@@ -1,0 +1,12 @@
+{
+  "name": "Rebania",
+  "short_name": "Rebania",
+  "description": "Sua fazenda em dia.",
+  "lang": "pt-BR",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#F7F4ED",
+  "theme_color": "#163E32",
+  "icons": [{ "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}

@@ -15,6 +15,8 @@ export function createDb({ url, max = 10 }: CreateDbOptions): PrismaClient {
   return new PrismaClient({ adapter });
 }
 
+export * from "./queue.ts";
+
 export type Db = PrismaClient;
 /** Cliente dentro de `db.$transaction(async (tx) => ...)`. */
 export type Tx = Prisma.TransactionClient;
