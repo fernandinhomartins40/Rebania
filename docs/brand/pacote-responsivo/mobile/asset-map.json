@@ -1,0 +1,25 @@
+{
+  "viewport_reference": 390,
+  "assets_are_identical_to_approved_desktop": true,
+  "hero": {
+    "src": "../assets/photos/hero-rancher.png",
+    "aspect_ratio": "4 / 5",
+    "object_fit": "cover",
+    "object_position": "65% 50%"
+  },
+  "history": {
+    "src": "../assets/photos/animal-history.png",
+    "aspect_ratio": "3 / 2",
+    "object_fit": "cover",
+    "object_position": "50% 50%"
+  },
+  "cta": {
+    "src": "../assets/photos/pasture-cta.png",
+    "aspect_ratio": "3 / 2",
+    "object_fit": "cover",
+    "object_position": "70% 50%",
+    "text_overlay": "linear-gradient(90deg, rgba(0,0,0,.7), rgba(0,0,0,.25))"
+  },
+  "logo": "../assets/brand/rebania-logo.png",
+  "symbol": "../assets/brand/rebania-symbol.png"
+}

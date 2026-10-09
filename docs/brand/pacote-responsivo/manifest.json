@@ -1,0 +1,132 @@
+{
+  "desktop_unchanged": true,
+  "native_4k_delivered": false,
+  "files": [
+    {
+      "path": "assets/brand/rebania-logo-reference.png",
+      "width": 1672,
+      "height": 941,
+      "alpha_range": [0, 255],
+      "sha256": "cea1227129d568a00752618dd078eb621789140dd0db7e793629e9be2e15a0f2"
+    },
+    {
+      "path": "assets/brand/rebania-logo.png",
+      "width": 2170,
+      "height": 725,
+      "alpha_range": [0, 255],
+      "sha256": "f69e3ce7342ee5cee522ed25867c9527482db56c868fc2d444b60a6cd94b3291"
+    },
+    {
+      "path": "assets/brand/rebania-symbol.png",
+      "width": 1254,
+      "height": 1254,
+      "alpha_range": [0, 255],
+      "sha256": "05a02d588c3c357fd9556baf6d1a274a2775c7ea0bc46123e0082c9b8c9cad80"
+    },
+    {
+      "path": "assets/photos/animal-history.png",
+      "width": 1536,
+      "height": 1024,
+      "alpha_range": null,
+      "sha256": "579c153b5b0b14186bd024a0d727d69d1285c705f8f6e116c75ad69514f2c384"
+    },
+    {
+      "path": "assets/photos/hero-rancher.png",
+      "width": 1536,
+      "height": 1024,
+      "alpha_range": null,
+      "sha256": "3a514919b77fd043d00a969fde91c4a820c3106f3fb53705a9bf3ca64053ee4b"
+    },
+    {
+      "path": "assets/photos/pasture-cta.png",
+      "width": 2172,
+      "height": 724,
+      "alpha_range": null,
+      "sha256": "3d504702fd61ecf87e4f4231e525406238cce62ee43b3cf748831e97124a9863"
+    },
+    {
+      "path": "assets/versions/animal-nova-versao.png",
+      "width": 1536,
+      "height": 1024,
+      "alpha_range": null,
+      "sha256": "c9f76f6bef98715f2029b5d364832638e47254a96f37a27500281d1e2ea536af"
+    },
+    {
+      "path": "assets/versions/hero-nova-versao.png",
+      "width": 1536,
+      "height": 1024,
+      "alpha_range": null,
+      "sha256": "2dc0c8b8d5674b74c84aa98357071e7b9cc58940b93bc9e35efda947b1280442"
+    },
+    {
+      "path": "assets/versions/logo-green-nova-versao.png",
+      "width": 2170,
+      "height": 725,
+      "alpha_range": [0, 255],
+      "sha256": "ae269ff38215b47d9b4c5010d9f9a5d2e6b0758bc9ca7bfd48961df9f18009a0"
+    },
+    {
+      "path": "assets/versions/logo-primary-nova-versao.png",
+      "width": 2169,
+      "height": 725,
+      "alpha_range": [0, 255],
+      "sha256": "22d92e7a5041ce5df99b2047282482c961b0ee6c6bfea6e59145a28098327bed"
+    },
+    {
+      "path": "assets/versions/pasture-nova-versao.png",
+      "width": 2172,
+      "height": 724,
+      "alpha_range": null,
+      "sha256": "412ea6e14d06f588c9fdb9b7333b70f82193f745b8378ebd93b69e180c33a95f"
+    },
+    {
+      "path": "assets/versions/symbol-nova-versao.png",
+      "width": 1254,
+      "height": 1254,
+      "alpha_range": [0, 255],
+      "sha256": "bcdd7ffb9f892aab83647c95b22a09859e51d46370c164e67eb3f74ff73a7804"
+    },
+    {
+      "path": "design/landing-desktop-revisada.png",
+      "width": 736,
+      "height": 2135,
+      "alpha_range": null,
+      "sha256": "5c4821599f0062170f8efeb1c4521c153130db35a4decf65d18634391c472116"
+    },
+    {
+      "path": "mobile/prancheta-mobile-01.png",
+      "width": 836,
+      "height": 1881,
+      "alpha_range": null,
+      "sha256": "3cceae89fd7ee6b7ed61c08d910127d218815ef93f9213c21775effe56f1b215"
+    },
+    {
+      "path": "mobile/prancheta-mobile-02.png",
+      "width": 836,
+      "height": 1881,
+      "alpha_range": null,
+      "sha256": "b6735e9db51da8d8ca18cf4ef76f5b7890aeb97f900529722b63ada7727c1daa"
+    },
+    {
+      "path": "mobile/prancheta-mobile-03.png",
+      "width": 836,
+      "height": 1881,
+      "alpha_range": null,
+      "sha256": "7b9befe6ad998eb6f46a98f64743f9cb6793f66d81f67cb69ade7a6235e3413c"
+    },
+    {
+      "path": "mobile/visao-geral-mobile.png",
+      "width": 740,
+      "height": 2125,
+      "alpha_range": null,
+      "sha256": "3c012dbc287481871e162eedd6c49457471db1866012fae06e6778f362cdd2b9"
+    },
+    {
+      "path": "tablet/prancheta-tablet.png",
+      "width": 782,
+      "height": 2010,
+      "alpha_range": null,
+      "sha256": "993d4fbe300fd54b45f7e85b82c09dafd0e1cfa5ecee7179db715adfcf7d6c87"
+    }
+  ]
+}

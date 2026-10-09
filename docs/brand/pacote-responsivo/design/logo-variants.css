@@ -1,0 +1,13 @@
+/* Aplicar ao PNG transparente aprovado. Mantém a geometria original. */
+.rebania-logo--white {
+  filter: brightness(0) invert(1);
+}
+.rebania-logo--black {
+  filter: brightness(0);
+}
+.rebania-logo {
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+}

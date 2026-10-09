@@ -1,0 +1,105 @@
+/* Adicionar ao projeto com estas classes nos blocos correspondentes.
+   As regras não se aplicam ao desktop >=1024px. */
+@media (max-width: 767px) {
+  .landing-container {
+    width: calc(100% - 40px);
+    margin-inline: auto;
+  }
+  .landing-header-links {
+    display: none;
+  }
+  .landing-mobile-menu {
+    display: inline-flex;
+  }
+  .landing-hero,
+  .landing-benefits,
+  .landing-steps,
+  .landing-animal,
+  .landing-history,
+  .landing-assistant,
+  .landing-platforms,
+  .landing-contracting,
+  .landing-faq,
+  .landing-form,
+  .landing-footer {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 20px;
+  }
+  .landing-hero > *,
+  .landing-animal > *,
+  .landing-assistant > * {
+    min-width: 0;
+  }
+  .landing-hero-photo {
+    width: 100%;
+    aspect-ratio: 4 / 5;
+    object-fit: cover;
+    object-position: 65% 50%;
+  }
+  .landing-hero-dashboard {
+    position: static;
+    transform: none;
+    width: 100%;
+  }
+  .landing-cta-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .landing-form input,
+  .landing-form select,
+  .landing-form button {
+    width: 100%;
+    min-height: 44px;
+    font-size: 16px;
+    box-sizing: border-box;
+  }
+  .landing-contracting > *,
+  .landing-steps > * {
+    min-width: 0;
+  }
+}
+@media (min-width: 768px) and (max-width: 1023px) {
+  .landing-container {
+    width: calc(100% - 64px);
+    margin-inline: auto;
+  }
+  .landing-header-links {
+    display: none;
+  }
+  .landing-mobile-menu {
+    display: inline-flex;
+  }
+  .landing-hero,
+  .landing-animal,
+  .landing-history,
+  .landing-assistant,
+  .landing-faq,
+  .landing-form {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 24px;
+  }
+  .landing-benefits,
+  .landing-steps,
+  .landing-contracting {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+  }
+  .landing-hero-photo {
+    width: 100%;
+    aspect-ratio: 3 / 4;
+    object-fit: cover;
+    object-position: 65% 50%;
+  }
+  .landing-platforms {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 24px;
+  }
+  .landing-platforms-web {
+    grid-column: 1 / -1;
+  }
+}

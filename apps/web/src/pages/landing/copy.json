@@ -5,80 +5,96 @@
   "navigation": ["Como funciona", "Recursos", "Inteligência", "Contratação"],
   "hero": {
     "title": "Sua fazenda em dia. Seu tempo de volta.",
-    "body": "Gestão de gado de corte, do nascimento à venda, com manejos simples e inteligência a seu lado.",
+    "body": "Gestão de gado de corte, do nascimento à venda.",
     "primary": "Solicitar demonstração",
     "secondary": "Conhecer o Rebania"
   },
   "benefits": {
     "title": "Do campo à gestão, tudo conectado.",
-    "items": ["Histórico de cada animal", "Manejos em grupo", "Próximas tarefas à vista"]
+    "items": [
+      { "title": "História completa", "body": "Do nascimento à venda, com tudo registrado." },
+      { "title": "Manejos em grupo", "body": "Ganhe escala e organize sua rotina." },
+      { "title": "Agenda sempre em dia", "body": "Nunca mais perca um manejo importante." }
+    ]
   },
   "steps": {
     "title": "Três etapas para seguir em frente.",
     "items": [
-      { "title": "Identifique", "body": "Selecione o animal ou o grupo do manejo." },
-      { "title": "Informe", "body": "Registre os dados necessários à tarefa." },
-      { "title": "Confirme", "body": "Revise o resultado e siga para o próximo manejo." }
+      { "title": "Identifique", "body": "Registre seus animais de forma simples e confiável." },
+      { "title": "Informe", "body": "Mantenha os manejos, pesagens e eventos em dia." },
+      {
+        "title": "Confirme",
+        "body": "Tenha informações seguras para decidir com tranquilidade."
+      }
     ]
   },
   "resources": {
     "title": "Completo para o rebanho. Simples para quem cuida.",
     "items": [
-      "Nascimento e reprodução",
-      "Vacinação e sanidade",
-      "Pesagem, recria e engorda",
-      "Lotes, pastos e movimentações",
-      "Estoque e gestão financeira"
+      { "title": "Nascimento e reprodução", "body": "Ciclo completo e controle reprodutivo." },
+      { "title": "Vacinação e sanidade", "body": "Calendário e histórico de vacinações." },
+      { "title": "Pesagem, recria e engorda", "body": "Acompanhe o desenvolvimento." },
+      { "title": "Lotes e pastos", "body": "Organize por lotes e áreas de pastejo." },
+      { "title": "Estoque e financeiro", "body": "Insumos, custos e movimentações." }
     ]
   },
   "history": {
     "title": "Cada animal tem uma história.",
-    "body": "Fotos, pesagens e manejos organizados em uma linha do tempo.",
-    "items": ["Nascimento", "Reprodução", "Pesagem"]
+    "items": [
+      { "title": "Nascimento", "body": "Registro de nascimento e identificação." },
+      { "title": "Reprodução", "body": "Cobertura registrada no lote de matrizes." },
+      { "title": "Pesagem", "body": "486 kg (ganho de 56 kg desde a última pesagem)." }
+    ]
   },
   "assistant": {
     "title": "Sua fazenda também pode responder.",
-    "body": "Consulte informações e prepare tarefas com o assistente inteligente.",
+    "body": "Consulte dados e prepare tarefas com o assistente.",
     "question": "Quais tarefas estão pendentes?",
     "response": "Vamos revisar a agenda da fazenda.",
     "control": "Você revisa. Você confirma."
   },
   "platforms": {
     "title": "No escritório e no campo.",
-    "channels": ["Web", "Android e iOS", "Alternativa PWA"],
-    "body": "Operação offline planejada para o campo, com sincronização ao reconectar.",
-    "note": "Recursos e integrações sujeitos à homologação. O suporte depende da plataforma e do equipamento."
+    "subtitle": "Acesse de onde estiver, com a mesma facilidade.",
+    "channels": [
+      { "title": "Web", "body": "Gestão completa no computador." },
+      { "title": "Android e iOS", "body": "No campo, sempre com você." },
+      { "title": "PWA", "body": "Funciona offline, no seu ritmo." }
+    ],
+    "body": "Operação offline planejada, com sincronização ao reconectar.",
+    "note": "Integrações sujeitas à homologação."
   },
   "contract": {
     "title": "Uma contratação clara.",
     "items": [
-      { "title": "Implantação", "body": "Sua fazenda configurada e equipe orientada." },
-      { "title": "Mensalidade", "body": "Acesso ao sistema e acompanhamento da operação." },
-      {
-        "title": "Créditos de IA",
-        "body": "Pacotes para usar o assistente conforme sua necessidade."
-      }
+      { "title": "Implantação", "body": "Acompanhamento para colocar sua fazenda em operação." },
+      { "title": "Mensalidade", "body": "Uso da plataforma e novas funcionalidades." },
+      { "title": "Créditos de IA", "body": "Recursos de inteligência para análises e sugestões." }
     ],
-    "note": "Os manejos manuais continuam mesmo sem créditos de IA."
+    "note": "Manejos manuais continuam mesmo sem créditos de IA."
   },
   "faq": {
     "title": "Perguntas de quem está no campo.",
     "items": [
       {
-        "question": "É indicado para cria, recria e engorda?",
-        "answer": "O Rebania está sendo desenvolvido para o ciclo completo da pecuária de corte. Os recursos serão apresentados conforme as fases de implementação."
+        "question": "Como funciona a identificação?",
+        "answer": "RFID com leitor homologado, NFC compatível, câmera ou busca manual."
       },
       {
-        "question": "Como funciona a identificação dos animais?",
-        "answer": "RFID com leitor homologado, NFC compatível, câmera ou busca manual. A compatibilidade depende do equipamento e da plataforma."
+        "question": "Preciso de internet para usar?",
+        "answer": "Não para os manejos de campo: cadastro, pesagem, aplicação, curral, trato e saída funcionam offline e sincronizam ao reconectar. Tratamentos, exames, compra e venda exigem conexão."
       },
       {
-        "question": "Preciso usar a inteligência artificial?",
-        "answer": "Não. O produto prevê fluxos manuais para os manejos e consultas. Créditos de IA são opcionais."
+        "question": "Meus dados ficam seguros?",
+        "answer": "Os dados de cada fazenda ficam isolados, com acesso por usuário e perfil. O histórico não é apagado: correções geram um novo registro, e o banco tem backup antes de cada atualização."
       },
       {
-        "question": "Como será a implantação?",
-        "answer": "A implantação prevê configuração da fazenda, revisão e importação dos dados, orientação da equipe e acompanhamento inicial."
+        "question": "Funciona em qual tipo de fazenda?",
+        "answer": "O Rebania está sendo desenvolvido para o ciclo completo da pecuária de corte: cria, recria e engorda."
+      },
+      {
+        "question": "Posso cancelar quando quiser?",
+        "answer": "Prazo e condições de cancelamento são definidos na proposta comercial da implantação."
       }
     ]
   },
@@ -88,10 +104,16 @@
   },
   "form": {
     "title": "Vamos conhecer sua fazenda.",
+    "subtitle": "Preencha seus dados e fale com nosso time.",
     "labels": ["Nome", "E-mail", "Perfil da operação"],
+    "placeholders": ["Seu nome", "seu@email.com", "Selecione o perfil da operação"],
     "options": ["Cria", "Recria", "Engorda", "Ciclo completo"],
     "button": "Solicitar contato",
     "previewNote": "Formulário previsto para integração."
+  },
+  "footer": {
+    "links": ["Recursos", "Contratação", "Contato", "Entrar"],
+    "note": "Componentes HTML/CSS · Telas ilustrativas"
   },
   "previewLabel": "Tela ilustrativa",
   "destinations": { "primary": "#demonstracao", "secondary": "#recursos" }
