@@ -606,6 +606,14 @@ export function summarizeEvent(
       return `Tratamento iniciado: ${String(data.condition)}`;
     case "treatment_closed":
       return `Tratamento encerrado: ${String(data.statusLabel)}${data.outcome ? ` · ${String(data.outcome)}` : ""}`;
+    case "sold":
+      return `Vendido para ${String(data.counterparty)}${data.liveWeightKg ? ` · ${Number(data.liveWeightKg).toLocaleString("pt-BR")} kg vivo` : ""}${data.withdrawalOverride ? " · com exceção de carência" : ""}`;
+    case "purchased":
+      return `Comprado de ${String(data.counterparty)}`;
+    case "died":
+      return `Morte: ${String(data.reason)}`;
+    case "exited":
+      return `${data.kind === "culled" ? "Descarte" : "Transferência"}: ${String(data.reason)}`;
     case "exam_collected":
       return `Exame coletado: ${String(data.kindLabel)}`;
     case "exam_result":

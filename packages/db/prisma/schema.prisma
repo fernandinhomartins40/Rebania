@@ -140,7 +140,7 @@ model Farm {
   createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
   archivedAt     DateTime? @map("archived_at") @db.Timestamptz(3)
 
-  organization Organization        @relation(fields: [organizationId], references: [id])
+  organization Organization            @relation(fields: [organizationId], references: [id])
   animals      Animal[]
   groups       Group[]
   pastures     Pasture[]
@@ -168,6 +168,9 @@ model Farm {
   treatments   Treatment[]
   exams        Exam[]
   sessions     HandlingSession[]
+  commercial   CommercialTransaction[]
+  entries      FinancialEntry[]
+  feedings     FeedingEvent[]
 
   @@unique([organizationId, id])
   @@map("farms")
@@ -285,8 +288,9 @@ model Group {
   updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
   archivedAt     DateTime? @map("archived_at") @db.Timestamptz(3)
 
-  farm    Farm     @relation(fields: [organizationId, farmId], references: [organizationId, id])
-  animals Animal[]
+  farm     Farm           @relation(fields: [organizationId, farmId], references: [organizationId, id])
+  animals  Animal[]
+  feedings FeedingEvent[]
 
   @@unique([farmId, id])
   @@map("groups")
@@ -333,6 +337,9 @@ model Animal {
   /// Projeção de carência (maior data entre aplicações não anuladas).
   withdrawalMeatUntil DateTime?      @map("withdrawal_meat_until") @db.Date
   withdrawalMilkUntil DateTime?      @map("withdrawal_milk_until") @db.Date
+  /// Saída (venda, morte, descarte, transferência): data e motivo; histórico preservado.
+  exitDate            DateTime?      @map("exit_date") @db.Date
+  exitReason          String?        @map("exit_reason")
   version             Int            @default(1)
   createdById         String?        @map("created_by_id") @db.Uuid
   createdAt           DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
@@ -359,6 +366,7 @@ model Animal {
   treatments        Treatment[]
   exams             Exam[]
   sessionItems      HandlingSessionItem[]
+  commercialItems   CommercialItem[]
 
   @@unique([organizationId, id])
   @@unique([farmId, id])
@@ -805,12 +813,13 @@ model Product {
   updatedAt          DateTime    @updatedAt @map("updated_at") @db.Timestamptz(3)
   archivedAt         DateTime?   @map("archived_at") @db.Timestamptz(3)
 
-  farm         Farm                @relation(fields: [organizationId, farmId], references: [organizationId, id])
-  sire         Animal?             @relation("ProductSire", fields: [organizationId, sireId], references: [organizationId, id], onDelete: NoAction, onUpdate: NoAction)
-  batches      ProductBatch[]
-  movements    StockMovement[]
-  applications HealthApplication[]
-  planItems    HealthPlanItem[]
+  farm          Farm                @relation(fields: [organizationId, farmId], references: [organizationId, id])
+  sire          Animal?             @relation("ProductSire", fields: [organizationId, sireId], references: [organizationId, id], onDelete: NoAction, onUpdate: NoAction)
+  batches       ProductBatch[]
+  movements     StockMovement[]
+  applications  HealthApplication[]
+  planItems     HealthPlanItem[]
+  feedingEvents FeedingEvent[]
 
   @@unique([farmId, id])
   @@index([farmId, kind])
@@ -1071,4 +1080,139 @@ model HandlingSessionException {
 
   @@index([sessionId])
   @@map("handling_session_exceptions")
+}
+
+// ---- G5: comercialização, saídas, trato e financeiro ---------------------------------
+
+enum CommercialKind {
+  sale
+  purchase
+}
+
+enum PriceMode {
+  per_head
+  per_kg_live
+  per_arroba
+  total
+}
+
+enum EntryKind {
+  income
+  expense
+}
+
+enum EntryStatus {
+  open
+  paid
+  cancelled
+}
+
+/// Compra ou venda de animais. Valores em centavos; arroba só como estimativa com rendimento informado.
+model CommercialTransaction {
+  id                  String         @id @default(uuid()) @db.Uuid
+  organizationId      String         @map("organization_id") @db.Uuid
+  farmId              String         @map("farm_id") @db.Uuid
+  kind                CommercialKind
+  date                DateTime       @db.Date
+  counterparty        String
+  document            String?
+  priceMode           PriceMode      @map("price_mode")
+  unitCents           BigInt         @map("unit_cents")
+  totalCents          BigInt         @map("total_cents")
+  heads               Int
+  totalLiveKg         Decimal?       @map("total_live_kg") @db.Decimal(12, 2)
+  carcassYieldPercent Decimal?       @map("carcass_yield_percent") @db.Decimal(5, 2)
+  estimatedArrobas    Decimal?       @map("estimated_arrobas") @db.Decimal(12, 2)
+  formula             String
+  notes               String?
+  /// Exceção de carência: quem liberou e por quê (somente pessoas com permissão).
+  withdrawalOverride  Json?          @map("withdrawal_override")
+  financialEntryId    String?        @map("financial_entry_id") @db.Uuid
+  createdById         String?        @map("created_by_id") @db.Uuid
+  createdAt           DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
+  voidedAt            DateTime?      @map("voided_at") @db.Timestamptz(3)
+  voidReason          String?        @map("void_reason")
+
+  farm  Farm             @relation(fields: [organizationId, farmId], references: [organizationId, id])
+  items CommercialItem[]
+
+  @@unique([farmId, id])
+  @@index([farmId, kind, date])
+  @@map("commercial_transactions")
+}
+
+model CommercialItem {
+  transactionId  String   @map("transaction_id") @db.Uuid
+  animalId       String   @map("animal_id") @db.Uuid
+  farmId         String   @map("farm_id") @db.Uuid
+  liveWeightKg   Decimal? @map("live_weight_kg") @db.Decimal(8, 2)
+  allocatedCents BigInt   @map("allocated_cents")
+
+  transaction CommercialTransaction @relation(fields: [farmId, transactionId], references: [farmId, id])
+  animal      Animal                @relation(fields: [farmId, animalId], references: [farmId, id])
+
+  @@id([transactionId, animalId])
+  @@index([animalId])
+  @@map("commercial_items")
+}
+
+/// Lançamento financeiro (receita/despesa) com vencimento, pagamento e rateio.
+model FinancialEntry {
+  id             String      @id @default(uuid()) @db.Uuid
+  organizationId String      @map("organization_id") @db.Uuid
+  farmId         String      @map("farm_id") @db.Uuid
+  kind           EntryKind
+  category       String
+  description    String
+  amountCents    BigInt      @map("amount_cents")
+  dueOn          DateTime    @map("due_on") @db.Date
+  paidOn         DateTime?   @map("paid_on") @db.Date
+  status         EntryStatus @default(open)
+  counterparty   String?
+  document       String?
+  /// Rateio: farm (fazenda toda), group (lotes) ou animals.
+  allocationType String      @default("farm") @map("allocation_type")
+  allocationIds  String[]    @default([]) @map("allocation_ids") @db.Uuid
+  sourceType     String?     @map("source_type")
+  sourceId       String?     @map("source_id") @db.Uuid
+  createdById    String?     @map("created_by_id") @db.Uuid
+  createdAt      DateTime    @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime    @updatedAt @map("updated_at") @db.Timestamptz(3)
+  cancelReason   String?     @map("cancel_reason")
+  version        Int         @default(1)
+
+  farm Farm @relation(fields: [organizationId, farmId], references: [organizationId, id])
+
+  @@index([farmId, status, dueOn])
+  @@index([farmId, paidOn])
+  @@map("financial_entries")
+}
+
+/// Trato/fornecimento por lote: dieta, quantidade, consumo de estoque e custo estimado.
+model FeedingEvent {
+  id              String    @id @default(uuid()) @db.Uuid
+  organizationId  String    @map("organization_id") @db.Uuid
+  farmId          String    @map("farm_id") @db.Uuid
+  groupId         String?   @map("group_id") @db.Uuid
+  date            DateTime  @db.Date
+  diet            String
+  productId       String?   @map("product_id") @db.Uuid
+  quantity        Decimal   @db.Decimal(14, 3)
+  unit            String
+  heads           Int
+  /// Custo médio de entrada do produto × quantidade (null sem custo informado nas entradas).
+  costCents       BigInt?   @map("cost_cents")
+  stockMovementId String?   @map("stock_movement_id") @db.Uuid
+  notes           String?
+  createdById     String?   @map("created_by_id") @db.Uuid
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  voidedAt        DateTime? @map("voided_at") @db.Timestamptz(3)
+  voidReason      String?   @map("void_reason")
+
+  farm    Farm     @relation(fields: [organizationId, farmId], references: [organizationId, id])
+  group   Group?   @relation(fields: [farmId, groupId], references: [farmId, id], onDelete: NoAction, onUpdate: NoAction)
+  product Product? @relation(fields: [farmId, productId], references: [farmId, id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([farmId, date])
+  @@map("feeding_events")
 }

@@ -7,6 +7,8 @@ import {
   MapPin,
   Pencil,
   FlaskConical,
+  HandCoins,
+  LogOut,
   Stethoscope,
   Syringe,
   Undo2,
@@ -66,6 +68,10 @@ const EVENT_ICON: Record<string, IconComponent> = {
   treatment_closed: Stethoscope,
   exam_collected: FlaskConical,
   exam_result: FlaskConical,
+  sold: HandCoins,
+  purchased: HandCoins,
+  died: LogOut,
+  exited: LogOut,
   calved: Baby,
   weaned: Baby,
   correction: Undo2,
@@ -84,6 +90,10 @@ const EVENT_TITLE: Record<string, string> = {
   treatment_closed: "Tratamento encerrado",
   exam_collected: "Exame",
   exam_result: "Resultado de exame",
+  sold: "Venda",
+  purchased: "Compra",
+  died: "Morte",
+  exited: "Saída do rebanho",
   pregnancy_check: "Diagnóstico de prenhez",
   calved: "Parto",
   weaned: "Desmama",
@@ -209,6 +219,9 @@ export function AnimalPage() {
           </Link>
           <Link className="btn btn-secondary" to={`/registrar/movimentacao?animal=${animal.id}`}>
             <ArrowLeftRight size={20} /> Movimentar
+          </Link>
+          <Link className="btn btn-ghost" to={`/registrar/saida?animal=${animal.id}`}>
+            <LogOut size={20} /> Registrar saída
           </Link>
           {animal.repro ? (
             <Link className="btn btn-secondary" to={`/registrar/nascimento?mae=${animal.id}`}>

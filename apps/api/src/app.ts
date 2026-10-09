@@ -12,6 +12,7 @@ import { importRoutes } from "./modules/imports.ts";
 import { mediaRoutes } from "./modules/media.ts";
 import { reproRoutes } from "./modules/repro/routes.ts";
 import { healthRoutes } from "./modules/health/routes.ts";
+import { commerceRoutes } from "./modules/commerce/routes.ts";
 import { orgRoutes } from "./modules/org.ts";
 import { syncRoutes } from "./modules/sync.ts";
 import { CSRF_HEADER, registerAuth } from "./plugins/auth.ts";
@@ -61,6 +62,7 @@ export async function buildApp(ctx: AppContext) {
   importRoutes(app, ctx);
   reproRoutes(app, ctx);
   healthRoutes(app, ctx);
+  commerceRoutes(app, ctx);
 
   return app;
 }

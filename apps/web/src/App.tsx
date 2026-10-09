@@ -23,6 +23,13 @@ import { TreatmentPage } from "./pages/health/Treatment.tsx";
 import { CurralRunPage } from "./pages/curral/Run.tsx";
 import { CurralSessionsPage } from "./pages/curral/Sessions.tsx";
 import { CurralSetupPage } from "./pages/curral/Setup.tsx";
+import { CommercialDetailPage, CommercialPage } from "./pages/commerce/Commercial.tsx";
+import { ExitPage } from "./pages/commerce/Exit.tsx";
+import { FeedingPage } from "./pages/commerce/Feeding.tsx";
+import { FinancePage } from "./pages/commerce/Finance.tsx";
+import { PurchasePage } from "./pages/commerce/Purchase.tsx";
+import { ReportsPage } from "./pages/commerce/Reports.tsx";
+import { SalePage } from "./pages/commerce/Sale.tsx";
 import { LandingPage } from "./pages/landing/Landing.tsx";
 import { LoginPage } from "./pages/Login.tsx";
 import { MovePage } from "./pages/Move.tsx";
@@ -93,6 +100,14 @@ function Routed() {
           <Route path="curral/nova" element={<CurralSetupPage />} />
           <Route path="curral/:id" element={<CurralRunPage />} />
           <Route path="fazenda/estoque" element={<StockPage />} />
+          <Route path="registrar/trato" element={<FeedingPage />} />
+          <Route path="registrar/saida" element={<ExitPage />} />
+          <Route path="comercial" element={<CommercialPage />} />
+          <Route path="comercial/venda" element={<SalePage />} />
+          <Route path="comercial/compra" element={<PurchasePage />} />
+          <Route path="comercial/:id" element={<CommercialDetailPage />} />
+          <Route path="fazenda/financeiro" element={<FinancePage />} />
+          <Route path="relatorios" element={<ReportsPage />} />
           <Route path="fazenda/configuracoes" element={<SettingsPage />} />
           <Route path="agenda" element={<AgendaPage />} />
           <Route path="fazenda" element={<FarmPage />} />

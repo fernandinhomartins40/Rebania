@@ -50,6 +50,30 @@ describe("isolamento entre organizações", () => {
       `/v1/farms/${B.farmId}/identifiers/resolve?value=0284`,
       `/v1/sync/pull?farmId=${B.farmId}`,
       `/v1/orgs/${B.orgId}/members`,
+      // G3 reprodução e agenda
+      `/v1/farms/${B.farmId}/tasks`,
+      `/v1/farms/${B.farmId}/animals/${animalB}/repro`,
+      `/v1/farms/${B.farmId}/breeding-seasons`,
+      `/v1/farms/${B.farmId}/protocols`,
+      `/v1/farms/${B.farmId}/reproduction/expected-calvings`,
+      `/v1/farms/${B.farmId}/settings`,
+      // G4 sanidade, estoque e curral
+      `/v1/farms/${B.farmId}/products`,
+      `/v1/farms/${B.farmId}/stock/movements`,
+      `/v1/farms/${B.farmId}/health/applications`,
+      `/v1/farms/${B.farmId}/health/calendar`,
+      `/v1/farms/${B.farmId}/health/plan`,
+      `/v1/farms/${B.farmId}/withdrawals`,
+      `/v1/farms/${B.farmId}/treatments`,
+      `/v1/farms/${B.farmId}/exams`,
+      `/v1/farms/${B.farmId}/handling-sessions`,
+      `/v1/farms/${B.farmId}/animals/${animalB}/health`,
+      // G5 comercial, trato, financeiro e relatórios
+      `/v1/farms/${B.farmId}/commercial`,
+      `/v1/farms/${B.farmId}/feedings`,
+      `/v1/farms/${B.farmId}/finance/entries`,
+      `/v1/farms/${B.farmId}/reports/inventory?from=2026-01-01&to=2026-12-31`,
+      `/v1/farms/${B.farmId}/reports/financial?from=2026-01-01&to=2026-12-31&format=csv`,
     ]) {
       const res = await clientA.get(url);
       expect(res.statusCode, url).toBe(404);
@@ -71,6 +95,52 @@ describe("isolamento entre organizações", () => {
         allFarms: true,
       }),
       clientA.post(`/v1/orgs/${B.orgId}/farms`, { name: "invasora" }),
+      clientA.post(`/v1/farms/${B.farmId}/products`, {
+        name: "Produto invasor",
+        kind: "vaccine",
+        unit: "mL",
+      }),
+      clientA.post(`/v1/farms/${B.farmId}/events/health`, {
+        kind: "vaccination",
+        date: "2026-10-01",
+        animalIds: [animalB],
+        products: [{ productId: randomUUID(), dose: 1 }],
+      }),
+      clientA.post(`/v1/farms/${B.farmId}/events/breeding`, {
+        kind: "artificial_insemination",
+        date: "2026-10-01",
+        femaleIds: [animalB],
+      }),
+      clientA.post(`/v1/farms/${B.farmId}/handling-sessions`, {
+        name: "invasora",
+        date: "2026-10-01",
+        config: { weigh: true },
+        animalIds: [animalB],
+      }),
+      clientA.post(`/v1/farms/${B.farmId}/sales`, {
+        date: "2026-10-01",
+        items: [{ animalId: animalB }],
+        priceMode: "per_head",
+        unitPrice: 1000,
+        counterparty: "Invasor",
+      }),
+      clientA.post(`/v1/farms/${B.farmId}/animals/${animalB}/exit`, {
+        kind: "dead",
+        date: "2026-10-01",
+        reason: "invasão",
+      }),
+      clientA.post(`/v1/farms/${B.farmId}/finance/entries`, {
+        kind: "expense",
+        category: "labor",
+        description: "invasão",
+        amount: 10,
+        dueOn: "2026-10-01",
+      }),
+      clientA.post(`/v1/farms/${B.farmId}/treatments`, {
+        animalId: animalB,
+        startedOn: "2026-10-01",
+        condition: "invasão",
+      }),
       clientA.post(`/v1/sync/push`, {
         farmId: B.farmId,
         deviceId: randomUUID(),
@@ -90,6 +160,14 @@ describe("isolamento entre organizações", () => {
     for (const res of await Promise.all(attempts)) expect(res.statusCode).toBe(404);
     expect(await env.db.animal.count({ where: { farmId: B.farmId } })).toBe(before);
     expect(await env.db.weightMeasurement.count({ where: { farmId: B.farmId } })).toBe(0);
+    expect(await env.db.product.count({ where: { farmId: B.farmId } })).toBe(0);
+    expect(await env.db.healthApplication.count({ where: { farmId: B.farmId } })).toBe(0);
+    expect(await env.db.breedingEvent.count({ where: { farmId: B.farmId } })).toBe(0);
+    expect(await env.db.handlingSession.count({ where: { farmId: B.farmId } })).toBe(0);
+    expect(await env.db.treatment.count({ where: { farmId: B.farmId } })).toBe(0);
+    expect(await env.db.commercialTransaction.count({ where: { farmId: B.farmId } })).toBe(0);
+    expect(await env.db.financialEntry.count({ where: { farmId: B.farmId } })).toBe(0);
+    expect((await env.db.animal.findUnique({ where: { id: animalB } }))?.status).toBe("active");
   });
 
   it("A não acessa animal de B usando a própria fazenda na URL", async () => {

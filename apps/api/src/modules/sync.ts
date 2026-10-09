@@ -33,6 +33,7 @@ import {
   markItem,
   openSession,
 } from "./health/service.ts";
+import { recordExit, recordFeeding, recordSale } from "./commerce/service.ts";
 
 const PERMISSION: Record<SyncMutation["type"], Permission> = {
   "animal.create": "animals.write",
@@ -48,6 +49,9 @@ const PERMISSION: Record<SyncMutation["type"], Permission> = {
   "handling.mark": "events.write",
   "handling.exception": "events.write",
   "handling.close": "events.write",
+  "feeding.record": "events.write",
+  "animal.exit": "events.write",
+  "sale.record": "sales.manage",
 };
 
 export function syncRoutes(app: FastifyInstance, ctx: AppContext) {
@@ -135,6 +139,12 @@ export function syncRoutes(app: FastifyInstance, ctx: AppContext) {
             return addSessionException(tx, fctx, m.entityId, m.payload);
           case "handling.close":
             return closeSession(tx, fctx, m.entityId, m.payload, meta);
+          case "feeding.record":
+            return recordFeeding(tx, fctx, { ...m.payload, id: m.entityId }, meta);
+          case "animal.exit":
+            return recordExit(tx, fctx, m.entityId, m.payload, meta);
+          case "sale.record":
+            return recordSale(tx, fctx, { ...m.payload, id: m.entityId }, meta);
         }
       },
     });

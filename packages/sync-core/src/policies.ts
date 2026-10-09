@@ -5,8 +5,10 @@ import type { SyncMutationType } from "@rebania/contracts";
  * - append: registros independentes coexistem (pesagens, fotos).
  * - idempotent_create: criação com ID gerado no aparelho; reenvio devolve o mesmo recibo.
  * - version_check: exige `expectedVersion`; divergência vira conflito para revisão humana.
+ * - state_check: o servidor confere o estado atual (ex.: animal ainda ativo); se outro
+ *   aparelho já vendeu/baixou o animal, vira CONFLITO — nunca reabre em silêncio.
  */
-export type MergePolicy = "append" | "idempotent_create" | "version_check";
+export type MergePolicy = "append" | "idempotent_create" | "version_check" | "state_check";
 
 export const MERGE_POLICY: Record<SyncMutationType, MergePolicy> = {
   "animal.create": "idempotent_create",
@@ -27,6 +29,9 @@ export const MERGE_POLICY: Record<SyncMutationType, MergePolicy> = {
   "handling.mark": "append",
   "handling.exception": "append",
   "handling.close": "idempotent_create",
+  "feeding.record": "append",
+  "animal.exit": "state_check",
+  "sale.record": "state_check",
 };
 
 /** Backoff exponencial com teto e jitter determinístico opcional (para testes). */

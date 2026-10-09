@@ -14,6 +14,7 @@ import {
   HandlingOpenInput,
   HealthApplyInput,
 } from "./health.ts";
+import { AnimalExitInput, FeedingInput, SaleInput } from "./commerce.ts";
 
 /**
  * Envelope de mutação offline. `organizationId`/tenant NÃO vem do cliente:
@@ -46,6 +47,12 @@ export const SyncMutation = z.discriminatedUnion("type", [
   Base.extend({ type: z.literal("handling.mark"), payload: HandlingMarkInput }),
   Base.extend({ type: z.literal("handling.exception"), payload: HandlingExceptionInput }),
   Base.extend({ type: z.literal("handling.close"), payload: HandlingCloseInput }),
+  /** Trato: entityId = id do fornecimento. */
+  Base.extend({ type: z.literal("feeding.record"), payload: FeedingInput }),
+  /** Saída (morte/descarte/transferência): entityId = animalId. */
+  Base.extend({ type: z.literal("animal.exit"), payload: AnimalExitInput }),
+  /** Venda: entityId = id da transação. */
+  Base.extend({ type: z.literal("sale.record"), payload: SaleInput }),
 ]);
 export type SyncMutation = z.input<typeof SyncMutation>;
 export type SyncMutationType = SyncMutation["type"];

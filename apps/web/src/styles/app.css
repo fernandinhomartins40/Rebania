@@ -1546,3 +1546,16 @@ button.list-item {
 .list-item .title {
   font-weight: 700;
 }
+@media print {
+  .no-print,
+  nav,
+  header,
+  .bottom-nav,
+  .topbar {
+    display: none !important;
+  }
+  .report {
+    box-shadow: none;
+    border: 0;
+  }
+}
