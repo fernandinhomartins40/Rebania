@@ -1,6 +1,7 @@
 import {
   AiGateway,
   AiUnavailableError,
+  DeepSeekProvider,
   DisabledProvider,
   ProviderError,
 } from "@rebania/ai-gateway";
@@ -38,7 +39,11 @@ const AskInput = z.object({
 
 export function aiRoutes(app: FastifyInstance, ctx: AppContext) {
   const { db } = ctx;
-  const gateway = ctx.ai ?? new AiGateway(new DisabledProvider());
+  const gateway =
+    ctx.ai ??
+    new AiGateway(
+      ctx.config.deepseek ? new DeepSeekProvider(ctx.config.deepseek) : new DisabledProvider(),
+    );
   const farm = (req: FastifyRequest, perm: Parameters<typeof requireFarm>[3]) =>
     requireFarm(db, requireAuth(req).userId, (req.params as { farmId: string }).farmId, perm);
 

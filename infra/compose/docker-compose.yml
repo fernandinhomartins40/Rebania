@@ -58,8 +58,10 @@ services:
       LOG_LEVEL: info
       DB_POOL_MAX: "10"
       MEDIA_DIR: /data/media
-      # Provedores pendentes (P-02): mantenha "none" até a decisão.
+      # IA (P-02): "deepseek" + DEEPSEEK_API_KEY liga o assistente; "none" desliga.
       AI_PROVIDER: ${AI_PROVIDER:-none}
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
+      DEEPSEEK_MODEL: ${DEEPSEEK_MODEL:-deepseek-chat}
       BILLING_PROVIDER: ${BILLING_PROVIDER:-none}
       BILLING_WEBHOOK_SECRET: ${BILLING_WEBHOOK_SECRET:-}
       METRICS_TOKEN: ${METRICS_TOKEN:-}
