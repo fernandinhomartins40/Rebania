@@ -1,10 +1,11 @@
 # Runbook — Deploy na VPS (72.60.10.112 · www.rebania.com.br)
 
-> O pipeline está configurado, mas só publica quando houver push na `main` com o runner da VPS 112 registrado. Nada foi publicado ainda.
+> O pipeline publica a cada push na `main`. O único secret é `VPS_PASSWORD`, a senha de root da VPS 72.60.10.112.
 
 ## Visão geral (VPS 72.60.10.112 · www.rebania.com.br)
 - **Build:** `.github/workflows/deploy.yml` roda o CI completo e, se passar, constrói `rebania-{api,worker,migrate,web}` em runners do GitHub e publica no GHCR (`ghcr.io/fernandinhomartins40/rebania-*:<sha>` e `:latest`). A VPS nunca compila.
-- **Deploy:** só em push na `main` (ou "Run workflow"), no runner self-hosted **da VPS 112** com rótulo `rebania`. Ele chama `infra/scripts/deploy.sh`, que faz pull → backup → migrações → up → healthcheck. Se o healthcheck falhar, volta sozinho para a release anterior. Por fim remove apenas imagens antigas do Rebania, mantendo a atual e a anterior.
+- **Deploy:** só em push na `main` (ou "Run workflow"). Um runner do GitHub entra em `root@72.60.10.112` por SSH com a senha do secret **`VPS_PASSWORD`**, que é o único secret. Ele envia `infra/` para `/opt/rebania`, preservando o `.env`. Depois roda `setup-host.sh`, que é idempotente: instala Docker se faltar, cria o `.env` uma única vez, instala o vhost e o certificado. Em seguida roda `deploy.sh`, que faz pull → backup → migrações → up → healthcheck. Se o healthcheck falhar, volta sozinho para a release anterior. Por fim remove apenas imagens antigas do Rebania, mantendo a atual e a anterior.
+- **GHCR:** o pull na VPS usa o `GITHUB_TOKEN` automático da execução, que o GitHub gera e expira sozinho. Não é um secret a configurar. A VPS faz logout no fim.
 - **Rollback manual:** Actions → *Deploy (GHCR -> VPS 112)* → *Run workflow* com `release=<sha anterior>`. O build é pulado e a imagem já publicada é reimplantada.
 - **Proteção:** o job usa o environment `production`. Em Settings → Environments → production, exija aprovação se quiser um "ok" antes de cada deploy.
 
@@ -23,31 +24,20 @@ Registre o resultado em `docs/DECISIONS.md` (P-04). Se 8088 estiver ocupada, tro
 ## 1. DNS
 No registro do domínio, crie registros `A` para `rebania.com.br` e `www.rebania.com.br` apontando para `72.60.10.112`.
 
-## 2. Preparação única da VPS (como root)
-```bash
-git clone https://github.com/fernandinhomartins40/Rebania.git /root/rebania-setup
-/root/rebania-setup/infra/scripts/setup-host.sh voce@rebania.com.br
-```
-Esse script:
-- cria `/opt/rebania/infra/compose/.env` com permissão 600 e senha do banco gerada, sem sobrescrever um `.env` existente;
-- instala o vhost `infra/nginx/host/rebania.com.br.conf` (apex → www, proxy para `127.0.0.1:8088`) sem tocar nos vhosts de outras aplicações, e o desfaz se `nginx -t` falhar;
-- emite o certificado com `certbot --nginx --redirect`.
+## 2. Secret
+No GitHub: repositório → Settings → Secrets and variables → Actions → *New repository secret*: nome `VPS_PASSWORD`, valor = senha de root da VPS 72.60.10.112. Nenhum outro secret é necessário.
 
-Revise o `.env` (por exemplo `METRICS_TOKEN`).
+## 3. Primeiro deploy
+Faça push/merge na `main` (ou *Run workflow*) e acompanhe em Actions. O primeiro deploy:
+- prepara a VPS (Docker, `/opt/rebania`, `.env` com senha do banco gerada na própria VPS, vhost);
+- tenta emitir o certificado. Se o DNS ainda não apontar para a 112, o certbot avisa e o próximo deploy tenta de novo.
 
-## 3. Runner self-hosted na VPS 112
-1. No GitHub: repositório → Settings → Actions → Runners → *New self-hosted runner* (Linux x64). Siga os comandos mostrados, num usuário sem root dedicado (ex.: `github-runner`).
-2. No `./config.sh`, informe o rótulo extra **`rebania`**. É ele que garante que o deploy rode na 112 e não na 108.
-3. Instale como serviço: `sudo ./svc.sh install github-runner && sudo ./svc.sh start`.
-4. Dê ao usuário do runner acesso ao Docker e aos diretórios:
-   ```bash
-   usermod -aG docker github-runner
-   chown -R github-runner: /opt/rebania /var/backups/rebania
-   ```
-5. O token do GHCR é o `GITHUB_TOKEN` da execução. Não é preciso criar nenhum secret.
+Não há backup no primeiro deploy, porque o banco está vazio. Nos seguintes, o dump vai para `/var/backups/rebania` antes de migrar; envie esse diretório para fora da VPS (`backup-restore.md`).
 
-## 4. Primeiro deploy
-Faça merge na `main` (ou rode o workflow manualmente) e acompanhe em Actions. No primeiro deploy não há backup, porque o banco está vazio. Nos seguintes, o dump vai para `/var/backups/rebania` antes de migrar; envie esse diretório para fora da VPS (`backup-restore.md`).
+Para ligar opcionais (DeepSeek, métricas), edite `/opt/rebania/infra/compose/.env` na VPS. O deploy nunca sobrescreve esse arquivo.
+
+## 4. Proxy que não seja Nginx
+Se a porta 80 da VPS já pertence a outro servidor (CyberPanel/OpenLiteSpeed), o `setup-host.sh` não mexe nele e apenas avisa. Nesse caso, crie um *External App* apontando para `127.0.0.1:8088` e um *Context* `/` usando esse app, mantendo `Host` e `X-Forwarded-Proto https`.
 
 ## 5. Deploy manual (emergência, sem GitHub Actions)
 ```bash
@@ -55,7 +45,6 @@ cd /opt/rebania
 echo "$PAT" | docker login ghcr.io -u <usuario> --password-stdin   # PAT com read:packages
 RELEASE=<sha publicado> infra/scripts/deploy.sh
 ```
-Num proxy que não seja Nginx (CyberPanel/OpenLiteSpeed), crie um *External App* apontando para `127.0.0.1:8088` e um *Context* `/` usando esse app, mantendo `Host` e `X-Forwarded-Proto https`.
 
 ## 6. Implantação de um cliente
 Os comandos `docker compose` abaixo rodam em `/opt/rebania/infra/compose`, onde ficam o compose e o `.env`.

@@ -1,3 +1,0 @@
-# Rótulo do runner self-hosted instalado na VPS 72.60.10.112 (docs/runbooks/deploy.md).
-self-hosted-runner:
-  labels: [rebania]

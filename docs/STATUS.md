@@ -31,7 +31,7 @@ Atualizado em 09/10/2026. "Testado" significa coberto por teste automatizado que
 | Restauração (teste obrigatório 11) | Dump do banco + arquivo de mídia restaurados em banco/diretório separados: contagens idênticas em 21 tabelas de negócio e mídia idêntica por hash | Execução local registrada em 09/10/2026; `infra/scripts/restore-check.sh` (com mídia) para o ambiente real |
 | Infra | Dockerfiles multi-stage sem root (api, worker, migrate, web/Nginx); compose de produção com porta só em loopback; backup e restauração verificada | Imagens construídas e stack completa executada localmente; backup → restore em banco separado conferido |
 | CI | GitHub Actions: formato, typecheck, lint, unitários, integração com PostgreSQL, schema × migrations, builds e imagens | `.github/workflows/ci.yml` |
-| CD (VPS 72.60.10.112 · www.rebania.com.br) | Push na `main` → CI completo → imagens no GHCR (`<sha>` + `latest`, cache no registry) → runner self-hosted rótulo `rebania` na VPS 112 faz pull, backup, migrações, up, healthcheck e rollback automático; limpeza só de imagens do Rebania; rollback manual por `release=<sha>`; vhost do host (apex → www) e certbot por `setup-host.sh` | `deploy.yml`, `infra/scripts/deploy.sh` (simulado com docker falso: sucesso e rollback), actionlint |
+| CD (VPS 72.60.10.112 · www.rebania.com.br) | Push na `main` → CI completo → imagens no GHCR (`<sha>` + `latest`, cache no registry) → SSH em root@72.60.10.112 com o único secret `VPS_PASSWORD`: prepara a VPS (idempotente), pull, backup, migrações, up, healthcheck e rollback automático; limpeza só de imagens do Rebania; rollback manual por `release=<sha>`; vhost do host (apex → www) e certbot por `setup-host.sh` | `deploy.yml`, `infra/scripts/deploy.sh` (simulado com docker falso: sucesso e rollback), actionlint; ainda não executado contra a VPS real |
 
 ## Pendente (não implementado)
 
@@ -45,5 +45,5 @@ Atualizado em 09/10/2026. "Testado" significa coberto por teste automatizado que
 - **Homologação de hardware:** nenhum aparelho foi testado fisicamente (P-03).
 - **Testes em aparelhos (teste 12):** o app nativo só foi empacotado; não rodou em Android/iOS físico nem em emulador. Builds EAS dependem de contas (P-05).
 - **Testes obrigatórios 6 (físico), 11 e 12** dependem de aparelhos físicos e do ambiente de produção (G7).
-- **Deploy (G7):** pipeline pronto para a VPS 72.60.10.112 e www.rebania.com.br, mas nada foi publicado. Faltam: DNS apontando para a 112, `setup-host.sh` executado, runner self-hosted com rótulo `rebania` registrado e merge na `main`. A auditoria da VPS (P-04), os limites de CPU/RAM medidos e o restore no ambiente real dependem disso.
+- **Deploy (G7):** pipeline pronto para a VPS 72.60.10.112 e www.rebania.com.br, mas nada foi publicado. Faltam: o secret `VPS_PASSWORD` no GitHub e o DNS apontando para a 112. A auditoria da VPS (P-04), os limites de CPU/RAM medidos e o restore no ambiente real dependem disso.
 - **Piloto (G7):** QA com o cliente e metas (tempo de registro, ajuda) dependem da entrevista e dados reais (P-07).

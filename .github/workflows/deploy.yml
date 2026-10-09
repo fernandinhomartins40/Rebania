@@ -3,8 +3,8 @@ name: Deploy (GHCR -> VPS 112)
 # Mesmo modelo do DigiUrban (build-images.yml), adaptado ao Rebania:
 # - as imagens são construídas em runners do GitHub e publicadas no GHCR;
 # - a VPS 72.60.10.112 só faz `pull` e sobe (nunca compila);
-# - o deploy roda no runner self-hosted da VPS 112 com o rótulo `rebania`
-#   (não usa o runner da VPS 108);
+# - o deploy entra na VPS 112 por SSH com senha; o ÚNICO secret é VPS_PASSWORD
+#   (o GITHUB_TOKEN usado no GHCR é automático do GitHub, não é configurado);
 # - backup antes das migrações, healthcheck e rollback automático em
 #   infra/scripts/deploy.sh.
 # Rollback manual: "Run workflow" informando `release` = SHA já publicado.
@@ -90,14 +90,18 @@ jobs:
     needs: build
     # Roda também no rollback manual (build pulado), mas nunca se algo falhou.
     if: ${{ !cancelled() && !failure() }}
-    runs-on: [self-hosted, rebania]
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     environment:
       name: production
       url: https://www.rebania.com.br
     env:
+      VPS_HOST: 72.60.10.112
+      VPS_USER: root
       APP_DIR: /opt/rebania
       RELEASE: ${{ inputs.release || github.sha }}
+      # ÚNICO secret do deploy. Usado só pelo sshpass (-e lê de SSHPASS), nunca impresso.
+      SSHPASS: ${{ secrets.VPS_PASSWORD }}
     steps:
       - name: Checkout (só a infraestrutura)
         uses: actions/checkout@v4
@@ -105,26 +109,38 @@ jobs:
           sparse-checkout: infra
           ref: ${{ inputs.release || github.sha }}
 
-      - name: Atualizar compose e scripts em /opt/rebania (o .env não é tocado)
+      - name: Preparar SSH
         run: |
           set -e
-          mkdir -p "$APP_DIR/infra/compose" "$APP_DIR/infra/scripts"
-          install -m 644 infra/compose/docker-compose.yml "$APP_DIR/infra/compose/docker-compose.yml"
-          install -m 644 infra/compose/.env.production.example "$APP_DIR/infra/compose/.env.production.example"
-          install -m 755 infra/scripts/deploy.sh infra/scripts/backup.sh infra/scripts/restore-check.sh "$APP_DIR/infra/scripts/"
+          if [ -z "$SSHPASS" ]; then
+            echo "::error::Secret VPS_PASSWORD não configurado (Settings > Secrets and variables > Actions)."
+            exit 1
+          fi
+          sudo apt-get update -qq && sudo apt-get install -y -qq sshpass >/dev/null
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          ssh-keyscan -T 15 -H "$VPS_HOST" >> ~/.ssh/known_hosts 2>/dev/null
 
-      - name: Login no GHCR
+      - name: Enviar compose, scripts e vhost para /opt/rebania (o .env da VPS não é tocado)
+        run: |
+          set -e
+          tar -czf - --exclude='compose/.env' --exclude='compose/docker-compose.dev.yml' infra \
+            | sshpass -e ssh -o StrictHostKeyChecking=yes "$VPS_USER@$VPS_HOST" \
+                "mkdir -p '$APP_DIR' && tar -xzf - -C '$APP_DIR' && chmod 755 '$APP_DIR'/infra/scripts/*.sh"
+
+      - name: Preparar a VPS (idempotente) e fazer o deploy
         env:
+          # Token automático da execução (não é secret configurado): só para o pull no GHCR.
           GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GHCR_USER: ${{ github.actor }}
-        run: echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
-
-      - name: Deploy (pull, backup, migrate, up, healthcheck, rollback)
-        run: REGISTRY="ghcr.io/${OWNER}/" "$APP_DIR/infra/scripts/deploy.sh"
-
-      - name: Logout do GHCR
-        if: always()
-        run: docker logout ghcr.io || true
+        run: |
+          set -e
+          printf '%s\n' "$GHCR_TOKEN" | sshpass -e ssh -o StrictHostKeyChecking=yes "$VPS_USER@$VPS_HOST" \
+            "set -e
+             cd '$APP_DIR'
+             docker login ghcr.io -u '$GHCR_USER' --password-stdin
+             trap 'docker logout ghcr.io >/dev/null 2>&1 || true' EXIT
+             APP_DIR='$APP_DIR' infra/scripts/setup-host.sh
+             RELEASE='$RELEASE' APP_DIR='$APP_DIR' REGISTRY='ghcr.io/$OWNER/' infra/scripts/deploy.sh"
 
       - name: Resumo
         if: success()
