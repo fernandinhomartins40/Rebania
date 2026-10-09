@@ -19,6 +19,11 @@ const Env = z.object({
   // Relativo ao diretório do processo (apps/api ou apps/worker): ambos apontam
   // para <raiz>/var/media. Em produção use caminho absoluto (volume /data/media).
   MEDIA_DIR: z.string().default("../../var/media"),
+  // Provedores de IA e pagamento ainda não decididos (P-02): padrão "none".
+  AI_PROVIDER: z.enum(["none"]).default("none"),
+  // "hmac": webhook genérico assinado (HMAC-SHA256) para conciliação manual/bancária.
+  BILLING_PROVIDER: z.enum(["none", "hmac"]).default("none"),
+  BILLING_WEBHOOK_SECRET: z.string().min(32).optional(),
 });
 
 export type Config = {
@@ -32,6 +37,9 @@ export type Config = {
   trustProxy: boolean;
   dbPoolMax: number;
   mediaDir: string;
+  aiProvider: "none";
+  billingProvider: "none" | "hmac";
+  billingWebhookSecret: string | null;
   /** Durações de sessão (ms). */
   webSessionTtlMs: number;
   mobileAccessTtlMs: number;
@@ -54,6 +62,9 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     trustProxy: e.TRUST_PROXY,
     dbPoolMax: e.DB_POOL_MAX,
     mediaDir: e.MEDIA_DIR,
+    aiProvider: e.AI_PROVIDER,
+    billingProvider: e.BILLING_PROVIDER,
+    billingWebhookSecret: e.BILLING_WEBHOOK_SECRET ?? null,
     webSessionTtlMs: 12 * 3600_000,
     mobileAccessTtlMs: 15 * 60_000,
     mobileRefreshTtlMs: 30 * 24 * 3600_000,

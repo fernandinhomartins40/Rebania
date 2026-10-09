@@ -6,7 +6,7 @@ Atualizado em 09/10/2026. "Testado" significa coberto por teste automatizado que
 
 | Área | O que existe | Evidência |
 |---|---|---|
-| Monorepo | pnpm 10 + Turborepo + TS strict; lint, typecheck, Prettier | `pnpm turbo run typecheck lint test` (31 tarefas verdes) + `pnpm test:integration` (77 testes) |
+| Monorepo | pnpm 10 + Turborepo + TS strict; lint, typecheck, Prettier | `pnpm turbo run typecheck lint test` (31 tarefas verdes) + `pnpm test:integration` (90 testes) |
 | Domínio (`packages/domain`) | Datas civis por timezone; categorias × sexo; identificadores; GMD com intervalo positivo; arroba só com rendimento explícito; projeção reprodutiva; carência configurada com fonte; quantidades em milésimos e dinheiro em centavos; preço por cabeça/kg/@; rateio sem perda de centavo; relatórios com cobertura; CSV pt-BR; papéis/permissões | 57 testes unitários |
 | Banco (`packages/db`) | Prisma 7 + PostgreSQL 16; FKs compostas de tenant; unicidade parcial de identificadores ativos (fazenda: brinco; organização: RFID/NFC/QR); auditoria append-only por trigger; fila de jobs | migração `init`; `migrate diff` sem divergência |
 | Auth | Login web (cookie httpOnly, SameSite=Strict, anti-CSRF por header); mobile (access 15 min + refresh rotativo, uso único); logout; sessões e revogação; convites com hash, expiração, uso único, papel limitado ao do convidante | `apps/api/test/auth.test.ts` (7) |
@@ -21,6 +21,7 @@ Atualizado em 09/10/2026. "Testado" significa coberto por teste automatizado que
 | Worker | Fila PostgreSQL com SKIP LOCKED, backoff, deduplicação; limpeza de sessões e recibos | `apps/worker/test` (3) |
 | Web/PWA | Hoje, Rebanho, Identificar, Passaporte, Cadastro/Pesagem/Movimentação em 3 etapas, Equipe e convites, Lotes e pastos, Central de sincronização, Conta; outbox em IndexedDB; rascunho sobrevive ao refresh; estado único de conectividade | `engine.test.ts` (3) + roteiro Playwright manual (convite → cadastro → pesagem online/offline → reconexão → passaporte) |
 | Landing (T01) | Copy do pacote, fotos WebP com `srcset`, prévias HTML rotuladas, FAQ nativo, formulário desabilitado | Verificada em 390 e 1280 px sem rolagem horizontal (Playwright) |
+| Plataforma, créditos e assistente (G6, testes obrigatórios 8, 9 e 10) | Console separado (implantação com convite, contratos, faturas com baixa manual, tabela de créditos versionada, pacotes, pedidos); créditos com saldo que nunca fica negativo (CHECK + débito condicional), reserva idempotente por request_id, consumo único, devolução em falha, estorno auditado, livro-razão imutável por trigger; webhook HMAC verificado e idempotente; acesso de suporte com prazo concedido pelo proprietário e cada leitura auditada; `packages/ai-gateway` neutro (timeout, retry, disjuntor, cache por tenant, dados de ferramenta marcados como não confiáveis); ferramentas presas à fazenda da sessão; rascunho com hash e confirmação humana; telas Assistente, Plano e créditos, Console | `ai-credits.test.ts` (13) + `ai-gateway` (6) + Playwright |
 | Hardware (`packages/hardware`) | Contratos de leitor/balança, parser RFID/balança, leitor em modo teclado (HID), supressão de leitura repetida do Modo Curral | 10 testes unitários |
 | Design tokens | Valores do pacote de marca; contraste AA verificado por par | 12 testes |
 | App nativo (Expo SDK 57) | Login com SecureStore, SQLite offline com o mesmo motor de sync, Hoje, Rebanho, Passaporte, Pesagem em 3 etapas, Agenda, Fazenda/sincronização/sair | typecheck + lint + bundle Metro Android e iOS (`expo export`) |
@@ -32,8 +33,9 @@ Atualizado em 09/10/2026. "Testado" significa coberto por teste automatizado que
 - **App nativo:** reprodução, sanidade, Modo Curral, venda, trato e financeiro existem só na web; o app nativo cobre rebanho, cadastro, pesagem, movimentação e fotos.
 - **NFC e leitores BLE nativos; OCR de brinco:** não implementados (dependem de aparelho homologado).
 - **Tratamentos, exames, compra e venda:** exigem conexão (rascunho preservado); aplicação, curral, trato e saída funcionam offline.
-- **G6:** console da plataforma, cobrança, créditos e assistente de IA (aguardam provedores, P-02).
+- **Provedores (P-02):** não há provedor de IA nem de pagamento integrado. O assistente aparece "indisponível" e a compra online de créditos também; a estrutura (gateway, adapters, webhooks) está pronta para receber o adapter escolhido. Créditos só por concessão no console.
+- **Preços (P-01):** nenhuma tabela de créditos ou pacote vem cadastrada; a equipe cadastra só valores aprovados.
 - **Homologação de hardware:** nenhum aparelho foi testado fisicamente (P-03).
 - **Testes em aparelhos:** o app nativo só foi empacotado; não rodou em Android/iOS físico nem em emulador.
-- **Testes obrigatórios 6 (físico), 8–10 e 12** dependem de G6/G7 e de aparelhos físicos.
+- **Testes obrigatórios 6 (físico), 11 e 12** dependem de aparelhos físicos e do ambiente de produção (G7).
 - **Deploy:** nada foi publicado; a VPS não foi auditada (P-04).

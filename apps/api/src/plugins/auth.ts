@@ -35,7 +35,14 @@ export function registerAuth(app: FastifyInstance, ctx: AppContext) {
       ? req.headers.authorization.slice(7).trim()
       : undefined;
 
-    if (!bearer && !SAFE_METHODS.has(req.method) && !req.url.startsWith("/v1/health")) {
+    // Webhooks de pagamento não usam cookie: são autenticados pela assinatura HMAC.
+    const isWebhook = req.url.startsWith("/v1/billing/webhooks/");
+    if (
+      !bearer &&
+      !isWebhook &&
+      !SAFE_METHODS.has(req.method) &&
+      !req.url.startsWith("/v1/health")
+    ) {
       if (req.headers[CSRF_HEADER] !== "1") {
         throw new HttpError(403, "csrf_required", "Requisição bloqueada por segurança.");
       }

@@ -65,7 +65,7 @@ export function RegisterPage() {
     {
       to: "/registrar/inseminacao",
       title: "Inseminação ou monta",
-      desc: "IA, monta natural ou repasse, em grupo.",
+      desc: "Inseminação artificial, monta natural ou repasse, em grupo.",
       icon: Venus,
       perm: "events.write",
     },

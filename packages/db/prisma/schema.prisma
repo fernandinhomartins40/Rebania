@@ -123,9 +123,16 @@ model Organization {
   slug      String   @unique
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
 
-  farms       Farm[]
-  memberships Membership[]
-  invitations Invitation[]
+  farms         Farm[]
+  memberships   Membership[]
+  invitations   Invitation[]
+  contracts     Contract[]
+  invoices      Invoice[]
+  credit        CreditAccount?
+  ledger        CreditLedger[]
+  reservations  CreditReservation[]
+  creditOrders  CreditOrder[]
+  supportGrants SupportGrant[]
 
   @@map("organizations")
 }
@@ -171,6 +178,8 @@ model Farm {
   commercial   CommercialTransaction[]
   entries      FinancialEntry[]
   feedings     FeedingEvent[]
+
+  drafts AiDraft[]
 
   @@unique([organizationId, id])
   @@map("farms")
@@ -1215,4 +1224,265 @@ model FeedingEvent {
 
   @@index([farmId, date])
   @@map("feeding_events")
+}
+
+// ---- G6: plataforma, cobrança, créditos e assistente ----------------------------------
+
+/// Equipe da plataforma (console separado). Concedido apenas por CLI/bootstrap.
+model PlatformAdmin {
+  userId    String   @id @map("user_id") @db.Uuid
+  grantedAt DateTime @default(now()) @map("granted_at") @db.Timestamptz(3)
+  note      String?
+
+  @@map("platform_admins")
+}
+
+enum ContractStatus {
+  draft
+  active
+  suspended
+  ended
+}
+
+/// Contrato do cliente. Valores são os NEGOCIADOS e digitados pela equipe; não há tabela de preços pública (P-01).
+model Contract {
+  id                  String         @id @default(uuid()) @db.Uuid
+  organizationId      String         @map("organization_id") @db.Uuid
+  status              ContractStatus @default(draft)
+  plan                String
+  implementationCents BigInt?        @map("implementation_cents")
+  monthlyCents        BigInt?        @map("monthly_cents")
+  startsOn            DateTime       @map("starts_on") @db.Date
+  endsOn              DateTime?      @map("ends_on") @db.Date
+  notes               String?
+  createdById         String?        @map("created_by_id") @db.Uuid
+  createdAt           DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt           DateTime       @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  invoices     Invoice[]
+
+  @@index([organizationId])
+  @@map("contracts")
+}
+
+enum InvoiceStatus {
+  pending
+  paid
+  failed
+  cancelled
+}
+
+model Invoice {
+  id             String        @id @default(uuid()) @db.Uuid
+  organizationId String        @map("organization_id") @db.Uuid
+  contractId     String?       @map("contract_id") @db.Uuid
+  description    String
+  amountCents    BigInt        @map("amount_cents")
+  dueOn          DateTime      @map("due_on") @db.Date
+  status         InvoiceStatus @default(pending)
+  provider       String?
+  providerRef    String?       @map("provider_ref")
+  paidAt         DateTime?     @map("paid_at") @db.Timestamptz(3)
+  createdAt      DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  contract     Contract?    @relation(fields: [contractId], references: [id])
+
+  @@index([organizationId, status])
+  @@map("invoices")
+}
+
+/// Saldo de créditos por organização. CHECK no banco: nunca negativo.
+model CreditAccount {
+  organizationId String   @id @map("organization_id") @db.Uuid
+  balance        Int      @default(0)
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+
+  @@map("credit_accounts")
+}
+
+/// Livro-razão IMUTÁVEL (trigger bloqueia UPDATE/DELETE). amount com sinal.
+model CreditLedger {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  kind           String
+  amount         Int
+  balanceAfter   Int      @map("balance_after")
+  reservationId  String?  @map("reservation_id") @db.Uuid
+  refType        String?  @map("ref_type")
+  refId          String?  @map("ref_id")
+  actorUserId    String?  @map("actor_user_id") @db.Uuid
+  note           String?
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+
+  @@index([organizationId, createdAt])
+  @@map("credit_ledger")
+}
+
+enum ReservationStatus {
+  reserved
+  consumed
+  released
+}
+
+model CreditReservation {
+  id              String            @id @default(uuid()) @db.Uuid
+  organizationId  String            @map("organization_id") @db.Uuid
+  farmId          String?           @map("farm_id") @db.Uuid
+  userId          String            @map("user_id") @db.Uuid
+  /// Idempotência: o mesmo request_id nunca reserva duas vezes.
+  requestId       String            @unique @map("request_id") @db.Uuid
+  action          String
+  amount          Int
+  rateCardVersion Int               @map("rate_card_version")
+  status          ReservationStatus @default(reserved)
+  expiresAt       DateTime          @map("expires_at") @db.Timestamptz(3)
+  createdAt       DateTime          @default(now()) @map("created_at") @db.Timestamptz(3)
+  settledAt       DateTime?         @map("settled_at") @db.Timestamptz(3)
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+
+  @@index([organizationId, status])
+  @@map("credit_reservations")
+}
+
+/// Tabela de créditos por ação de IA, versionada. Nenhuma vem pronta (P-01).
+model RateCard {
+  version     Int      @id
+  actions     Json
+  createdById String?  @map("created_by_id") @db.Uuid
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@map("rate_cards")
+}
+
+/// Pacote de créditos à venda. Nenhum vem pronto (P-01).
+model CreditPackage {
+  id         String    @id @default(uuid()) @db.Uuid
+  name       String
+  credits    Int
+  priceCents BigInt    @map("price_cents")
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  archivedAt DateTime? @map("archived_at") @db.Timestamptz(3)
+
+  orders CreditOrder[]
+
+  @@map("credit_packages")
+}
+
+enum OrderStatus {
+  pending
+  paid
+  failed
+}
+
+model CreditOrder {
+  id             String      @id @default(uuid()) @db.Uuid
+  organizationId String      @map("organization_id") @db.Uuid
+  packageId      String      @map("package_id") @db.Uuid
+  credits        Int
+  priceCents     BigInt      @map("price_cents")
+  status         OrderStatus @default(pending)
+  provider       String
+  providerRef    String?     @unique @map("provider_ref")
+  createdById    String?     @map("created_by_id") @db.Uuid
+  createdAt      DateTime    @default(now()) @map("created_at") @db.Timestamptz(3)
+  settledAt      DateTime?   @map("settled_at") @db.Timestamptz(3)
+
+  organization Organization  @relation(fields: [organizationId], references: [id])
+  package      CreditPackage @relation(fields: [packageId], references: [id])
+
+  @@index([organizationId])
+  @@map("credit_orders")
+}
+
+/// Evento de webhook de pagamento: (provider, event_id) único → processado uma vez.
+model PaymentEvent {
+  id          String    @id @default(uuid()) @db.Uuid
+  provider    String
+  eventId     String    @map("event_id")
+  type        String
+  payload     Json
+  receivedAt  DateTime  @default(now()) @map("received_at") @db.Timestamptz(3)
+  processedAt DateTime? @map("processed_at") @db.Timestamptz(3)
+  result      String?
+
+  @@unique([provider, eventId])
+  @@map("payment_events")
+}
+
+/// Acesso de suporte EXCEPCIONAL: concedido pelo proprietário, com prazo, revogável e auditado.
+model SupportGrant {
+  id             String    @id @default(uuid()) @db.Uuid
+  organizationId String    @map("organization_id") @db.Uuid
+  platformUserId String    @map("platform_user_id") @db.Uuid
+  grantedById    String    @map("granted_by_id") @db.Uuid
+  reason         String
+  expiresAt      DateTime  @map("expires_at") @db.Timestamptz(3)
+  revokedAt      DateTime? @map("revoked_at") @db.Timestamptz(3)
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+
+  @@index([organizationId])
+  @@map("support_grants")
+}
+
+enum DraftStatus {
+  pending
+  confirmed
+  cancelled
+  expired
+  failed
+}
+
+/// Rascunho de ação preparado pelo assistente. Só vira registro com confirmação humana.
+model AiDraft {
+  id             String      @id @default(uuid()) @db.Uuid
+  organizationId String      @map("organization_id") @db.Uuid
+  farmId         String      @map("farm_id") @db.Uuid
+  userId         String      @map("user_id") @db.Uuid
+  action         String
+  payload        Json
+  preview        Json
+  /// Hash do payload: a confirmação precisa apresentar o mesmo hash (nada muda por baixo).
+  hash           String
+  status         DraftStatus @default(pending)
+  expiresAt      DateTime    @map("expires_at") @db.Timestamptz(3)
+  createdAt      DateTime    @default(now()) @map("created_at") @db.Timestamptz(3)
+  confirmedAt    DateTime?   @map("confirmed_at") @db.Timestamptz(3)
+  resultRef      String?     @map("result_ref")
+  error          String?
+
+  farm Farm @relation(fields: [organizationId, farmId], references: [organizationId, id])
+
+  @@index([farmId, status])
+  @@map("ai_drafts")
+}
+
+model AiUsage {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  farmId         String   @map("farm_id") @db.Uuid
+  userId         String   @map("user_id") @db.Uuid
+  requestId      String   @map("request_id") @db.Uuid
+  provider       String
+  action         String
+  inputTokens    Int      @default(0) @map("input_tokens")
+  outputTokens   Int      @default(0) @map("output_tokens")
+  credits        Int      @default(0)
+  status         String
+  error          String?
+  latencyMs      Int?     @map("latency_ms")
+  /// Resposta entregue (para devolver a mesma em retry com o mesmo request_id).
+  result         Json?
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([organizationId, createdAt])
+  @@map("ai_usage")
 }

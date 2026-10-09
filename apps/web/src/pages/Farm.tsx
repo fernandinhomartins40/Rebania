@@ -4,7 +4,10 @@ import {
   Settings,
   Venus,
   FileSpreadsheet,
+  Building2,
   ChartColumn,
+  Coins,
+  Sparkles,
   HandCoins,
   MapPin,
   Package,
@@ -15,12 +18,21 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { ROLE_LABEL } from "@rebania/domain";
+import { useEffect, useState } from "react";
 import { Link } from "react-router";
+import { get } from "../api/client.ts";
 import { PageHead } from "../components/ui.tsx";
 import { useSession } from "../state/session.tsx";
 
 export function FarmPage() {
   const { farm, can, me } = useSession();
+  const [staff, setStaff] = useState(false);
+  useEffect(() => {
+    get<{ isPlatformAdmin: boolean }>("/v1/platform/me").then(
+      (r) => setStaff(r.isPlatformAdmin),
+      () => setStaff(false),
+    );
+  }, []);
   const items: { to: string; title: string; desc: string; icon: LucideIcon; show: boolean }[] = [
     {
       to: "/fazenda/lotes",
@@ -72,6 +84,20 @@ export function FarmPage() {
       show: can("reports.read") || can("finance.read"),
     },
     {
+      to: "/assistente",
+      title: "Assistente inteligente",
+      desc: "Perguntas sobre o rebanho e rascunhos que você confirma.",
+      icon: Sparkles,
+      show: true,
+    },
+    {
+      to: "/fazenda/plano",
+      title: "Plano e créditos",
+      desc: "Contrato, faturas, créditos do assistente e acesso de suporte.",
+      icon: Coins,
+      show: can("org.manage"),
+    },
+    {
       to: "/fazenda/configuracoes",
       title: "Configurações",
       desc: "Nome da fazenda e parâmetros de reprodução.",
@@ -98,6 +124,13 @@ export function FarmPage() {
       desc: "Registros no aparelho, rejeitados ou em conflito.",
       icon: CloudUpload,
       show: true,
+    },
+    {
+      to: "/console",
+      title: "Console da plataforma",
+      desc: "Equipe Rebania: implantação, contratos, faturas e créditos.",
+      icon: Building2,
+      show: staff,
     },
     {
       to: "/fazenda/conta",

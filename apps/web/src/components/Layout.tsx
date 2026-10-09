@@ -1,5 +1,6 @@
 import {
   Bell,
+  Sparkles,
   CalendarDays,
   CirclePlus,
   House,
@@ -62,6 +63,9 @@ export function Layout() {
           <span style={{ flex: 1 }} />
           <div className="appbar-actions">
             <SyncBadge compact />
+            <Link to="/assistente" className="icon-btn" aria-label="Assistente inteligente">
+              <Sparkles size={24} />
+            </Link>
             <Link to="/agenda" className="icon-btn" aria-label="Avisos e tarefas">
               <Bell size={26} />
             </Link>

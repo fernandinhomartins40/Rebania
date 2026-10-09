@@ -1,0 +1,19 @@
+{
+  "name": "@rebania/ai-gateway",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./testing": "./src/testing.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "lint": "eslint src",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@rebania/config": "workspace:*",
+    "@types/node": "22.20.5"
+  }
+}

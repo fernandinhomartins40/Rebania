@@ -11,7 +11,8 @@
     "typecheck": "tsc -p tsconfig.json",
     "lint": "eslint src test",
     "test": "vitest run --project unit",
-    "test:integration": "vitest run --project integration"
+    "test:integration": "vitest run --project integration",
+    "platform-admin": "tsx --env-file-if-exists=../../.env src/cli/platform-admin.ts"
   },
   "dependencies": {
     "@fastify/cookie": "11.1.3",
@@ -26,7 +27,8 @@
     "@rebania/media": "workspace:*",
     "@rebania/sync-core": "workspace:*",
     "fastify": "5.12.5",
-    "zod": "4.3.5"
+    "zod": "4.3.5",
+    "@rebania/ai-gateway": "workspace:*"
   },
   "devDependencies": {
     "@rebania/config": "workspace:*",

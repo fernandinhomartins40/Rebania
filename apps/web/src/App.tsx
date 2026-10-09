@@ -30,6 +30,14 @@ import { FinancePage } from "./pages/commerce/Finance.tsx";
 import { PurchasePage } from "./pages/commerce/Purchase.tsx";
 import { ReportsPage } from "./pages/commerce/Reports.tsx";
 import { SalePage } from "./pages/commerce/Sale.tsx";
+import { AssistantPage } from "./pages/ai/Assistant.tsx";
+import { PlanPage } from "./pages/ai/Plan.tsx";
+import {
+  ConsoleOrgPage,
+  ConsolePage,
+  ConsoleSettingsPage,
+  ConsoleSupportPage,
+} from "./pages/console/Console.tsx";
 import { LandingPage } from "./pages/landing/Landing.tsx";
 import { LoginPage } from "./pages/Login.tsx";
 import { MovePage } from "./pages/Move.tsx";
@@ -108,6 +116,12 @@ function Routed() {
           <Route path="comercial/:id" element={<CommercialDetailPage />} />
           <Route path="fazenda/financeiro" element={<FinancePage />} />
           <Route path="relatorios" element={<ReportsPage />} />
+          <Route path="assistente" element={<AssistantPage />} />
+          <Route path="fazenda/plano" element={<PlanPage />} />
+          <Route path="console" element={<ConsolePage />} />
+          <Route path="console/configuracao" element={<ConsoleSettingsPage />} />
+          <Route path="console/org/:id" element={<ConsoleOrgPage />} />
+          <Route path="console/org/:id/suporte/:farmId" element={<ConsoleSupportPage />} />
           <Route path="fazenda/configuracoes" element={<SettingsPage />} />
           <Route path="agenda" element={<AgendaPage />} />
           <Route path="fazenda" element={<FarmPage />} />

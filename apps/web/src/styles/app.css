@@ -1559,3 +1559,74 @@ button.list-item {
     border: 0;
   }
 }
+/* ---- G6: assistente, créditos e console --------------------------------------- */
+.chat {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 96px;
+  display: grid;
+  gap: 12px;
+}
+.bubble {
+  border-radius: 16px;
+  padding: 12px 14px;
+  max-width: 90%;
+}
+.bubble.me {
+  margin: 0 0 8px auto;
+  background: var(--color-brand-primary);
+  color: var(--color-text-on-brand);
+}
+.bubble.ai {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+}
+.bubble .meta {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  margin: 0 0 6px;
+}
+.ask-bar {
+  position: sticky;
+  bottom: 88px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--color-surface);
+  border: 2px solid var(--color-brand-primary);
+  border-radius: 999px;
+  padding: 6px 8px 6px 16px;
+}
+.ask-bar input {
+  flex: 1;
+  border: 0;
+  background: transparent;
+  min-height: 44px;
+}
+.drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgb(0 0 0 / 0.35);
+  z-index: 50;
+  display: flex;
+  justify-content: flex-end;
+}
+.drawer {
+  background: var(--color-canvas);
+  width: min(480px, 100%);
+  height: 100%;
+  overflow: auto;
+  padding: 16px;
+  box-shadow: -8px 0 24px rgb(0 0 0 / 0.15);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .drawer {
+    animation: drawer-in 0.18s ease-out;
+  }
+}
+@keyframes drawer-in {
+  from {
+    transform: translateX(24px);
+    opacity: 0.6;
+  }
+}

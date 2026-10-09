@@ -74,6 +74,12 @@ describe("isolamento entre organizações", () => {
       `/v1/farms/${B.farmId}/finance/entries`,
       `/v1/farms/${B.farmId}/reports/inventory?from=2026-01-01&to=2026-12-31`,
       `/v1/farms/${B.farmId}/reports/financial?from=2026-01-01&to=2026-12-31&format=csv`,
+      // G6 assistente, créditos e suporte
+      `/v1/farms/${B.farmId}/ai/status`,
+      `/v1/farms/${B.farmId}/ai/drafts`,
+      `/v1/orgs/${B.orgId}/credits`,
+      `/v1/orgs/${B.orgId}/support-grants`,
+      `/v1/platform/orgs`,
     ]) {
       const res = await clientA.get(url);
       expect(res.statusCode, url).toBe(404);
@@ -135,6 +141,15 @@ describe("isolamento entre organizações", () => {
         description: "invasão",
         amount: 10,
         dueOn: "2026-10-01",
+      }),
+      clientA.post(`/v1/farms/${B.farmId}/ai/ask`, {
+        question: "dados de B?",
+        requestId: randomUUID(),
+      }),
+      clientA.post(`/v1/orgs/${B.orgId}/support-grants`, {
+        platformEmail: "x@x.dev",
+        hours: 1,
+        reason: "tentativa de invasão",
       }),
       clientA.post(`/v1/farms/${B.farmId}/treatments`, {
         animalId: animalB,

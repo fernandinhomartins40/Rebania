@@ -469,7 +469,7 @@ function Protocols() {
                     })
                   }
                 />{" "}
-                IA
+                Inseminação artificial
               </label>
               <button
                 type="button"

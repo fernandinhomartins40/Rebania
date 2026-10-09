@@ -5,6 +5,7 @@ import path from "node:path";
 import { createDb, type Db, type Role } from "@rebania/db";
 import type { FastifyInstance } from "fastify";
 import { buildApp } from "../src/app.ts";
+import type { AppContext } from "../src/lib/context.ts";
 import { loadConfig } from "../src/config.ts";
 import { hashPassword } from "../src/lib/crypto.ts";
 
@@ -19,7 +20,9 @@ export interface TestEnv {
   close: () => Promise<void>;
 }
 
-export async function createTestEnv(): Promise<TestEnv> {
+export async function createTestEnv(
+  extra: Pick<AppContext, "ai" | "billing"> = {},
+): Promise<TestEnv> {
   const url =
     process.env.TEST_DATABASE_URL ?? "postgresql://rebania:rebania@localhost:5432/rebania_test";
   const config = {
@@ -33,7 +36,7 @@ export async function createTestEnv(): Promise<TestEnv> {
   };
   const db = createDb({ url, max: 5 });
   const clock = { now: new Date("2026-10-08T15:00:00Z") };
-  const app = await buildApp({ db, config, now: () => clock.now });
+  const app = await buildApp({ db, config, now: () => clock.now, ...extra });
   return {
     app,
     db,
@@ -118,6 +121,7 @@ export function client(app: FastifyInstance, headers: Record<string, string>) {
       ...(payload !== undefined ? { payload: payload as object } : {}),
     });
   return {
+    headers,
     get: (url: string) => call("GET", url),
     post: (url: string, payload?: unknown, extra?: Record<string, string>) =>
       call("POST", url, payload ?? {}, extra),
