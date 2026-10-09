@@ -93,10 +93,10 @@ echo "=== Banco ==="
 compose up -d postgres
 wait_healthy postgres 36
 
-# Backup só quando já existe uma versão rodando (no 1º deploy o banco está vazio).
-API_ID="$(compose ps -q api 2>/dev/null | head -1)"
-if [ -n "$PREVIOUS" ] && [ "$PREVIOUS" != "$RELEASE" ] && [ -n "$API_ID" ] \
-  && [ "$(docker inspect -f '{{.State.Running}}' "$API_ID" 2>/dev/null)" = "true" ]; then
+# Backup sempre que já houve uma release (no 1º deploy o banco está vazio). Não depende
+# da API anterior estar saudável: uma release quebrada (em loop de restart) também tem
+# dados a proteger, e o backup.sh lê a mídia sem precisar da API no ar.
+if [ -n "$PREVIOUS" ] && [ "$PREVIOUS" != "$RELEASE" ]; then
   echo "=== Backup antes de migrar ==="
   "$APP_DIR/infra/scripts/backup.sh" "$BACKUP_DIR"
 fi

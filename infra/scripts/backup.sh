@@ -13,8 +13,15 @@ $COMPOSE exec -T postgres pg_dump -U rebania -d rebania --format=custom --no-own
 (cd "$DEST" && sha256sum "$(basename "$OUT")" > "$(basename "$OUT").sha256")
 # Valida que o arquivo é um dump legível antes de considerar o backup concluído.
 $COMPOSE exec -T postgres pg_restore --list < "$OUT" > /dev/null
-# Mídia (fotos): arquivo tar do volume compartilhado, lido pelo container da API.
+# Mídia (fotos): arquivo tar do volume compartilhado. Usa o container da API se ele
+# estiver de pé; senão (parado, ausente ou em loop de restart, p.ex. release quebrada)
+# lê o volume num container descartável da mesma imagem, sem subir dependências.
 MEDIA_OUT="$DEST/rebania-media-$STAMP.tar.gz"
-$COMPOSE exec -T api tar -C /data/media -czf - . > "$MEDIA_OUT"
+API_ID="$($COMPOSE ps -q api 2>/dev/null | head -1)"
+if [ -n "$API_ID" ] && [ "$(docker inspect -f '{{.State.Status}}' "$API_ID" 2>/dev/null)" = "running" ]; then
+  $COMPOSE exec -T api tar -C /data/media -czf - . > "$MEDIA_OUT"
+else
+  $COMPOSE run --rm --no-deps -T --entrypoint tar api -C /data/media -czf - . > "$MEDIA_OUT"
+fi
 (cd "$DEST" && sha256sum "$(basename "$MEDIA_OUT")" > "$(basename "$MEDIA_OUT").sha256")
 echo "backup ok: $OUT ($(du -h "$OUT" | cut -f1)) + $MEDIA_OUT ($(du -h "$MEDIA_OUT" | cut -f1))"
