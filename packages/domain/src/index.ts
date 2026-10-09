@@ -9,3 +9,4 @@ export * from "./import.ts";
 export * from "./repro.ts";
 export * from "./health.ts";
 export * from "./commerce.ts";
+export * from "./depth.ts";

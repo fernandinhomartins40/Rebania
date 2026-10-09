@@ -80,6 +80,12 @@ describe("isolamento entre organizações", () => {
       `/v1/orgs/${B.orgId}/credits`,
       `/v1/orgs/${B.orgId}/support-grants`,
       `/v1/platform/orgs`,
+      // G8
+      `/v1/farms/${B.farmId}/occurrences`,
+      `/v1/farms/${B.farmId}/confinement`,
+      `/v1/farms/${B.farmId}/pastures/status`,
+      `/v1/farms/${B.farmId}/rain`,
+      `/v1/farms/${B.farmId}/assets`,
     ]) {
       const res = await clientA.get(url);
       expect(res.statusCode, url).toBe(404);
@@ -151,6 +157,13 @@ describe("isolamento entre organizações", () => {
         hours: 1,
         reason: "tentativa de invasão",
       }),
+      clientA.post(`/v1/farms/${B.farmId}/occurrences`, {
+        targetType: "other",
+        title: "invasão",
+        severity: "low",
+        occurredOn: "2026-10-01",
+      }),
+      clientA.post(`/v1/farms/${B.farmId}/rain`, { date: "2026-10-01", mm: 10 }),
       clientA.post(`/v1/farms/${B.farmId}/treatments`, {
         animalId: animalB,
         startedOn: "2026-10-01",
@@ -182,6 +195,8 @@ describe("isolamento entre organizações", () => {
     expect(await env.db.treatment.count({ where: { farmId: B.farmId } })).toBe(0);
     expect(await env.db.commercialTransaction.count({ where: { farmId: B.farmId } })).toBe(0);
     expect(await env.db.financialEntry.count({ where: { farmId: B.farmId } })).toBe(0);
+    expect(await env.db.occurrence.count({ where: { farmId: B.farmId } })).toBe(0);
+    expect(await env.db.rainRecord.count({ where: { farmId: B.farmId } })).toBe(0);
     expect((await env.db.animal.findUnique({ where: { id: animalB } }))?.status).toBe("active");
   });
 

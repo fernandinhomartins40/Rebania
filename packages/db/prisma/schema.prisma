@@ -179,7 +179,12 @@ model Farm {
   entries      FinancialEntry[]
   feedings     FeedingEvent[]
 
-  drafts AiDraft[]
+  drafts           AiDraft[]
+  occurrences      Occurrence[]
+  bunkReadings     BunkReading[]
+  slaughterReturns SlaughterReturn[]
+  rainRecords      RainRecord[]
+  assets           Asset[]
 
   @@unique([organizationId, id])
   @@map("farms")
@@ -293,13 +298,18 @@ model Group {
   farmId         String    @map("farm_id") @db.Uuid
   name           String
   notes          String?
+  /// Confinamento: lote usado como baia, com capacidade e data de entrada.
+  isPen          Boolean   @default(false) @map("is_pen")
+  penCapacity    Int?      @map("pen_capacity")
+  penStartedOn   DateTime? @map("pen_started_on") @db.Date
   createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
   archivedAt     DateTime? @map("archived_at") @db.Timestamptz(3)
 
-  farm     Farm           @relation(fields: [organizationId, farmId], references: [organizationId, id])
-  animals  Animal[]
-  feedings FeedingEvent[]
+  farm         Farm           @relation(fields: [organizationId, farmId], references: [organizationId, id])
+  animals      Animal[]
+  feedings     FeedingEvent[]
+  bunkReadings BunkReading[]
 
   @@unique([farmId, id])
   @@map("groups")
@@ -311,12 +321,16 @@ model Pasture {
   farmId         String    @map("farm_id") @db.Uuid
   name           String
   notes          String?
+  /// Área em hectares e descanso-alvo informados pela fazenda (opcionais).
+  areaHa         Decimal?  @map("area_ha") @db.Decimal(10, 2)
+  restTargetDays Int?      @map("rest_target_days")
   createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
   archivedAt     DateTime? @map("archived_at") @db.Timestamptz(3)
 
-  farm    Farm     @relation(fields: [organizationId, farmId], references: [organizationId, id])
+  farm    Farm         @relation(fields: [organizationId, farmId], references: [organizationId, id])
   animals Animal[]
+  rain    RainRecord[]
 
   @@unique([farmId, id])
   @@map("pastures")
@@ -1485,4 +1499,129 @@ model AiUsage {
 
   @@index([organizationId, createdAt])
   @@map("ai_usage")
+}
+
+// ---- G8: ocorrências e módulos de profundidade --------------------------------------
+
+enum OccurrenceStatus {
+  open
+  resolved
+}
+
+/// Ocorrência (T42): animal, lote/baia, pasto, equipamento ou outro.
+model Occurrence {
+  id             String           @id @default(uuid()) @db.Uuid
+  organizationId String           @map("organization_id") @db.Uuid
+  farmId         String           @map("farm_id") @db.Uuid
+  targetType     String           @map("target_type")
+  targetId       String?          @map("target_id") @db.Uuid
+  targetLabel    String?          @map("target_label")
+  title          String
+  description    String?
+  severity       String
+  status         OccurrenceStatus @default(open)
+  occurredOn     DateTime         @map("occurred_on") @db.Date
+  resolvedOn     DateTime?        @map("resolved_on") @db.Date
+  resolution     String?
+  createdById    String?          @map("created_by_id") @db.Uuid
+  createdAt      DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  farm Farm @relation(fields: [organizationId, farmId], references: [organizationId, id])
+
+  @@index([farmId, status])
+  @@map("occurrences")
+}
+
+/// Leitura de cocho por baia (escala da fazenda, 0–5).
+model BunkReading {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  farmId         String   @map("farm_id") @db.Uuid
+  groupId        String   @map("group_id") @db.Uuid
+  date           DateTime @db.Date
+  score          Int
+  notes          String?
+  createdById    String?  @map("created_by_id") @db.Uuid
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  farm  Farm  @relation(fields: [organizationId, farmId], references: [organizationId, id])
+  group Group @relation(fields: [farmId, groupId], references: [farmId, id])
+
+  @@unique([groupId, date])
+  @@map("bunk_readings")
+}
+
+/// Retorno do frigorífico de uma venda: carcaça real por animal.
+model SlaughterReturn {
+  id                  String   @id @default(uuid()) @db.Uuid
+  organizationId      String   @map("organization_id") @db.Uuid
+  farmId              String   @map("farm_id") @db.Uuid
+  transactionId       String   @unique @map("transaction_id") @db.Uuid
+  receivedOn          DateTime @map("received_on") @db.Date
+  plant               String
+  pricePerArrobaCents BigInt?  @map("price_per_arroba_cents")
+  finalTotalCents     BigInt?  @map("final_total_cents")
+  notes               String?
+  items               Json
+  createdById         String?  @map("created_by_id") @db.Uuid
+  createdAt           DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  farm Farm @relation(fields: [organizationId, farmId], references: [organizationId, id])
+
+  @@map("slaughter_returns")
+}
+
+model RainRecord {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  farmId         String   @map("farm_id") @db.Uuid
+  date           DateTime @db.Date
+  mm             Decimal  @db.Decimal(6, 1)
+  pastureId      String?  @map("pasture_id") @db.Uuid
+  notes          String?
+  createdById    String?  @map("created_by_id") @db.Uuid
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  farm    Farm     @relation(fields: [organizationId, farmId], references: [organizationId, id])
+  pasture Pasture? @relation(fields: [farmId, pastureId], references: [farmId, id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([farmId, date])
+  @@map("rain_records")
+}
+
+model Asset {
+  id             String    @id @default(uuid()) @db.Uuid
+  organizationId String    @map("organization_id") @db.Uuid
+  farmId         String    @map("farm_id") @db.Uuid
+  name           String
+  kind           String
+  identifier     String?
+  acquiredOn     DateTime? @map("acquired_on") @db.Date
+  notes          String?
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  archivedAt     DateTime? @map("archived_at") @db.Timestamptz(3)
+
+  farm         Farm               @relation(fields: [organizationId, farmId], references: [organizationId, id])
+  maintenances AssetMaintenance[]
+
+  @@unique([farmId, id])
+  @@map("assets")
+}
+
+model AssetMaintenance {
+  id             String    @id @default(uuid()) @db.Uuid
+  organizationId String    @map("organization_id") @db.Uuid
+  farmId         String    @map("farm_id") @db.Uuid
+  assetId        String    @map("asset_id") @db.Uuid
+  date           DateTime  @db.Date
+  description    String
+  costCents      BigInt?   @map("cost_cents")
+  nextDueOn      DateTime? @map("next_due_on") @db.Date
+  createdById    String?   @map("created_by_id") @db.Uuid
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  asset Asset @relation(fields: [farmId, assetId], references: [farmId, id])
+
+  @@index([assetId, date])
+  @@map("asset_maintenances")
 }

@@ -217,6 +217,10 @@ export const REPORT_KINDS = [
   "financial",
   "feeding",
   "health",
+  "confinement",
+  "slaughter",
+  "result",
+  "pastures",
 ] as const;
 export const ReportKindEnum = z.enum(REPORT_KINDS);
 

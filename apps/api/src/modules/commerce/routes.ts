@@ -11,7 +11,7 @@ import {
   SaleInput,
   type FeedingDto,
 } from "@rebania/contracts";
-import { toCsv, type Permission } from "@rebania/domain";
+import { toCsv, type Feature, type Permission } from "@rebania/domain";
 import type { Tx } from "@rebania/db";
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { z } from "zod";
@@ -24,6 +24,7 @@ import { idempotencyKey, replyReceipt } from "../../lib/ops.ts";
 import { requireFarm, type FarmContext } from "../../lib/tenant.ts";
 import { requireAuth } from "../../plugins/auth.ts";
 import { buildReport } from "./reports.ts";
+import { farmFeatures } from "../depth.ts";
 import {
   cancelEntry,
   checkSale,
@@ -228,8 +229,24 @@ export function commerceRoutes(app: FastifyInstance, ctx: AppContext) {
       const kind = ReportKindEnum.parse(req.params.kind);
       const fctx = await farm(
         req,
-        kind === "financial" || kind === "commercial" ? "finance.read" : "reports.read",
+        kind === "financial" || kind === "commercial" || kind === "result" || kind === "slaughter"
+          ? "finance.read"
+          : "reports.read",
       );
+      const needs: Partial<Record<typeof kind, Feature>> = {
+        confinement: "confinement",
+        slaughter: "slaughter",
+        result: "result",
+        pastures: "pasture",
+      };
+      const feature = needs[kind];
+      if (feature && !(await farmFeatures(db, fctx.farmId))[feature]) {
+        throw new HttpError(
+          409,
+          "feature_disabled",
+          "Módulo desativado nesta fazenda (Configurações).",
+        );
+      }
       const q = ReportQuery.parse(req.query);
       if (q.from > q.to) throw new HttpError(400, "invalid_period", "Início depois do fim.");
       const r = await buildReport(db, fctx, kind, q.from, q.to);

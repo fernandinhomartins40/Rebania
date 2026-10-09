@@ -18,6 +18,7 @@ import {
 import {
   addDays,
   daysBetween,
+  parseFeatures,
   parseReproSettings,
   pregnancyRate,
   projectRepro,
@@ -198,6 +199,7 @@ export function reproRoutes(app: FastifyInstance, ctx: AppContext) {
       name: f.name,
       timezone: f.timezone,
       repro: parseReproSettings((f.settings as { repro?: unknown }).repro),
+      features: parseFeatures((f.settings as { features?: unknown }).features),
     };
   });
 
@@ -207,12 +209,13 @@ export function reproRoutes(app: FastifyInstance, ctx: AppContext) {
     const f = await db.farm.findUniqueOrThrow({ where: { id: fctx.farmId } });
     const current = (f.settings ?? {}) as Record<string, unknown>;
     const repro = parseReproSettings({ ...parseReproSettings(current.repro), ...body.repro });
+    const features = parseFeatures({ ...parseFeatures(current.features), ...body.features });
     const updated = await db.$transaction(async (tx) => {
       const u = await tx.farm.update({
         where: { id: fctx.farmId },
         data: {
           ...(body.name ? { name: body.name } : {}),
-          settings: { ...current, repro } as unknown as Prisma.InputJsonValue,
+          settings: { ...current, repro, features } as unknown as Prisma.InputJsonValue,
         },
       });
       await audit(tx, {
@@ -222,12 +225,12 @@ export function reproRoutes(app: FastifyInstance, ctx: AppContext) {
         action: "farm.settings_updated",
         entityType: "farm",
         entityId: fctx.farmId,
-        data: { before: current, after: { repro } } as unknown as Prisma.InputJsonValue,
+        data: { before: current, after: { repro, features } } as unknown as Prisma.InputJsonValue,
         ip: req.ip,
       });
       return u;
     });
-    return { name: updated.name, timezone: updated.timezone, repro };
+    return { name: updated.name, timezone: updated.timezone, repro, features };
   });
 
   // ---- Estações de monta (T16) ----

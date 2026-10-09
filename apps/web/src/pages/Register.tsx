@@ -5,6 +5,7 @@ import {
   ClipboardList,
   FlaskConical,
   HeartPulse,
+  CircleAlert,
   LogOut,
   Wheat,
   Syringe,
@@ -117,6 +118,13 @@ export function RegisterPage() {
       title: "Morte, descarte ou transferência",
       desc: "Encerra a situação do animal sem apagar o histórico.",
       icon: LogOut,
+      perm: "events.write",
+    },
+    {
+      to: "/ocorrencias?novo=1",
+      title: "Ocorrência",
+      desc: "Animal doente, cerca, bebedouro, equipamento.",
+      icon: CircleAlert,
       perm: "events.write",
     },
     {

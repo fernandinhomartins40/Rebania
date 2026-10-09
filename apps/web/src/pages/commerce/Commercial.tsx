@@ -6,6 +6,8 @@ import { Link, useParams } from "react-router";
 import { errorMessage, get, post } from "../../api/client.ts";
 import { Alert, Empty, formatDate, Loading, PageHead } from "../../components/ui.tsx";
 import { useSession } from "../../state/session.tsx";
+import { useFeatures } from "../../state/features.ts";
+import { SlaughterReturnPanel } from "../depth/Slaughter.tsx";
 
 /** Lista de compras e vendas. */
 export function CommercialPage() {
@@ -69,6 +71,7 @@ export function CommercialPage() {
 export function CommercialDetailPage() {
   const { id } = useParams();
   const { farm, can } = useSession();
+  const features = useFeatures(farm!.id);
   const [t, setT] = useState<CommercialDto | null>(null);
   const [voiding, setVoiding] = useState(false);
   const [reason, setReason] = useState("");
@@ -201,6 +204,7 @@ export function CommercialDetailPage() {
           )
         ) : null}
       </div>
+      {t.kind === "sale" && features?.slaughter ? <SlaughterReturnPanel sale={t} /> : null}
     </section>
   );
 }

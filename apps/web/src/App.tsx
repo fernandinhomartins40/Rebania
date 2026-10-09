@@ -32,6 +32,10 @@ import { ReportsPage } from "./pages/commerce/Reports.tsx";
 import { SalePage } from "./pages/commerce/Sale.tsx";
 import { AssistantPage } from "./pages/ai/Assistant.tsx";
 import { PlanPage } from "./pages/ai/Plan.tsx";
+import { AssetsPage } from "./pages/depth/Assets.tsx";
+import { ConfinementPage } from "./pages/depth/Confinement.tsx";
+import { OccurrencesPage } from "./pages/depth/Occurrences.tsx";
+import { PasturesPage } from "./pages/depth/Pastures.tsx";
 import {
   ConsoleOrgPage,
   ConsolePage,
@@ -117,6 +121,10 @@ function Routed() {
           <Route path="fazenda/financeiro" element={<FinancePage />} />
           <Route path="relatorios" element={<ReportsPage />} />
           <Route path="assistente" element={<AssistantPage />} />
+          <Route path="ocorrencias" element={<OccurrencesPage />} />
+          <Route path="fazenda/confinamento" element={<ConfinementPage />} />
+          <Route path="fazenda/pastagem" element={<PasturesPage />} />
+          <Route path="fazenda/patrimonio" element={<AssetsPage />} />
           <Route path="fazenda/plano" element={<PlanPage />} />
           <Route path="console" element={<ConsolePage />} />
           <Route path="console/configuracao" element={<ConsoleSettingsPage />} />

@@ -1,6 +1,8 @@
 import type { ReportDto } from "@rebania/contracts";
 import {
+  adgFromSeries,
   adgReport,
+  penClosing,
   CATEGORIES,
   CATEGORY_FIN_LABEL,
   CATEGORY_LABEL,
@@ -10,6 +12,7 @@ import {
 } from "@rebania/domain";
 import type { Db } from "@rebania/db";
 import { civilToDate, dateToCivil } from "../../lib/dates.ts";
+import { daysBetween } from "@rebania/domain";
 import type { FarmContext } from "../../lib/tenant.ts";
 
 type Kind = ReportDto["kind"];
@@ -412,6 +415,212 @@ export async function buildReport(
           qty: R(v.qty, 3),
           unit: v.unit,
         })),
+        totals: null,
+        notes: [],
+      };
+    }
+    case "confinement": {
+      const pens = await db.group.findMany({
+        where: { farmId, isPen: true },
+        include: {
+          animals: {
+            where: { status: "active" },
+            select: {
+              weights: { where: { voidedAt: null }, select: { measuredOn: true, weightKg: true } },
+            },
+          },
+          feedings: { where: { voidedAt: null, date: range } },
+        },
+        orderBy: { name: "asc" },
+      });
+      let costed = 0;
+      const rows = pens.map((p) => {
+        const start =
+          p.penStartedOn && dateToCivil(p.penStartedOn)! > from
+            ? dateToCivil(p.penStartedOn)!
+            : from;
+        const days = Math.max(0, daysBetween(start, to));
+        let gain = 0;
+        let withGain = 0;
+        for (const a of p.animals) {
+          const r = adgFromSeries(
+            a.weights
+              .map((w) => ({ measuredOn: dateToCivil(w.measuredOn), weightKg: Number(w.weightKg) }))
+              .filter((w) => w.measuredOn >= start && w.measuredOn <= to),
+          );
+          if (r.ok) {
+            gain += r.to.weightKg - r.from.weightKg;
+            withGain++;
+          }
+        }
+        const allCosted = p.feedings.length > 0 && p.feedings.every((f) => f.costCents !== null);
+        if (allCosted) costed++;
+        const c = penClosing({
+          heads: p.animals.length,
+          days,
+          liveGainKg: withGain ? R(gain) : null,
+          feedCostCents: allCosted
+            ? p.feedings.reduce((sum, f) => sum + Number(f.costCents), 0)
+            : null,
+        });
+        return {
+          pen: p.name,
+          heads: c.heads,
+          days: c.days,
+          gainKg: c.liveGainKg,
+          feedQty: R(
+            p.feedings.reduce((sum, f) => sum + Number(f.quantity), 0),
+            3,
+          ),
+          feedCost: c.feedCostCents === null ? null : c.feedCostCents / 100,
+          perHeadDay: c.costPerHeadDayCents === null ? null : c.costPerHeadDayCents / 100,
+          perKgGain: c.costPerKgGainCents === null ? null : c.costPerKgGainCents / 100,
+        };
+      });
+      return {
+        kind,
+        title: "Fechamento do confinamento",
+        period,
+        formula:
+          "Por baia: dias = da entrada na baia (ou início do período) ao fim; ganho = soma (última − primeira pesagem no período) dos animais com 2 pesagens; custo do trato = custo médio das entradas × quantidade; R$/cab/dia = custo ÷ (cabeças × dias); R$/kg ganho = custo ÷ ganho.",
+        coverage: pens.length
+          ? {
+              ...coverage(costed, pens.length),
+              note: "Baias com custo calculável em todos os tratos do período.",
+            }
+          : null,
+        columns: [
+          { key: "pen", label: "Baia", type: "text" },
+          { key: "heads", label: "Cabeças", type: "number" },
+          { key: "days", label: "Dias", type: "number" },
+          { key: "gainKg", label: "Ganho (kg vivo)", type: "number" },
+          { key: "feedQty", label: "Trato (qtd.)", type: "number" },
+          { key: "feedCost", label: "Custo do trato (R$)", type: "money" },
+          { key: "perHeadDay", label: "R$/cab/dia", type: "money" },
+          { key: "perKgGain", label: "R$/kg ganho", type: "money" },
+        ],
+        rows,
+        totals: null,
+        notes: [
+          "Custo do trato é estimativa gerencial; não inclui mão de obra, sanidade ou estrutura.",
+        ],
+      };
+    }
+    case "slaughter": {
+      const returns = await db.slaughterReturn.findMany({ where: { farmId, receivedOn: range } });
+      const tx = await db.commercialTransaction.findMany({
+        where: { id: { in: returns.map((r) => r.transactionId) } },
+      });
+      const rows = returns.map((r) => {
+        const t = tx.find((x) => x.id === r.transactionId)!;
+        const items = r.items as {
+          carcassKg: number;
+          arrobas: number;
+          yieldPercent: number | null;
+        }[];
+        const realArrobas = R(items.reduce((sum, i) => sum + i.arrobas, 0));
+        const yields = items.map((i) => i.yieldPercent).filter((y): y is number => y !== null);
+        return {
+          date: dateToCivil(r.receivedOn),
+          plant: r.plant,
+          heads: items.length,
+          estimatedArrobas: t.estimatedArrobas === null ? null : Number(t.estimatedArrobas),
+          realArrobas,
+          realYield: yields.length ? R(yields.reduce((a, b) => a + b, 0) / yields.length) : null,
+          estimatedTotal: Number(t.totalCents) / 100,
+          finalTotal: r.finalTotalCents === null ? null : Number(r.finalTotalCents) / 100,
+        };
+      });
+      return {
+        kind,
+        title: "Abate: estimado × real",
+        period,
+        formula:
+          "Real: arrobas = carcaça ÷ 15; rendimento = carcaça ÷ peso vivo da venda (média dos animais com peso individual). Estimado: o registrado na venda (rendimento informado).",
+        coverage: null,
+        columns: [
+          { key: "date", label: "Retorno", type: "text" },
+          { key: "plant", label: "Frigorífico", type: "text" },
+          { key: "heads", label: "Cabeças", type: "number" },
+          { key: "estimatedArrobas", label: "@ estimadas", type: "number" },
+          { key: "realArrobas", label: "@ reais", type: "number" },
+          { key: "realYield", label: "Rendimento real (%)", type: "percent" },
+          { key: "estimatedTotal", label: "Valor da venda (R$)", type: "money" },
+          { key: "finalTotal", label: "Valor final (R$)", type: "money" },
+        ],
+        rows,
+        totals: null,
+        notes: [],
+      };
+    }
+    case "result": {
+      const entries = await db.financialEntry.findMany({
+        where: { farmId, status: { not: "cancelled" }, dueOn: range },
+      });
+      const feed = await db.feedingEvent.findMany({
+        where: { farmId, voidedAt: null, date: range },
+      });
+      const sum = (f: (e: (typeof entries)[number]) => boolean) =>
+        entries.filter(f).reduce((s2, e) => s2 + Number(e.amountCents), 0) / 100;
+      const cats = [...new Set(entries.map((e) => e.category))];
+      const rows = cats.map((c) => {
+        const k = entries.find((e) => e.category === c)!.kind;
+        return {
+          line: `${k === "income" ? "(+)" : "(−)"} ${CATEGORY_FIN_LABEL[c as EntryCategory] ?? c}`,
+          realized: sum((e) => e.category === c && e.status === "paid") * (k === "income" ? 1 : -1),
+          planned: sum((e) => e.category === c && e.status === "open") * (k === "income" ? 1 : -1),
+        };
+      });
+      const realized = rows.reduce((s2, r) => s2 + r.realized, 0);
+      const planned = rows.reduce((s2, r) => s2 + r.planned, 0);
+      const feedCost =
+        feed.filter((f) => f.costCents !== null).reduce((s2, f) => s2 + Number(f.costCents), 0) /
+        100;
+      return {
+        kind,
+        title: "Resultado (DRE gerencial)",
+        period,
+        formula:
+          "Lançamentos com vencimento no período, por categoria. Realizado = pago/recebido; Previsto = em aberto. Cancelados não entram. Política de custo: o que foi lançado no financeiro; consumo de estoque (trato) aparece só como referência, para não contar a compra duas vezes.",
+        coverage: null,
+        columns: [
+          { key: "line", label: "Linha", type: "text" },
+          { key: "realized", label: "Realizado (R$)", type: "money" },
+          { key: "planned", label: "Previsto (R$)", type: "money" },
+        ],
+        rows,
+        totals: { line: "Resultado", realized: R(realized), planned: R(planned) },
+        notes: [
+          `Referência: custo estimado do trato consumido no período R$ ${feedCost.toLocaleString("pt-BR", { minimumFractionDigits: 2 })} (já incluído nas compras de alimento lançadas).`,
+        ],
+      };
+    }
+    case "pastures": {
+      const rain = await db.rainRecord.findMany({
+        where: { farmId, date: range },
+        include: { pasture: { select: { name: true } } },
+      });
+      const by = new Map<string, { place: string; mm: number; days: number }>();
+      for (const r of rain) {
+        const k = r.pasture?.name ?? "Fazenda (geral)";
+        const v = by.get(k) ?? { place: k, mm: 0, days: 0 };
+        v.mm += Number(r.mm);
+        v.days++;
+        by.set(k, v);
+      }
+      return {
+        kind,
+        title: "Chuva no período",
+        period,
+        formula:
+          "Soma dos registros de chuva (mm) por local no período; dias = registros lançados.",
+        coverage: null,
+        columns: [
+          { key: "place", label: "Local", type: "text" },
+          { key: "mm", label: "Chuva (mm)", type: "number" },
+          { key: "days", label: "Registros", type: "number" },
+        ],
+        rows: [...by.values()].map((v) => ({ ...v, mm: R(v.mm, 1) })),
         totals: null,
         notes: [],
       };

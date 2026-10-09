@@ -1,13 +1,14 @@
 import type { ReportDto } from "@rebania/contracts";
-import { addDays, formatBRL, todayInTimezone } from "@rebania/domain";
+import { addDays, formatBRL, todayInTimezone, type Feature } from "@rebania/domain";
 import { Download, Printer } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router";
 import { errorMessage, get } from "../../api/client.ts";
 import { Alert, Empty, Field, formatDate, Loading, PageHead } from "../../components/ui.tsx";
 import { useSession } from "../../state/session.tsx";
+import { useFeatures } from "../../state/features.ts";
 
-const KINDS: { key: ReportDto["kind"]; label: string; finance?: boolean }[] = [
+const KINDS: { key: ReportDto["kind"]; label: string; finance?: boolean; feature?: Feature }[] = [
   { key: "inventory", label: "Inventário" },
   { key: "performance", label: "Desempenho (GMD)" },
   { key: "reproduction", label: "Reprodução" },
@@ -16,6 +17,10 @@ const KINDS: { key: ReportDto["kind"]; label: string; finance?: boolean }[] = [
   { key: "feeding", label: "Trato e custo" },
   { key: "commercial", label: "Compras e vendas", finance: true },
   { key: "financial", label: "Financeiro (caixa)", finance: true },
+  { key: "result", label: "Resultado (DRE gerencial)", finance: true, feature: "result" },
+  { key: "confinement", label: "Fechamento do confinamento", feature: "confinement" },
+  { key: "slaughter", label: "Abate: estimado × real", finance: true, feature: "slaughter" },
+  { key: "pastures", label: "Chuva", feature: "pasture" },
 ];
 
 function cell(v: string | number | null | undefined, type: string) {
@@ -38,7 +43,12 @@ export function ReportsPage() {
   const to = params.get("ate") ?? today;
   const [report, setReport] = useState<ReportDto | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const kinds = KINDS.filter((k) => (k.finance ? can("finance.read") : can("reports.read")));
+  const features = useFeatures(farm!.id);
+  const kinds = KINDS.filter(
+    (k) =>
+      (k.finance ? can("finance.read") : can("reports.read")) &&
+      (!k.feature || features?.[k.feature]),
+  );
   const url = `/v1/farms/${farm!.id}/reports/${kind}?from=${from}&to=${to}`;
   useEffect(() => {
     setReport(null);

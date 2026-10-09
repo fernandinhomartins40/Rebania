@@ -614,6 +614,8 @@ export function summarizeEvent(
       return `Morte: ${String(data.reason)}`;
     case "exited":
       return `${data.kind === "culled" ? "Descarte" : "Transferência"}: ${String(data.reason)}`;
+    case "occurrence":
+      return `Ocorrência: ${String(data.title)}`;
     case "exam_collected":
       return `Exame coletado: ${String(data.kindLabel)}`;
     case "exam_result":

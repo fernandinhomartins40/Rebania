@@ -21,16 +21,26 @@ export const ReproSettingsInput = z.object({
 });
 export type ReproSettingsInput = z.infer<typeof ReproSettingsInput>;
 
+export const FeaturesInput = z.object({
+  confinement: z.boolean(),
+  slaughter: z.boolean(),
+  result: z.boolean(),
+  pasture: z.boolean(),
+  assets: z.boolean(),
+});
+
 export const FarmSettings = z.object({
   name: z.string(),
   timezone: z.string(),
   repro: ReproSettingsInput,
+  features: FeaturesInput,
 });
 export type FarmSettings = z.infer<typeof FarmSettings>;
 
 export const UpdateFarmSettingsInput = z.object({
   name: z.string().trim().min(2).max(120).optional(),
   repro: ReproSettingsInput.partial().optional(),
+  features: FeaturesInput.partial().optional(),
 });
 
 /** Operação em grupo: lista FECHADA dos animais efetivamente manejados (snapshot). */
