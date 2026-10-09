@@ -45,5 +45,6 @@ Atualizado em 09/10/2026. "Testado" significa coberto por teste automatizado que
 - **Homologação de hardware:** nenhum aparelho foi testado fisicamente (P-03).
 - **Testes em aparelhos (teste 12):** o app nativo só foi empacotado; não rodou em Android/iOS físico nem em emulador. Builds EAS dependem de contas (P-05).
 - **Testes obrigatórios 6 (físico), 11 e 12** dependem de aparelhos físicos e do ambiente de produção (G7).
+- **Demonstração:** `seed-demo` (CLI e workflow manual "Seed de demonstração") cria uma organização fictícia isolada com um usuário por perfil e 12 animais; senha só pelo secret `DEMO_PASSWORD` (repositório público). Coberto por `demo-seed.test.ts` (3).
 - **Deploy (G7):** pipeline pronto para a VPS 72.60.10.112 e www.rebania.com.br, mas nada foi publicado. Faltam: o secret `VPS_PASSWORD` no GitHub e o DNS apontando para a 112. A auditoria da VPS (P-04), os limites de CPU/RAM medidos e o restore no ambiente real dependem disso.
 - **Piloto (G7):** QA com o cliente e metas (tempo de registro, ajuda) dependem da entrevista e dados reais (P-07).

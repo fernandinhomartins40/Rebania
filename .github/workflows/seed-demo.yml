@@ -1,0 +1,80 @@
+name: Seed de demonstração (VPS 112)
+
+# Cria/atualiza a organização de demonstração na produção, com um usuário por
+# perfil (dono, gerente, campo, veterinario, financeiro @demo.rebania.com.br).
+# A senha vem do secret DEMO_PASSWORD (mín. 10 caracteres), definido por quem
+# administra o repositório; ela segue por stdin até o container e nunca é
+# impressa nem passada como argumento. O repositório é público: não use uma
+# senha que exista em outro lugar. Reexecutar redefine a senha e não duplica dados.
+# Pré-requisito: um deploy que já contenha dist/cli/seed-demo.js na imagem da API.
+
+"on":
+  workflow_dispatch:
+    inputs:
+      platform_admin:
+        description: Dar ao dono@demo.rebania.com.br acesso ao console da plataforma (vê todas as organizações)
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: seed-demo-rebania-vps112
+  cancel-in-progress: false
+
+jobs:
+  seed:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    environment:
+      name: production
+    env:
+      VPS_HOST: 72.60.10.112
+      VPS_USER: root
+      APP_DIR: /opt/rebania
+      SSHPASS: ${{ secrets.VPS_PASSWORD }}
+      DEMO_PASSWORD: ${{ secrets.DEMO_PASSWORD }}
+      PLATFORM_FLAG: ${{ inputs.platform_admin && '--platform-admin' || '' }}
+    steps:
+      - name: Conferir secrets
+        run: |
+          if [ -z "$SSHPASS" ]; then
+            echo "::error::Secret VPS_PASSWORD não configurado."
+            exit 1
+          fi
+          if [ "${#DEMO_PASSWORD}" -lt 10 ]; then
+            echo "::error::Crie o secret DEMO_PASSWORD (mín. 10 caracteres) em Settings > Secrets and variables > Actions."
+            exit 1
+          fi
+
+      - name: Preparar SSH
+        run: |
+          set -e
+          sudo apt-get update -qq && sudo apt-get install -y -qq sshpass >/dev/null
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          ssh-keyscan -T 15 -H "$VPS_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: Rodar o seed no container da API
+        run: |
+          set -e
+          printf '%s\n' "$DEMO_PASSWORD" | sshpass -e ssh -o StrictHostKeyChecking=yes "$VPS_USER@$VPS_HOST" \
+            "set -e
+             IFS= read -r SEED_DEMO_PASSWORD
+             export SEED_DEMO_PASSWORD
+             cd '$APP_DIR/infra/compose'
+             if docker compose version >/dev/null 2>&1; then DC='docker compose'; else DC='docker-compose'; fi
+             \$DC --env-file .env -f docker-compose.yml exec -T -e SEED_DEMO_PASSWORD api \
+               node dist/cli/seed-demo.js $PLATFORM_FLAG"
+
+      - name: Resumo
+        run: |
+          {
+            echo "### Demonstração pronta"
+            echo "Acesse https://www.rebania.com.br/entrar com a senha do secret DEMO_PASSWORD:"
+            echo "- dono@demo.rebania.com.br (proprietário)"
+            echo "- gerente@demo.rebania.com.br (gerente)"
+            echo "- campo@demo.rebania.com.br (equipe de campo)"
+            echo "- veterinario@demo.rebania.com.br (veterinário)"
+            echo "- financeiro@demo.rebania.com.br (financeiro)"
+          } >> "$GITHUB_STEP_SUMMARY"

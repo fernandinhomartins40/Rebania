@@ -11,6 +11,8 @@ pnpm --filter @rebania/web dev        # http://localhost:5173 (proxy /v1 → API
 ```
 Abra o link de convite impresso pelo bootstrap. A landing fica em `/` para visitantes; o login em `/entrar`.
 
+Atalho para testar sem convite: `SEED_DEMO_PASSWORD='sua-senha-10+' pnpm --filter @rebania/api seed-demo` cria a organização de demonstração (12 animais fictícios) com `dono@`, `gerente@`, `campo@`, `veterinario@` e `financeiro@demo.rebania.com.br`, todos com essa senha. `--platform-admin` libera o console ao `dono@`.
+
 ## App nativo
 ```bash
 cp apps/mobile/.env.example apps/mobile/.env     # EXPO_PUBLIC_API_URL = IP da máquina na rede

@@ -59,6 +59,21 @@ Também é possível implantar pelo console da plataforma (Fazenda → Console).
 docker compose exec api node dist/cli/platform-admin.js --email pessoa@rebania.com.br      # --revoke para retirar
 ```
 
+## 6.1 Organização de demonstração (testes)
+Cria "Rebania Demonstração (dados fictícios)" com 12 animais de exemplo e um usuário por perfil, todos com a mesma senha: `dono@`, `gerente@`, `campo@`, `veterinario@` e `financeiro@demo.rebania.com.br`. Reexecutar redefine a senha e não duplica dados.
+
+Pelo GitHub (recomendado):
+1. Crie o secret `DEMO_PASSWORD` (mín. 10 caracteres) em *Settings → Secrets and variables → Actions*. O repositório é público: use uma senha exclusiva para a demo.
+2. Em *Actions → Seed de demonstração (VPS 112) → Run workflow*. Marque "console da plataforma" só se quiser que `dono@demo.rebania.com.br` veja todas as organizações.
+
+Na VPS (a senha vai por variável de ambiente, fora do histórico do shell):
+```bash
+cd /opt/rebania/infra/compose
+read -rs SEED_DEMO_PASSWORD && export SEED_DEMO_PASSWORD
+docker compose exec -T -e SEED_DEMO_PASSWORD api node dist/cli/seed-demo.js   # --platform-admin opcional
+```
+Sem senha informada, o comando gera uma e a mostra só no terminal.
+
 ## 7. Smoke test
 1. `curl -fsS https://www.rebania.com.br/v1/health` responde `ok` (e `http://rebania.com.br` redireciona para `https://www.rebania.com.br`).
 2. Login web; numa fazenda de homologação: cadastro de animal, pesagem, aplicação sanitária, um animal no Modo Curral e encerramento.
