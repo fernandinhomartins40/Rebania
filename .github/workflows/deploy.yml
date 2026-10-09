@@ -1,0 +1,133 @@
+name: Deploy (GHCR -> VPS 112)
+
+# Mesmo modelo do DigiUrban (build-images.yml), adaptado ao Rebania:
+# - as imagens são construídas em runners do GitHub e publicadas no GHCR;
+# - a VPS 72.60.10.112 só faz `pull` e sobe (nunca compila);
+# - o deploy roda no runner self-hosted da VPS 112 com o rótulo `rebania`
+#   (não usa o runner da VPS 108);
+# - backup antes das migrações, healthcheck e rollback automático em
+#   infra/scripts/deploy.sh.
+# Rollback manual: "Run workflow" informando `release` = SHA já publicado.
+
+"on":
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      release:
+        description: SHA de uma release já publicada no GHCR (vazio = construir o commit atual)
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+  packages: write
+
+# Um deploy por vez; vale o último commit.
+concurrency:
+  group: deploy-rebania-vps112
+  cancel-in-progress: true
+
+env:
+  REGISTRY: ghcr.io
+  OWNER: fernandinhomartins40
+
+jobs:
+  verify:
+    if: ${{ !inputs.release }}
+    uses: ./.github/workflows/ci.yml
+    with:
+      skip_images: true
+
+  build:
+    needs: verify
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - name: rebania-api
+            dockerfile: infra/docker/node.Dockerfile
+            target: api
+          - name: rebania-worker
+            dockerfile: infra/docker/node.Dockerfile
+            target: worker
+          - name: rebania-migrate
+            dockerfile: infra/docker/node.Dockerfile
+            target: migrate
+          - name: rebania-web
+            dockerfile: infra/docker/web.Dockerfile
+            target: web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build e push ${{ matrix.name }}
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          target: ${{ matrix.target }}
+          push: true
+          # `latest` para conveniência; o deploy usa sempre o SHA (rollback exato).
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/${{ matrix.name }}:${{ github.sha }}
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/${{ matrix.name }}:latest
+          labels: |
+            project=rebania
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.OWNER }}/${{ matrix.name }}:buildcache
+          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.OWNER }}/${{ matrix.name }}:buildcache,mode=max
+          provenance: false
+          sbom: false
+
+  deploy:
+    needs: build
+    # Roda também no rollback manual (build pulado), mas nunca se algo falhou.
+    if: ${{ !cancelled() && !failure() }}
+    runs-on: [self-hosted, rebania]
+    timeout-minutes: 30
+    environment:
+      name: production
+      url: https://www.rebania.com.br
+    env:
+      APP_DIR: /opt/rebania
+      RELEASE: ${{ inputs.release || github.sha }}
+    steps:
+      - name: Checkout (só a infraestrutura)
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: infra
+          ref: ${{ inputs.release || github.sha }}
+
+      - name: Atualizar compose e scripts em /opt/rebania (o .env não é tocado)
+        run: |
+          set -e
+          mkdir -p "$APP_DIR/infra/compose" "$APP_DIR/infra/scripts"
+          install -m 644 infra/compose/docker-compose.yml "$APP_DIR/infra/compose/docker-compose.yml"
+          install -m 644 infra/compose/.env.production.example "$APP_DIR/infra/compose/.env.production.example"
+          install -m 755 infra/scripts/deploy.sh infra/scripts/backup.sh infra/scripts/restore-check.sh "$APP_DIR/infra/scripts/"
+
+      - name: Login no GHCR
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GHCR_USER: ${{ github.actor }}
+        run: echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
+
+      - name: Deploy (pull, backup, migrate, up, healthcheck, rollback)
+        run: REGISTRY="ghcr.io/${OWNER}/" "$APP_DIR/infra/scripts/deploy.sh"
+
+      - name: Logout do GHCR
+        if: always()
+        run: docker logout ghcr.io || true
+
+      - name: Resumo
+        if: success()
+        run: |
+          echo "Rebania publicado: https://www.rebania.com.br (release ${RELEASE})"
+          echo "Health: https://www.rebania.com.br/v1/health"

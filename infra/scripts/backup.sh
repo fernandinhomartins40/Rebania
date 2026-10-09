@@ -5,7 +5,7 @@
 set -euo pipefail
 DEST="${1:?informe o diretório de destino}"
 ENV_FILE="${ENV_FILE:-$(dirname "$0")/../compose/.env}"
-COMPOSE="docker compose --env-file $ENV_FILE -f $(dirname "$0")/../compose/docker-compose.yml"
+COMPOSE="${DOCKER_COMPOSE:-docker compose} --env-file $ENV_FILE -f $(dirname "$0")/../compose/docker-compose.yml"
 STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
 mkdir -p "$DEST"
 OUT="$DEST/rebania-db-$STAMP.dump"

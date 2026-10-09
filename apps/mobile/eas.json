@@ -13,7 +13,7 @@
     },
     "production": {
       "autoIncrement": true,
-      "env": { "EXPO_PUBLIC_API_URL": "https://SUBSTITUA-PELO-DOMINIO-DE-PRODUCAO" }
+      "env": { "EXPO_PUBLIC_API_URL": "https://www.rebania.com.br" }
     }
   }
 }
