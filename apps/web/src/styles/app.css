@@ -140,9 +140,14 @@ svg {
   margin: var(--space-sm) 0 var(--space-lg);
   min-height: 44px;
 }
+.page-head {
+  flex-wrap: wrap;
+}
 .page-head h1 {
   font-size: 26px;
   flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 .page-head .aside {
   color: var(--color-text-primary);
@@ -1636,4 +1641,17 @@ button.list-item {
   letter-spacing: 0.04em;
   color: var(--color-text-secondary);
   margin: 20px 0 8px;
+}
+/* Telas estreitas (360 px): sem rolagem lateral; Agenda segue na barra inferior. */
+@media (max-width: 400px) {
+  .appbar {
+    padding-inline: 12px;
+    gap: 8px;
+  }
+  .appbar-actions {
+    gap: 4px;
+  }
+  .hide-narrow {
+    display: none !important;
+  }
 }

@@ -25,18 +25,22 @@ Atualizado em 09/10/2026. "Testado" significa coberto por teste automatizado que
 | Ocorrências e módulos de profundidade (G8) | Ocorrências (T42) em animal/lote/pasto/equipamento com resolução; módulos por chave da fazenda (desligados por padrão): confinamento (baias, leitura de cocho com correção auditada, fechamento R$/cab/dia e R$/kg ganho), abate (retorno do frigorífico com @ e rendimento reais × estimativa), resultado (DRE gerencial realizado × previsto), pastagem (área, ocupação/descanso pelas movimentações, chuva), patrimônio (manutenção com próxima data na agenda) | `depth.test.ts` (7) + Playwright |
 | Hardware (`packages/hardware`) | Contratos de leitor/balança, parser RFID/balança, leitor em modo teclado (HID), supressão de leitura repetida do Modo Curral | 10 testes unitários |
 | Design tokens | Valores do pacote de marca; contraste AA verificado por par | 12 testes |
-| App nativo (Expo SDK 57) | Login com SecureStore, SQLite offline com o mesmo motor de sync, Hoje, Rebanho, Passaporte, Pesagem em 3 etapas, Agenda, Fazenda/sincronização/sair | typecheck + lint + bundle Metro Android e iOS (`expo export`) |
+| App nativo (Expo SDK 57) | Login com SecureStore, SQLite offline com o mesmo motor de sync; Hoje, Rebanho, Passaporte com fotos, Cadastro, Pesagem, Movimentação, **Modo Curral** (leitor em modo teclado/câmera, supressão de repetidos, ID desconhecido, retomada, encerramento), Aplicação sanitária, Nascimento, Trato, Saída, Ocorrência, Agenda real; funções de escritório indicadas no navegador; perfis EAS (sem envio às lojas) | typecheck + lint + bundle Metro Android e iOS (`expo export`) |
+| Observabilidade e operação (G7) | `/v1/metrics` Prometheus (latência/erros por rota, recibos de sync, fila, uso e custo de IA) protegido por token; runbooks de deploy, rollback, incidente, suporte, observabilidade, lojas | `metrics.test.ts` (2) |
+| Acessibilidade (G7) | axe WCAG 2 A/AA sem violações e sem rolagem lateral em 360/768/1280 px nas 29 telas principais; foco visível; redução de movimento | `pnpm --filter @rebania/web a11y` |
+| Restauração (teste obrigatório 11) | Dump do banco + arquivo de mídia restaurados em banco/diretório separados: contagens idênticas em 21 tabelas de negócio e mídia idêntica por hash | Execução local registrada em 09/10/2026; `infra/scripts/restore-check.sh` (com mídia) para o ambiente real |
 | Infra | Dockerfiles multi-stage sem root (api, worker, migrate, web/Nginx); compose de produção com porta só em loopback; backup e restauração verificada | Imagens construídas e stack completa executada localmente; backup → restore em banco separado conferido |
 | CI | GitHub Actions: formato, typecheck, lint, unitários, integração com PostgreSQL, schema × migrations, builds e imagens | `.github/workflows/ci.yml` |
 
 ## Pendente (não implementado)
 
-- **App nativo:** reprodução, sanidade, Modo Curral, venda, trato e financeiro existem só na web; o app nativo cobre rebanho, cadastro, pesagem, movimentação e fotos.
+- **App nativo:** reprodução (exceto nascimento), estoque, venda/compra, financeiro, relatórios, configurações e assistente ficam no navegador.
 - **NFC e leitores BLE nativos; OCR de brinco:** não implementados (dependem de aparelho homologado).
 - **Tratamentos, exames, compra e venda:** exigem conexão (rascunho preservado); aplicação, curral, trato e saída funcionam offline.
 - **Provedores (P-02):** não há provedor de IA nem de pagamento integrado. O assistente aparece "indisponível" e a compra online de créditos também; a estrutura (gateway, adapters, webhooks) está pronta para receber o adapter escolhido. Créditos só por concessão no console.
 - **Preços (P-01):** nenhuma tabela de créditos ou pacote vem cadastrada; a equipe cadastra só valores aprovados.
 - **Homologação de hardware:** nenhum aparelho foi testado fisicamente (P-03).
-- **Testes em aparelhos:** o app nativo só foi empacotado; não rodou em Android/iOS físico nem em emulador.
+- **Testes em aparelhos (teste 12):** o app nativo só foi empacotado; não rodou em Android/iOS físico nem em emulador. Builds EAS dependem de contas (P-05).
 - **Testes obrigatórios 6 (físico), 11 e 12** dependem de aparelhos físicos e do ambiente de produção (G7).
-- **Deploy:** nada foi publicado; a VPS não foi auditada (P-04).
+- **Deploy (G7):** nada foi publicado; a VPS não foi auditada (P-04). Limites de CPU/RAM medidos e restore no ambiente real dependem disso.
+- **Piloto (G7):** QA com o cliente e metas (tempo de registro, ajuda) dependem da entrevista e dados reais (P-07).

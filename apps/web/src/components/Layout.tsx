@@ -66,7 +66,7 @@ export function Layout() {
             <Link to="/assistente" className="icon-btn" aria-label="Assistente inteligente">
               <Sparkles size={24} />
             </Link>
-            <Link to="/agenda" className="icon-btn" aria-label="Avisos e tarefas">
+            <Link to="/agenda" className="icon-btn hide-narrow" aria-label="Avisos e tarefas">
               <Bell size={26} />
             </Link>
             <Link

@@ -24,6 +24,8 @@ const Env = z.object({
   // "hmac": webhook genérico assinado (HMAC-SHA256) para conciliação manual/bancária.
   BILLING_PROVIDER: z.enum(["none", "hmac"]).default("none"),
   BILLING_WEBHOOK_SECRET: z.string().min(32).optional(),
+  // Token do coletor de métricas (Prometheus). Sem token, /v1/metrics responde 404.
+  METRICS_TOKEN: z.string().min(24).optional(),
 });
 
 export type Config = {
@@ -40,6 +42,7 @@ export type Config = {
   aiProvider: "none";
   billingProvider: "none" | "hmac";
   billingWebhookSecret: string | null;
+  metricsToken: string | null;
   /** Durações de sessão (ms). */
   webSessionTtlMs: number;
   mobileAccessTtlMs: number;
@@ -65,6 +68,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     aiProvider: e.AI_PROVIDER,
     billingProvider: e.BILLING_PROVIDER,
     billingWebhookSecret: e.BILLING_WEBHOOK_SECRET ?? null,
+    metricsToken: e.METRICS_TOKEN ?? null,
     webSessionTtlMs: 12 * 3600_000,
     mobileAccessTtlMs: 15 * 60_000,
     mobileRefreshTtlMs: 30 * 24 * 3600_000,

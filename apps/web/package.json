@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "typecheck": "tsc -p tsconfig.json",
     "lint": "eslint src",
-    "test": "vitest run"
+    "test": "vitest run",
+    "a11y": "node e2e/a11y.mjs"
   },
   "dependencies": {
     "@rebania/contracts": "workspace:*",
@@ -31,6 +32,8 @@
     "@vitejs/plugin-react": "6.1.2",
     "fake-indexeddb": "6.2.5",
     "jsdom": "30.1.2",
-    "vite": "8.3.4"
+    "vite": "8.3.4",
+    "playwright": "1.56.1",
+    "axe-core": "4.10.3"
   }
 }

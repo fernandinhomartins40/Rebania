@@ -56,11 +56,20 @@ docker compose exec api node dist/cli/bootstrap.js --org "Nome" --farm "Fazenda"
 ```
 Entregue o link do convite pessoalmente (uso único, 7 dias).
 
+Também é possível implantar pelo console da plataforma (Fazenda → Console). Para dar acesso ao console a alguém da equipe (a pessoa precisa já ter conta):
+```bash
+docker compose exec api node dist/cli/platform-admin.js --email pessoa@rebania.com.br      # --revoke para retirar
+```
+
 ## 7. Smoke test
-Login web, cadastro de um animal de teste numa fazenda de homologação, pesagem, verificação em `/fazenda/sincronizacao`.
+1. `curl -fsS http://127.0.0.1:${REBANIA_HTTP_PORT}/v1/health` responde `ok`.
+2. Login web; numa fazenda de homologação: cadastro de animal, pesagem, aplicação sanitária, um animal no Modo Curral e encerramento.
+3. `/fazenda/sincronizacao` sem pendências; Relatórios → Inventário abre e baixa CSV.
+4. Assistente mostra "indisponível" enquanto `AI_PROVIDER=none` (esperado).
+5. Com `METRICS_TOKEN`: `curl -H "Authorization: Bearer $METRICS_TOKEN" .../v1/metrics` retorna métricas.
 
 ## Rollback
-1. `REBANIA_TAG=<anterior> docker compose up -d api worker web`.
+1. `REBANIA_TAG=<anterior> docker compose up -d api worker web` (as imagens anteriores ficam no registro; não as remova antes de o novo deploy estabilizar).
 2. Migrações são aditivas e compatíveis com a versão anterior. Se uma migração precisar ser desfeita, restaure o backup feito no passo 3 (ver `backup-restore.md`) após avaliar a perda de dados entre o backup e o rollback.
 
 ## Limites e medição

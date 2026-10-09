@@ -1,5 +1,16 @@
 import type { OutboxItem } from "@rebania/sync-core";
-import { ArrowLeftRight, ChevronRight, LogOut, Weight } from "lucide-react-native";
+import {
+  ArrowLeftRight,
+  Baby,
+  ChevronRight,
+  CircleAlert,
+  ClipboardList,
+  LogOut,
+  Monitor,
+  Syringe,
+  Weight,
+  Wheat,
+} from "lucide-react-native";
 import { useEffect, useState, type ReactNode } from "react";
 import { BrandCow } from "../components/brand.tsx";
 import { Pressable, ScrollView, Text, View } from "react-native";
@@ -8,14 +19,24 @@ import { Button, Card, Muted, PageHead, s } from "../components/ui.tsx";
 import { useSession } from "../lib/session.tsx";
 import { color, radius, space } from "../theme.ts";
 
-export function RegisterScreen({ open }: { open: (kind: "new" | "weigh" | "move") => void }) {
+export type RegisterKind =
+  "new" | "weigh" | "move" | "curral" | "apply" | "birth" | "feeding" | "exit" | "occurrence";
+
+export function RegisterScreen({ open }: { open: (kind: RegisterKind) => void }) {
   const items: {
-    kind: "new" | "weigh" | "move";
+    kind: RegisterKind;
     title: string;
     desc: string;
     icon: ReactNode;
     ochre?: boolean;
   }[] = [
+    {
+      kind: "curral",
+      title: "Modo Curral",
+      desc: "Leitor, peso e aplicação animal a animal; retoma após reiniciar.",
+      icon: <ClipboardList size={30} color={color.brandOchreText} strokeWidth={1.8} />,
+      ochre: true,
+    },
     {
       kind: "new",
       title: "Cadastrar animal",
@@ -34,6 +55,36 @@ export function RegisterScreen({ open }: { open: (kind: "new" | "weigh" | "move"
       title: "Movimentação",
       desc: "Trocar de lote ou pasto.",
       icon: <ArrowLeftRight size={30} color={color.brandPrimary} strokeWidth={1.8} />,
+    },
+    {
+      kind: "apply",
+      title: "Vacinação e aplicação",
+      desc: "Produto, dose e via em grupo; baixa no estoque.",
+      icon: <Syringe size={30} color={color.brandPrimary} strokeWidth={1.8} />,
+    },
+    {
+      kind: "birth",
+      title: "Nascimento",
+      desc: "Mãe, crias (gêmeos ou natimorto) e brinco.",
+      icon: <Baby size={30} color={color.brandPrimary} strokeWidth={1.8} />,
+    },
+    {
+      kind: "feeding",
+      title: "Trato",
+      desc: "Dieta e quantidade por lote.",
+      icon: <Wheat size={30} color={color.brandPrimary} strokeWidth={1.8} />,
+    },
+    {
+      kind: "exit",
+      title: "Morte, descarte ou transferência",
+      desc: "Encerra a situação sem apagar o histórico.",
+      icon: <LogOut size={30} color={color.brandPrimary} strokeWidth={1.8} />,
+    },
+    {
+      kind: "occurrence",
+      title: "Ocorrência",
+      desc: "Cerca, bebedouro, animal doente, equipamento.",
+      icon: <CircleAlert size={30} color={color.brandPrimary} strokeWidth={1.8} />,
     },
   ];
   return (
@@ -69,25 +120,19 @@ export function RegisterScreen({ open }: { open: (kind: "new" | "weigh" | "move"
   );
 }
 
-export function AgendaScreen() {
-  return (
-    <ScrollView contentContainerStyle={s.screen}>
-      <PageHead title="Agenda" />
-      <Card>
-        <Muted>
-          Sem tarefas por enquanto. A agenda passa a ser gerada pelos manejos de reprodução e
-          sanidade.
-        </Muted>
-      </Card>
-    </ScrollView>
-  );
-}
-
 const TYPE_LABEL: Record<string, string> = {
   "animal.create": "Cadastro",
   "animal.update": "Edição",
   "animal.move": "Movimentação",
   "weight.record": "Pesagem",
+  "health.apply": "Aplicação sanitária",
+  "handling.open": "Modo Curral (início)",
+  "handling.mark": "Modo Curral (animal)",
+  "handling.exception": "Modo Curral (exceção)",
+  "handling.close": "Modo Curral (encerramento)",
+  "birth.record": "Nascimento",
+  "feeding.record": "Trato",
+  "animal.exit": "Saída do rebanho",
 };
 
 export function FarmScreen() {
@@ -135,6 +180,17 @@ export function FarmScreen() {
           variant="secondary"
           onPress={() => void engine?.syncNow()}
         />
+      </Card>
+      <Card>
+        <View style={{ flexDirection: "row", gap: space.md, alignItems: "center" }}>
+          <Monitor size={24} color={color.brandPrimary} />
+          <Text style={[s.h2, { marginBottom: 0 }]}>No navegador</Text>
+        </View>
+        <Muted>
+          Venda e compra, financeiro, relatórios, estoque, reprodução (estações e protocolos),
+          configurações, equipe, assistente e plano ficam no endereço web da fazenda, com o mesmo
+          login.
+        </Muted>
       </Card>
       <Button
         label={unsent ? `Sair (apaga ${unsent} registro(s) não enviado(s))` : "Sair deste aparelho"}

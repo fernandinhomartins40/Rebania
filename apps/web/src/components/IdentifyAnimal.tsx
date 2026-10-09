@@ -86,7 +86,7 @@ export function IdentifyAnimal({
           </Link>
         </Alert>
       ) : null}
-      <div className="animal-list" aria-label="Resultados">
+      <div className="animal-list" role="group" aria-label="Resultados">
         {results.map(({ animal, hit }) => (
           <button
             key={animal.id}

@@ -22,6 +22,7 @@ export interface TestEnv {
 
 export async function createTestEnv(
   extra: Pick<AppContext, "ai" | "billing"> = {},
+  env: Record<string, string> = {},
 ): Promise<TestEnv> {
   const url =
     process.env.TEST_DATABASE_URL ?? "postgresql://rebania:rebania@localhost:5432/rebania_test";
@@ -31,6 +32,7 @@ export async function createTestEnv(
       COOKIE_SECURE: "false",
       LOG_LEVEL: "silent",
       WEB_BASE_URL: "http://web.test",
+      ...env,
     }),
     mediaDir: mkdtempSync(path.join(tmpdir(), "rebania-media-")),
   };

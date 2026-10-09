@@ -13,7 +13,11 @@ import { HerdScreen } from "./src/screens/Herd.tsx";
 import { LoginScreen } from "./src/screens/Login.tsx";
 import { MoveScreen } from "./src/screens/Move.tsx";
 import { NewAnimalScreen } from "./src/screens/NewAnimal.tsx";
-import { AgendaScreen, FarmScreen, RegisterScreen } from "./src/screens/Simple.tsx";
+import { FarmScreen, RegisterScreen } from "./src/screens/Simple.tsx";
+import { AgendaScreen } from "./src/screens/Agenda.tsx";
+import { ApplyScreen } from "./src/screens/Apply.tsx";
+import { CurralScreen } from "./src/screens/Curral.tsx";
+import { BirthScreen, ExitScreen, FeedingScreen, OccurrenceScreen } from "./src/screens/Field.tsx";
 import { TodayScreen } from "./src/screens/Today.tsx";
 import { WeighScreen } from "./src/screens/Weigh.tsx";
 import { color } from "./src/theme.ts";
@@ -24,6 +28,12 @@ type Overlay =
   | { kind: "weigh"; animal?: LocalAnimal }
   | { kind: "new" }
   | { kind: "move" }
+  | { kind: "curral" }
+  | { kind: "apply" }
+  | { kind: "birth" }
+  | { kind: "feeding" }
+  | { kind: "exit" }
+  | { kind: "occurrence" }
   | null;
 
 function initials(name?: string) {
@@ -53,6 +63,18 @@ function Shell() {
     content = <NewAnimalScreen back={() => setOverlay(null)} />;
   } else if (overlay?.kind === "move") {
     content = <MoveScreen back={() => setOverlay(null)} />;
+  } else if (overlay?.kind === "curral") {
+    content = <CurralScreen back={() => setOverlay(null)} />;
+  } else if (overlay?.kind === "apply") {
+    content = <ApplyScreen back={() => setOverlay(null)} />;
+  } else if (overlay?.kind === "birth") {
+    content = <BirthScreen back={() => setOverlay(null)} />;
+  } else if (overlay?.kind === "feeding") {
+    content = <FeedingScreen back={() => setOverlay(null)} />;
+  } else if (overlay?.kind === "exit") {
+    content = <ExitScreen back={() => setOverlay(null)} />;
+  } else if (overlay?.kind === "occurrence") {
+    content = <OccurrenceScreen back={() => setOverlay(null)} />;
   } else if (overlay?.kind === "weigh") {
     content = <WeighScreen preset={overlay.animal ?? null} back={() => setOverlay(null)} />;
   } else if (tab === "hoje") {

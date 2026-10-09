@@ -16,6 +16,7 @@ import { commerceRoutes } from "./modules/commerce/routes.ts";
 import { aiRoutes } from "./modules/ai/routes.ts";
 import { platformRoutes } from "./modules/platform.ts";
 import { depthRoutes } from "./modules/depth.ts";
+import { metricsRoutes } from "./modules/metrics.ts";
 import { orgRoutes } from "./modules/org.ts";
 import { syncRoutes } from "./modules/sync.ts";
 import { CSRF_HEADER, registerAuth } from "./plugins/auth.ts";
@@ -69,6 +70,7 @@ export async function buildApp(ctx: AppContext) {
   aiRoutes(app, ctx);
   platformRoutes(app, ctx);
   depthRoutes(app, ctx);
+  metricsRoutes(app, ctx);
 
   return app;
 }

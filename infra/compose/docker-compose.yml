@@ -58,6 +58,11 @@ services:
       LOG_LEVEL: info
       DB_POOL_MAX: "10"
       MEDIA_DIR: /data/media
+      # Provedores pendentes (P-02): mantenha "none" até a decisão.
+      AI_PROVIDER: ${AI_PROVIDER:-none}
+      BILLING_PROVIDER: ${BILLING_PROVIDER:-none}
+      BILLING_WEBHOOK_SECRET: ${BILLING_WEBHOOK_SECRET:-}
+      METRICS_TOKEN: ${METRICS_TOKEN:-}
     volumes:
       - rebania_media:/data/media
     depends_on:

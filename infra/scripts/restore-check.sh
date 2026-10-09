@@ -8,10 +8,20 @@ ENV_FILE="${ENV_FILE:-$(dirname "$0")/../compose/.env}"
 COMPOSE="docker compose --env-file $ENV_FILE -f $(dirname "$0")/../compose/docker-compose.yml"
 $COMPOSE exec -T postgres psql -U rebania -d postgres -v ON_ERROR_STOP=1 -c "DROP DATABASE IF EXISTS rebania_restore_check" -c "CREATE DATABASE rebania_restore_check"
 $COMPOSE exec -T postgres pg_restore -U rebania -d rebania_restore_check --no-owner --exit-on-error < "$DUMP"
-for t in organizations farms users animals animal_identifiers weight_measurements animal_events audit_entries; do
+for t in organizations farms users memberships animals animal_identifiers weight_measurements animal_events \
+  attachments breeding_events pregnancy_checks births tasks products stock_movements health_applications \
+  handling_sessions commercial_transactions financial_entries feeding_events credit_ledger audit_entries; do
   a=$($COMPOSE exec -T postgres psql -U rebania -d rebania -Atc "select count(*) from $t")
   b=$($COMPOSE exec -T postgres psql -U rebania -d rebania_restore_check -Atc "select count(*) from $t")
   printf "%-22s origem=%-8s restaurado=%s\n" "$t" "$a" "$b"
 done
 $COMPOSE exec -T postgres psql -U rebania -d postgres -c "DROP DATABASE rebania_restore_check" >/dev/null
+MEDIA="${2:-}"
+if [ -n "$MEDIA" ]; then
+  # Mídia: confere o checksum do arquivo e extrai num diretório SEPARADO (nunca no volume em uso).
+  (cd "$(dirname "$MEDIA")" && sha256sum -c "$(basename "$MEDIA").sha256")
+  TMP="$(mktemp -d)"
+  tar -C "$TMP" -xzf "$MEDIA"
+  echo "mídia restaurada em $TMP: $(find "$TMP" -type f | wc -l) arquivo(s)"
+fi
 echo "restauração verificada"

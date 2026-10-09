@@ -2,7 +2,7 @@ import { defineConfig } from "tsup";
 
 // Empacota os pacotes internos (@rebania/*) que exportam TypeScript fonte.
 export default defineConfig({
-  entry: ["src/server.ts", "src/cli/bootstrap.ts"],
+  entry: ["src/server.ts", "src/cli/bootstrap.ts", "src/cli/platform-admin.ts"],
   format: ["esm"],
   platform: "node",
   target: "node22",
