@@ -21,20 +21,20 @@
     "@fastify/rate-limit": "11.2.1",
     "@prisma/adapter-pg": "7.10.0",
     "@prisma/client": "7.10.0",
+    "@rebania/ai-gateway": "workspace:*",
     "@rebania/contracts": "workspace:*",
     "@rebania/db": "workspace:*",
     "@rebania/domain": "workspace:*",
     "@rebania/media": "workspace:*",
     "@rebania/sync-core": "workspace:*",
     "fastify": "5.12.5",
-    "zod": "4.3.5",
-    "@rebania/ai-gateway": "workspace:*"
+    "pg": "8.23.1",
+    "sharp": "0.35.5",
+    "zod": "4.3.5"
   },
   "devDependencies": {
     "@rebania/config": "workspace:*",
     "@types/pg": "8.20.0",
-    "pg": "8.23.1",
-    "sharp": "0.35.5",
     "tsup": "8.5.1",
     "tsx": "4.23.15"
   }

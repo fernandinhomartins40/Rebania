@@ -52,6 +52,8 @@ jobs:
           SHADOW_DATABASE_URL: postgresql://rebania:rebania@localhost:5432/rebania_shadow
         name: Schema e migrations em sincronia
       - run: pnpm turbo run build --filter=@rebania/api --filter=@rebania/worker --filter=@rebania/web
+      - name: Dependências de produção (como na imagem)
+        run: infra/scripts/check-prod-deps.sh
 
   images:
     runs-on: ubuntu-24.04
