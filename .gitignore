@@ -6,6 +6,7 @@ coverage/
 .env
 .env.*
 !.env.example
+!.env.production.example
 packages/db/src/generated/
 apps/mobile/.expo/
 apps/mobile/android/
