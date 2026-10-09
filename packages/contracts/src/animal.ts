@@ -115,6 +115,14 @@ export const Animal = z.object({
   identifiers: z.array(Identifier),
   primaryIdentifier: z.string().nullable(),
   lastWeight: z.object({ weightKg: z.number(), measuredOn: z.string() }).nullable(),
+  /** Situação reprodutiva projetada (somente fêmeas). */
+  repro: z
+    .object({
+      status: z.enum(["open", "bred", "pregnant", "unknown"]),
+      since: z.string().nullable(),
+      expectedCalvingOn: z.string().nullable(),
+    })
+    .nullable(),
   /** Foto mais recente pronta (rotas autenticadas). */
   photo: z.object({ id: uuid, thumbUrl: z.string(), displayUrl: z.string() }).nullable(),
   createdAt: z.string(),

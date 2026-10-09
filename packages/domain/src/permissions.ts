@@ -23,6 +23,8 @@ export const PERMISSIONS = [
   "animals.retag",
   "events.write",
   "groups.manage",
+  "settings.manage",
+  "tasks.manage",
   "finance.read",
   "finance.write",
   "reports.read",
@@ -41,11 +43,13 @@ export const ROLE_PERMISSIONS: Record<Role, readonly Permission[]> = {
     "animals.retag",
     "events.write",
     "groups.manage",
+    "settings.manage",
+    "tasks.manage",
     "finance.read",
     "reports.read",
   ],
   field: ["animals.read", "animals.write", "events.write"],
-  veterinarian: ["animals.read", "events.write", "reports.read"],
+  veterinarian: ["animals.read", "events.write", "reports.read", "tasks.manage"],
   finance: ["animals.read", "finance.read", "finance.write", "reports.read"],
 };
 

@@ -10,6 +10,7 @@ import { authRoutes } from "./modules/auth.ts";
 import { farmRoutes } from "./modules/farms.ts";
 import { importRoutes } from "./modules/imports.ts";
 import { mediaRoutes } from "./modules/media.ts";
+import { reproRoutes } from "./modules/repro/routes.ts";
 import { orgRoutes } from "./modules/org.ts";
 import { syncRoutes } from "./modules/sync.ts";
 import { CSRF_HEADER, registerAuth } from "./plugins/auth.ts";
@@ -57,6 +58,7 @@ export async function buildApp(ctx: AppContext) {
   syncRoutes(app, ctx);
   mediaRoutes(app, ctx);
   importRoutes(app, ctx);
+  reproRoutes(app, ctx);
 
   return app;
 }

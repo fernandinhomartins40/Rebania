@@ -9,6 +9,12 @@ import { FarmPage } from "./pages/Farm.tsx";
 import { HerdPage } from "./pages/Herd.tsx";
 import { IdentifyPage } from "./pages/Identify.tsx";
 import { ImportPage } from "./pages/Import.tsx";
+import { BirthPage } from "./pages/repro/Birth.tsx";
+import { BreedingPage } from "./pages/repro/Breeding.tsx";
+import { PregnancyPage } from "./pages/repro/Pregnancy.tsx";
+import { ReproductionPage } from "./pages/repro/Reproduction.tsx";
+import { WeaningPage } from "./pages/repro/Weaning.tsx";
+import { SettingsPage } from "./pages/Settings.tsx";
 import { LandingPage } from "./pages/landing/Landing.tsx";
 import { LoginPage } from "./pages/Login.tsx";
 import { MovePage } from "./pages/Move.tsx";
@@ -66,6 +72,12 @@ function Routed() {
           <Route path="registrar/animal" element={<NewAnimalPage />} />
           <Route path="registrar/pesagem" element={<WeighPage />} />
           <Route path="registrar/movimentacao" element={<MovePage />} />
+          <Route path="registrar/nascimento" element={<BirthPage />} />
+          <Route path="registrar/inseminacao" element={<BreedingPage />} />
+          <Route path="registrar/diagnostico" element={<PregnancyPage />} />
+          <Route path="registrar/desmama" element={<WeaningPage />} />
+          <Route path="reproducao" element={<ReproductionPage />} />
+          <Route path="fazenda/configuracoes" element={<SettingsPage />} />
           <Route path="agenda" element={<AgendaPage />} />
           <Route path="fazenda" element={<FarmPage />} />
           <Route path="fazenda/equipe" element={<TeamPage />} />

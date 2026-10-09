@@ -1,4 +1,13 @@
-import { ArrowLeftRight, ChevronRight, Weight, type LucideIcon } from "lucide-react";
+import {
+  ArrowLeftRight,
+  Baby,
+  ChevronRight,
+  HeartPulse,
+  Stethoscope,
+  Venus,
+  Weight,
+  type LucideIcon,
+} from "lucide-react";
 import { Link } from "react-router";
 import { BrandCow, type IconComponent } from "../components/brand.tsx";
 import { PageHead } from "../components/ui.tsx";
@@ -6,7 +15,7 @@ import { useSession } from "../state/session.tsx";
 
 /**
  * Registrar: só lista jornadas implementadas (MN §5: não rotular como disponível
- * o que ainda não existe). Reprodução, sanidade, trato e venda entram nos goals G3–G5.
+ * o que ainda não existe).
  */
 export function RegisterPage() {
   const { can } = useSession();
@@ -38,6 +47,35 @@ export function RegisterPage() {
       title: "Movimentação",
       desc: "Trocar de lote ou pasto com data efetiva.",
       icon: ArrowLeftRight,
+      perm: "events.write",
+    },
+    {
+      to: "/registrar/nascimento",
+      title: "Nascimento",
+      desc: "Mãe, data, sexo e identificação da cria; gêmeos e natimorto.",
+      icon: Baby,
+      ochre: true,
+      perm: "events.write",
+    },
+    {
+      to: "/registrar/inseminacao",
+      title: "Inseminação ou monta",
+      desc: "IA, monta natural ou repasse, em grupo.",
+      icon: Venus,
+      perm: "events.write",
+    },
+    {
+      to: "/registrar/diagnostico",
+      title: "Diagnóstico de prenhez",
+      desc: "Prenha, vazia ou inconclusivo, com responsável.",
+      icon: Stethoscope,
+      perm: "events.write",
+    },
+    {
+      to: "/registrar/desmama",
+      title: "Desmama",
+      desc: "Bezerros desmamados com peso opcional.",
+      icon: HeartPulse,
       perm: "events.write",
     },
   ];

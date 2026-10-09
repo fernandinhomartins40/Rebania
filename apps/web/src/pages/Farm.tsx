@@ -1,6 +1,8 @@
 import {
   ChevronRight,
   CloudUpload,
+  Settings,
+  Venus,
   FileSpreadsheet,
   MapPin,
   UserRound,
@@ -20,6 +22,20 @@ export function FarmPage() {
       title: "Lotes e pastos",
       desc: "Organização do rebanho para manejo e indicadores.",
       icon: MapPin,
+      show: true,
+    },
+    {
+      to: "/reproducao",
+      title: "Reprodução",
+      desc: "Partos previstos, estações de monta e protocolos IATF.",
+      icon: Venus,
+      show: true,
+    },
+    {
+      to: "/fazenda/configuracoes",
+      title: "Configurações",
+      desc: "Nome da fazenda e parâmetros de reprodução.",
+      icon: Settings,
       show: true,
     },
     {

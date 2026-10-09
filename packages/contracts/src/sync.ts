@@ -6,6 +6,7 @@ import {
   RecordWeightInput,
   UpdateAnimalInput,
 } from "./animal.ts";
+import { BirthInput, BreedingInput, PregnancyCheckInput, WeaningInput } from "./repro.ts";
 
 /**
  * Envelope de mutação offline. `organizationId`/tenant NÃO vem do cliente:
@@ -25,6 +26,12 @@ export const SyncMutation = z.discriminatedUnion("type", [
   Base.extend({ type: z.literal("animal.move"), payload: MoveAnimalInput }),
   /** entityId = animalId; payload.id = id da pesagem (gerado no aparelho) */
   Base.extend({ type: z.literal("weight.record"), payload: RecordWeightInput }),
+  /** Operações reprodutivas: entityId = id da operação (gerado no aparelho). */
+  Base.extend({ type: z.literal("breeding.record"), payload: BreedingInput }),
+  Base.extend({ type: z.literal("pregnancy.record"), payload: PregnancyCheckInput }),
+  /** entityId = id do parto */
+  Base.extend({ type: z.literal("birth.record"), payload: BirthInput }),
+  Base.extend({ type: z.literal("weaning.record"), payload: WeaningInput }),
 ]);
 export type SyncMutation = z.input<typeof SyncMutation>;
 export type SyncMutationType = SyncMutation["type"];
@@ -43,6 +50,8 @@ export const SyncReceipt = z.discriminatedUnion("status", [
     status: z.literal("accepted"),
     entityId: uuid,
     version: z.number().int().nullable(),
+    /** Resultado detalhado (ex.: operação em grupo com exceções). Estável em reenvios. */
+    detail: z.unknown().optional(),
   }),
   z.object({
     mutationId: z.string(),

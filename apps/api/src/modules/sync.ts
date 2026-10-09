@@ -20,12 +20,22 @@ import {
   recordWeight,
   updateAnimal,
 } from "./animals/service.ts";
+import {
+  recordBirth,
+  recordBreeding,
+  recordPregnancyChecks,
+  recordWeaning,
+} from "./repro/service.ts";
 
 const PERMISSION: Record<SyncMutation["type"], Permission> = {
   "animal.create": "animals.write",
   "animal.update": "animals.write",
   "animal.move": "events.write",
   "weight.record": "events.write",
+  "breeding.record": "events.write",
+  "pregnancy.record": "events.write",
+  "birth.record": "events.write",
+  "weaning.record": "events.write",
 };
 
 export function syncRoutes(app: FastifyInstance, ctx: AppContext) {
@@ -95,6 +105,14 @@ export function syncRoutes(app: FastifyInstance, ctx: AppContext) {
             return moveAnimal(tx, fctx, m.entityId, m.payload, meta);
           case "weight.record":
             return recordWeight(tx, fctx, m.entityId, m.payload, meta);
+          case "breeding.record":
+            return recordBreeding(tx, fctx, { ...m.payload, operationId: m.entityId }, meta);
+          case "pregnancy.record":
+            return recordPregnancyChecks(tx, fctx, { ...m.payload, operationId: m.entityId }, meta);
+          case "birth.record":
+            return recordBirth(tx, fctx, { ...m.payload, id: m.entityId }, meta);
+          case "weaning.record":
+            return recordWeaning(tx, fctx, { ...m.payload, operationId: m.entityId }, meta);
         }
       },
     });

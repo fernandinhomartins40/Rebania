@@ -78,6 +78,31 @@ enum WeightSource {
   import
 }
 
+enum BreedingKind {
+  artificial_insemination
+  natural_service
+  cleanup_bull
+}
+
+enum PregnancyResult {
+  pregnant
+  open
+  inconclusive
+}
+
+enum ReproStatus {
+  open
+  bred
+  pregnant
+  unknown
+}
+
+enum TaskStatus {
+  open
+  done
+  cancelled
+}
+
 enum AttachmentStatus {
   uploading
   processing
@@ -110,6 +135,8 @@ model Farm {
   organizationId String    @map("organization_id") @db.Uuid
   name           String
   timezone       String    @default("America/Sao_Paulo")
+  /// Parâmetros configurados pela fazenda (ex.: reprodução), validados em @rebania/domain.
+  settings       Json      @default("{}")
   createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
   archivedAt     DateTime? @map("archived_at") @db.Timestamptz(3)
 
@@ -125,6 +152,13 @@ model Farm {
   changes      ChangeLog[]
   attachments  Attachment[]
   imports      ImportBatch[]
+  seasons      BreedingSeason[]
+  protocols    ReproProtocol[]
+  executions   ProtocolExecution[]
+  breedings    BreedingEvent[]
+  checks       PregnancyCheck[]
+  births       Birth[]
+  tasks        Task[]
 
   @@unique([organizationId, id])
   @@map("farms")
@@ -283,27 +317,37 @@ model Animal {
   damId              String?        @map("dam_id") @db.Uuid
   sireId             String?        @map("sire_id") @db.Uuid
   notes              String?
+  /// Projeção da situação reprodutiva (recalculada a cada evento reprodutivo).
+  reproStatus        ReproStatus?   @map("repro_status")
+  reproStatusSince   DateTime?      @map("repro_status_since") @db.Date
+  expectedCalvingOn  DateTime?      @map("expected_calving_on") @db.Date
   version            Int            @default(1)
   createdById        String?        @map("created_by_id") @db.Uuid
   createdAt          DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt          DateTime       @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  farm            Farm                @relation(fields: [organizationId, farmId], references: [organizationId, id])
-  group           Group?              @relation(fields: [farmId, groupId], references: [farmId, id], onUpdate: Cascade)
-  pasture         Pasture?            @relation(fields: [farmId, pastureId], references: [farmId, id], onUpdate: Cascade)
-  dam             Animal?             @relation("Dam", fields: [organizationId, damId], references: [organizationId, id], onDelete: NoAction, onUpdate: NoAction)
-  sire            Animal?             @relation("Sire", fields: [organizationId, sireId], references: [organizationId, id], onDelete: NoAction, onUpdate: NoAction)
-  offspringAsDam  Animal[]            @relation("Dam")
-  offspringAsSire Animal[]            @relation("Sire")
-  identifiers     AnimalIdentifier[]
-  weights         WeightMeasurement[]
-  events          AnimalEvent[]
-  attachments     Attachment[]
+  farm              Farm                @relation(fields: [organizationId, farmId], references: [organizationId, id])
+  group             Group?              @relation(fields: [farmId, groupId], references: [farmId, id], onUpdate: Cascade)
+  pasture           Pasture?            @relation(fields: [farmId, pastureId], references: [farmId, id], onUpdate: Cascade)
+  dam               Animal?             @relation("Dam", fields: [organizationId, damId], references: [organizationId, id], onDelete: NoAction, onUpdate: NoAction)
+  sire              Animal?             @relation("Sire", fields: [organizationId, sireId], references: [organizationId, id], onDelete: NoAction, onUpdate: NoAction)
+  offspringAsDam    Animal[]            @relation("Dam")
+  offspringAsSire   Animal[]            @relation("Sire")
+  identifiers       AnimalIdentifier[]
+  weights           WeightMeasurement[]
+  events            AnimalEvent[]
+  attachments       Attachment[]
+  breedingsAsFemale BreedingEvent[]     @relation("BreedingFemale")
+  breedingsAsSire   BreedingEvent[]     @relation("BreedingSire")
+  checks            PregnancyCheck[]
+  birthsAsDam       Birth[]             @relation("BirthDam")
+  calfOf            BirthCalf[]
 
   @@unique([organizationId, id])
   @@unique([farmId, id])
   @@index([farmId, status])
   @@index([farmId, groupId])
+  @@index([farmId, expectedCalvingOn])
   @@map("animals")
 }
 
@@ -475,4 +519,189 @@ model ImportBatch {
   farm Farm @relation(fields: [organizationId, farmId], references: [organizationId, id])
 
   @@map("import_batches")
+}
+
+model BreedingSeason {
+  id             String    @id @default(uuid()) @db.Uuid
+  organizationId String    @map("organization_id") @db.Uuid
+  farmId         String    @map("farm_id") @db.Uuid
+  name           String
+  startDate      DateTime  @map("start_date") @db.Date
+  endDate        DateTime  @map("end_date") @db.Date
+  notes          String?
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  archivedAt     DateTime? @map("archived_at") @db.Timestamptz(3)
+
+  farm      Farm             @relation(fields: [organizationId, farmId], references: [organizationId, id])
+  breedings BreedingEvent[]
+  checks    PregnancyCheck[]
+
+  @@unique([farmId, id])
+  @@map("breeding_seasons")
+}
+
+/// Protocolo reprodutivo definido pela fazenda/veterinário. Cada edição cria nova versão.
+model ReproProtocol {
+  id             String    @id @default(uuid()) @db.Uuid
+  organizationId String    @map("organization_id") @db.Uuid
+  farmId         String    @map("farm_id") @db.Uuid
+  /// Agrupa as versões de um mesmo protocolo.
+  lineageId      String    @map("lineage_id") @db.Uuid
+  version        Int
+  name           String
+  /// [{ day, title, description, inseminate }]
+  steps          Json
+  responsible    String?
+  notes          String?
+  createdById    String?   @map("created_by_id") @db.Uuid
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  supersededAt   DateTime? @map("superseded_at") @db.Timestamptz(3)
+
+  farm       Farm                @relation(fields: [organizationId, farmId], references: [organizationId, id])
+  executions ProtocolExecution[]
+
+  @@unique([lineageId, version])
+  @@unique([farmId, id])
+  @@map("repro_protocols")
+}
+
+model ProtocolExecution {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  farmId         String   @map("farm_id") @db.Uuid
+  protocolId     String   @map("protocol_id") @db.Uuid
+  startDate      DateTime @map("start_date") @db.Date
+  /// Snapshot dos animais no início (não muda se o filtro mudar depois).
+  animalIds      String[] @map("animal_ids") @db.Uuid
+  seasonId       String?  @map("season_id") @db.Uuid
+  createdById    String?  @map("created_by_id") @db.Uuid
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  farm      Farm            @relation(fields: [organizationId, farmId], references: [organizationId, id])
+  protocol  ReproProtocol   @relation(fields: [farmId, protocolId], references: [farmId, id])
+  breedings BreedingEvent[]
+
+  @@map("protocol_executions")
+}
+
+model BreedingEvent {
+  id             String       @id @default(uuid()) @db.Uuid
+  organizationId String       @map("organization_id") @db.Uuid
+  farmId         String       @map("farm_id") @db.Uuid
+  femaleId       String       @map("female_id") @db.Uuid
+  kind           BreedingKind
+  date           DateTime     @db.Date
+  /// Fim da exposição (monta natural em período).
+  endDate        DateTime?    @map("end_date") @db.Date
+  sireId         String?      @map("sire_id") @db.Uuid
+  semen          String?
+  technician     String?
+  seasonId       String?      @map("season_id") @db.Uuid
+  executionId    String?      @map("execution_id") @db.Uuid
+  notes          String?
+  createdById    String?      @map("created_by_id") @db.Uuid
+  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamptz(3)
+  voidedAt       DateTime?    @map("voided_at") @db.Timestamptz(3)
+  voidReason     String?      @map("void_reason")
+
+  farm      Farm               @relation(fields: [organizationId, farmId], references: [organizationId, id])
+  female    Animal             @relation("BreedingFemale", fields: [organizationId, femaleId], references: [organizationId, id])
+  sire      Animal?            @relation("BreedingSire", fields: [organizationId, sireId], references: [organizationId, id], onDelete: NoAction, onUpdate: NoAction)
+  season    BreedingSeason?    @relation(fields: [farmId, seasonId], references: [farmId, id], onDelete: NoAction, onUpdate: NoAction)
+  execution ProtocolExecution? @relation(fields: [executionId], references: [id])
+
+  @@index([femaleId, date])
+  @@index([farmId, date])
+  @@map("breeding_events")
+}
+
+model PregnancyCheck {
+  id                     String          @id @default(uuid()) @db.Uuid
+  organizationId         String          @map("organization_id") @db.Uuid
+  farmId                 String          @map("farm_id") @db.Uuid
+  femaleId               String          @map("female_id") @db.Uuid
+  date                   DateTime        @db.Date
+  result                 PregnancyResult
+  method                 String?
+  examiner               String?
+  estimatedGestationDays Int?            @map("estimated_gestation_days")
+  seasonId               String?         @map("season_id") @db.Uuid
+  notes                  String?
+  createdById            String?         @map("created_by_id") @db.Uuid
+  createdAt              DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
+  voidedAt               DateTime?       @map("voided_at") @db.Timestamptz(3)
+  voidReason             String?         @map("void_reason")
+
+  farm   Farm            @relation(fields: [organizationId, farmId], references: [organizationId, id])
+  female Animal          @relation(fields: [organizationId, femaleId], references: [organizationId, id])
+  season BreedingSeason? @relation(fields: [farmId, seasonId], references: [farmId, id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([femaleId, date])
+  @@map("pregnancy_checks")
+}
+
+model Birth {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  farmId         String   @map("farm_id") @db.Uuid
+  damId          String   @map("dam_id") @db.Uuid
+  date           DateTime @db.Date
+  assistance     String   @default("none")
+  sireId         String?  @map("sire_id") @db.Uuid
+  notes          String?
+  createdById    String?  @map("created_by_id") @db.Uuid
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  farm   Farm        @relation(fields: [organizationId, farmId], references: [organizationId, id])
+  dam    Animal      @relation("BirthDam", fields: [organizationId, damId], references: [organizationId, id])
+  calves BirthCalf[]
+
+  @@index([damId, date])
+  @@index([farmId, date])
+  @@map("births")
+}
+
+model BirthCalf {
+  id             String    @id @default(uuid()) @db.Uuid
+  organizationId String    @map("organization_id") @db.Uuid
+  birthId        String    @map("birth_id") @db.Uuid
+  /// Nulo para natimorto (registrado no parto, sem cadastro de animal).
+  animalId       String?   @map("animal_id") @db.Uuid
+  sex            AnimalSex
+  stillborn      Boolean   @default(false)
+  birthWeightKg  Decimal?  @map("birth_weight_kg") @db.Decimal(6, 2)
+
+  birth  Birth   @relation(fields: [birthId], references: [id], onDelete: Cascade)
+  animal Animal? @relation(fields: [organizationId, animalId], references: [organizationId, id])
+
+  @@map("birth_calves")
+}
+
+/// Agenda: tarefas com origem rastreável (manejo, protocolo, configuração) ou manuais.
+model Task {
+  id             String     @id @default(uuid()) @db.Uuid
+  organizationId String     @map("organization_id") @db.Uuid
+  farmId         String     @map("farm_id") @db.Uuid
+  type           String
+  title          String
+  description    String?
+  dueOn          DateTime   @map("due_on") @db.Date
+  status         TaskStatus @default(open)
+  /// Snapshot dos animais alvo.
+  animalIds      String[]   @map("animal_ids") @db.Uuid
+  assigneeId     String?    @map("assignee_id") @db.Uuid
+  sourceType     String?    @map("source_type")
+  sourceId       String?    @map("source_id") @db.Uuid
+  dedupeKey      String?    @map("dedupe_key")
+  createdById    String?    @map("created_by_id") @db.Uuid
+  createdAt      DateTime   @default(now()) @map("created_at") @db.Timestamptz(3)
+  completedAt    DateTime?  @map("completed_at") @db.Timestamptz(3)
+  completedById  String?    @map("completed_by_id") @db.Uuid
+  resolution     String?
+
+  farm Farm @relation(fields: [organizationId, farmId], references: [organizationId, id])
+
+  @@unique([farmId, dedupeKey])
+  @@index([farmId, status, dueOn])
+  @@map("tasks")
 }

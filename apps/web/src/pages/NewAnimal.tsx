@@ -422,6 +422,10 @@ export function NewAnimalPage() {
                   primaryIdentifier: normalizeIdentifier(d.idType, d.idValue),
                   lastWeight: null,
                   photo: null,
+                  repro:
+                    d.category === "heifer" || d.category === "cow"
+                      ? { status: "unknown", since: null, expectedCalvingOn: null }
+                      : null,
                   createdAt: new Date().toISOString(),
                   updatedAt: new Date().toISOString(),
                   pending: true,

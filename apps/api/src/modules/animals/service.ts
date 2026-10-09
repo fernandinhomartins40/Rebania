@@ -102,6 +102,14 @@ export function toAnimalDto(a: AnimalWithRelations): AnimalDto {
     lastWeight: last
       ? { weightKg: Number(last.weightKg), measuredOn: dateToCivil(last.measuredOn) }
       : null,
+    repro:
+      a.sex === "female" && (a.category === "heifer" || a.category === "cow")
+        ? {
+            status: a.reproStatus ?? "unknown",
+            since: dateToCivil(a.reproStatusSince),
+            expectedCalvingOn: dateToCivil(a.expectedCalvingOn),
+          }
+        : null,
     photo: photo
       ? {
           id: photo.id,
@@ -550,6 +558,32 @@ export function summarizeEvent(
       return `Identificador adicionado: ${formatIdentifier(data.type as IdentifierType, String(data.value))}`;
     case "retagged":
       return `Troca de identificação: ${formatIdentifier(data.type as IdentifierType, String(data.value))} (anterior: ${(data.retired as string[]).join(", ")})`;
+    case "bred": {
+      const kinds: Record<string, string> = {
+        artificial_insemination: "Inseminação artificial",
+        natural_service: "Monta natural",
+        cleanup_bull: "Repasse",
+      };
+      return `${kinds[String(data.kind)] ?? "Cobertura"}${data.semen ? ` · sêmen ${String(data.semen)}` : ""}${data.technician ? ` · ${String(data.technician)}` : ""}`;
+    }
+    case "pregnancy_check": {
+      const r: Record<string, string> = {
+        pregnant: "Prenha",
+        open: "Vazia",
+        inconclusive: "Inconclusivo",
+      };
+      const ec = data.expectedCalving as { date?: string } | null;
+      return `Diagnóstico: ${r[String(data.result)] ?? "—"}${data.estimatedGestationDays ? ` · ${String(data.estimatedGestationDays)} dias de gestação` : ""}${ec?.date ? ` · parto previsto ${ec.date.split("-").reverse().join("/")}` : ""}`;
+    }
+    case "calved": {
+      const n = (data.calfIds as string[] | undefined)?.length ?? 0;
+      const st = Number(data.stillborn ?? 0);
+      return `Parto: ${n} cria(s) viva(s)${st ? ` · ${st} natimorto(s)` : ""}`;
+    }
+    case "weaned":
+      return `Desmama${data.weightKg ? ` · ${Number(data.weightKg).toLocaleString("pt-BR")} kg` : ""}`;
+    case "correction":
+      return `Correção: ${String(data.label)} anulado(a) · ${String(data.reason)}`;
     case "updated":
       return `Dados atualizados: ${Object.keys((data.after as object) ?? {}).join(", ")}`;
     default:

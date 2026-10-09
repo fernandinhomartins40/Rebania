@@ -192,3 +192,24 @@ export function ageLabel(months: number): string {
   if (months < 24) return `${months} ${months === 1 ? "mês" : "meses"}`;
   return `${Math.floor(months / 12)} anos`;
 }
+
+/** Selo de situação como nas pranchas: Prenha · Vazia · Inseminada · Reprodutor · Ativo. */
+export function StatusBadge({
+  animal,
+}: {
+  animal: { status: string; category: string; pending?: boolean; repro: { status: string } | null };
+}) {
+  if (animal.pending) return <span className="badge badge-warn">no aparelho</span>;
+  if (animal.status !== "active") return <span className="badge badge-muted">Inativo</span>;
+  if (animal.category === "bull") return <span className="badge badge-info">Reprodutor</span>;
+  switch (animal.repro?.status) {
+    case "pregnant":
+      return <span className="badge badge-ok">Prenha</span>;
+    case "open":
+      return <span className="badge badge-warn">Vazia</span>;
+    case "bred":
+      return <span className="badge badge-info">Inseminada</span>;
+    default:
+      return <span className="badge badge-ok">Ativo</span>;
+  }
+}

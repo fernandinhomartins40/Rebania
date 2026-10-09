@@ -291,6 +291,10 @@ export function NewAnimalScreen({ back }: { back: () => void }) {
                       primaryIdentifier: normalizeIdentifier("visual_tag", tag),
                       lastWeight: null,
                       photo: null,
+                      repro:
+                        category === "heifer" || category === "cow"
+                          ? { status: "unknown", since: null, expectedCalvingOn: null }
+                          : null,
                       createdAt: new Date().toISOString(),
                       updatedAt: new Date().toISOString(),
                       pending: true,

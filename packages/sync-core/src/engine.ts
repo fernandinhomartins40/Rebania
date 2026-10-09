@@ -43,7 +43,7 @@ export interface SyncState {
 }
 
 export type SubmitResult =
-  | { status: "synced"; entityId: string }
+  | { status: "synced"; entityId: string; detail?: unknown }
   | { status: "saved_locally" }
   | { status: "rejected" | "conflict"; message: string };
 
@@ -73,6 +73,8 @@ export class SyncEngine {
   private listeners = new Set<(s: SyncState) => void>();
   private timer: unknown;
   private running: Promise<void> | null = null;
+  /** Recibos aceitos recentes (para devolver detalhes ao `submit`). */
+  private recent = new Map<string, unknown>();
   state: SyncState;
 
   constructor(opts: SyncEngineOptions) {
@@ -145,6 +147,10 @@ export class SyncEngine {
     try {
       const before = await this.outbox.items();
       const r = await this.outbox.flush(this.api);
+      for (const rc of r.receipts) {
+        if (rc.status === "accepted") this.recent.set(rc.mutationId, rc.detail);
+      }
+      if (this.recent.size > 200) this.recent = new Map([...this.recent].slice(-100));
       if (r.networkError) throw new NetworkFailure();
       await this.reconcile(before);
       await this.pull();
@@ -237,7 +243,14 @@ export class SyncEngine {
     const item = (await this.outbox.items()).find(
       (i) => i.mutation.mutationId === mutation.mutationId,
     );
-    if (!item) return { status: "synced", entityId: mutation.entityId };
+    if (!item) {
+      const detail = this.recent.get(mutation.mutationId);
+      return {
+        status: "synced",
+        entityId: mutation.entityId,
+        ...(detail !== undefined ? { detail } : {}),
+      };
+    }
     if (item.state === "pending") return { status: "saved_locally" };
     return {
       status: item.state,

@@ -13,6 +13,12 @@ export const MERGE_POLICY: Record<SyncMutationType, MergePolicy> = {
   "animal.update": "version_check",
   "animal.move": "version_check",
   "weight.record": "append",
+  // Operações reprodutivas criam registros novos (idempotentes por operação);
+  // o servidor valida cada animal e devolve exceções em vez de sobrescrever.
+  "breeding.record": "append",
+  "pregnancy.record": "append",
+  "birth.record": "idempotent_create",
+  "weaning.record": "append",
 };
 
 /** Backoff exponencial com teto e jitter determinístico opcional (para testes). */

@@ -1,4 +1,13 @@
-import { Bell, CalendarDays, CirclePlus, House, MapPin, Plus, Warehouse } from "lucide-react";
+import {
+  Bell,
+  CalendarDays,
+  CirclePlus,
+  House,
+  MapPin,
+  Plus,
+  Venus,
+  Warehouse,
+} from "lucide-react";
 import { BrandCow, type IconComponent } from "./brand.tsx";
 import { NavLink, Outlet, Link } from "react-router";
 import { useSession } from "../state/session.tsx";
@@ -15,6 +24,7 @@ const NAV: { to: string; label: string; icon: IconComponent; end?: boolean }[] =
 
 /** Atalhos do desktop: só áreas implementadas (Reprodução, Sanidade etc. entram nos próximos goals). */
 const SHORTCUTS: { to: string; label: string; icon: IconComponent }[] = [
+  { to: "/reproducao", label: "Reprodução", icon: Venus },
   { to: "/fazenda/lotes", label: "Lotes e pastos", icon: MapPin },
 ];
 

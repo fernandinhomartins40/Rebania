@@ -15,7 +15,7 @@ import {
 } from "@rebania/domain";
 import { useMemo, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router";
-import { ageLabel, AnimalPhoto, Empty, formatKg, Loading } from "../components/ui.tsx";
+import { ageLabel, AnimalPhoto, Empty, formatKg, Loading, StatusBadge } from "../components/ui.tsx";
 import { cameraScanSupported } from "../components/CameraScanner.tsx";
 import { useLocalHerd } from "../state/local-data.ts";
 import { useSession } from "../state/session.tsx";
@@ -200,11 +200,7 @@ export function HerdPage() {
               <div className="body">
                 <span className="name">
                   {CATEGORY_LABEL[a.category]} {a.primaryIdentifier ?? "s/ identificação"}
-                  {a.pending ? (
-                    <span className="badge badge-warn">no aparelho</span>
-                  ) : (
-                    <span className="badge badge-ok">Ativo</span>
-                  )}
+                  <StatusBadge animal={a} />
                 </span>
                 <span className="meta">
                   {[a.breed ?? "Raça não informada", a.groupName ?? "Sem lote"].join(" · ")}

@@ -47,6 +47,8 @@ export class MemoryOutboxStorage implements OutboxStorage {
 }
 
 export interface FlushResult {
+  /** Recibos recebidos nesta rodada (inclui detalhes de operações em grupo). */
+  receipts: SyncReceipt[];
   accepted: number;
   rejected: number;
   conflicts: number;
@@ -90,6 +92,7 @@ export class Outbox {
   /** Envia pendentes em lotes ordenados. Rejeitados/conflitos ficam visíveis, nunca somem. */
   async flush(transport: SyncTransport): Promise<FlushResult> {
     const result: FlushResult = {
+      receipts: [],
       accepted: 0,
       rejected: 0,
       conflicts: 0,
@@ -122,6 +125,7 @@ export class Outbox {
           }
           break outer;
         }
+        result.receipts.push(...response.receipts);
         const receipts = new Map(response.receipts.map((r) => [r.mutationId, r]));
         for (const item of batch) {
           const receipt = receipts.get(item.mutation.mutationId);

@@ -34,6 +34,7 @@ function animal(id: string): LocalAnimal {
     primaryIdentifier: "1",
     lastWeight: null,
     photo: null,
+    repro: null,
     createdAt: "",
     updatedAt: "",
   };

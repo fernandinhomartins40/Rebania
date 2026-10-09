@@ -1,5 +1,6 @@
 import {
   ArrowRight,
+  Baby,
   CalendarDays,
   ChevronDown,
   ChevronRight,
@@ -26,6 +27,7 @@ import { AnimalPhoto, Loading } from "../components/ui.tsx";
 import { useLocalHerd } from "../state/local-data.ts";
 import { useSession } from "../state/session.tsx";
 import { useSync } from "../state/sync.tsx";
+import { useOpenTasks } from "../state/tasks.ts";
 
 function greeting(): { text: string; night: boolean } {
   const h = new Date().getHours();
@@ -50,6 +52,7 @@ export function TodayPage() {
   const { me, farm, farms, selectFarm } = useSession();
   const { state } = useSync();
   const { animals, places } = useLocalHerd(farm!.id);
+  const { tasks } = useOpenTasks(farm!.id);
   const navigate = useNavigate();
   if (!animals) return <Loading />;
 
@@ -65,7 +68,34 @@ export function TodayPage() {
   const noGroup = active.filter((a) => !a.groupId);
   const problems = state.rejected + state.conflict;
 
+  const dueTasks = (tasks ?? []).filter((t) => daysBetween(t.dueOn, today) >= 0);
+  const overdue = dueTasks.filter((t) => t.dueOn < today);
+  const pregnant = active.filter((a) => a.repro?.status === "pregnant").length;
+  const calving30 = active.filter(
+    (a) => a.repro?.expectedCalvingOn && daysBetween(today, a.repro.expectedCalvingOn) <= 30,
+  );
   const priorities: Priority[] = [];
+  if (dueTasks.length) {
+    priorities.push({
+      icon: CalendarDays,
+      title: `${dueTasks.length} tarefa(s) para hoje${overdue.length ? ` · ${overdue.length} atrasada(s)` : ""}`,
+      why: dueTasks
+        .slice(0, 2)
+        .map((t) => t.title)
+        .join(" · "),
+      to: "/agenda",
+      action: "Abrir agenda",
+    });
+  }
+  if (calving30.length) {
+    priorities.push({
+      icon: Baby,
+      title: `${calving30.length} parto(s) previsto(s)`,
+      why: "Nos próximos 30 dias (estimativa a partir das coberturas e diagnósticos).",
+      to: "/reproducao",
+      action: "Ver matrizes",
+    });
+  }
   if (problems) {
     priorities.push({
       icon: CircleAlert,
@@ -160,18 +190,25 @@ export function TodayPage() {
             <span>animais</span>
           </div>
         </Link>
-        <a href="#prioridades" className="tile tile-ochre">
+        <Link to="/agenda" className="tile tile-ochre">
           <ClipboardList size={46} aria-hidden="true" />
           <div>
-            <strong>{priorities.length}</strong>
-            <span>{priorities.length === 1 ? "pendência" : "pendências"}</span>
+            <strong>{tasks ? dueTasks.length : "—"}</strong>
+            <span>{dueTasks.length === 1 ? "tarefa" : "tarefas"}</span>
           </div>
-        </a>
+        </Link>
         <Link to="/rebanho?filtro=matrizes" className="tile tile-sage desk-only">
           <BrandCow size={52} aria-hidden="true" />
           <div>
             <strong>{cows}</strong>
             <span>matrizes</span>
+          </div>
+        </Link>
+        <Link to="/rebanho?filtro=matrizes" className="tile tile-sage desk-only">
+          <BrandCow size={52} aria-hidden="true" />
+          <div>
+            <strong>{pregnant}</strong>
+            <span>prenhas</span>
           </div>
         </Link>
         <div className="tile tile-cream desk-only">
@@ -198,8 +235,7 @@ export function TodayPage() {
       {priorities.length === 0 ? (
         <div className="card">
           <p className="hint" style={{ margin: 0 }}>
-            Nada pendente pelos critérios disponíveis. A agenda de partos e vacinações chega com os
-            módulos de reprodução e sanidade.
+            Nada pendente para hoje. Tarefas futuras ficam na Agenda.
           </p>
         </div>
       ) : (

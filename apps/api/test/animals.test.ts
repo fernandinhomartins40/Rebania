@@ -110,7 +110,10 @@ describe("cadastro e passaporte", () => {
     expect(r2.json().id).toBe(r1.json().id);
     expect(
       await env.db.animal.count({
-        where: { identifiers: { some: { normalizedValue: body.identifiers[0]!.value } } },
+        where: {
+          farmId: t.farmId,
+          identifiers: { some: { normalizedValue: body.identifiers[0]!.value } },
+        },
       }),
     ).toBe(1);
     const r3 = await field.post(`${base()}/animals`, newAnimal(), { "idempotency-key": key });

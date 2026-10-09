@@ -12,7 +12,7 @@ export interface IdempotentInput {
   type: string;
   requestHash: string;
   deviceId?: string | null;
-  execute: (tx: Tx) => Promise<{ entityId: string; version: number | null }>;
+  execute: (tx: Tx) => Promise<{ entityId: string; version: number | null; detail?: unknown }>;
 }
 
 /**
@@ -35,6 +35,7 @@ export async function runIdempotent(input: IdempotentInput): Promise<SyncReceipt
         status: "accepted",
         entityId: result.entityId,
         version: result.version,
+        ...(result.detail !== undefined ? { detail: result.detail } : {}),
       };
       await saveReceipt(tx, input, receipt, result.entityId);
       return receipt;

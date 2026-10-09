@@ -1,10 +1,14 @@
 import {
   ArrowLeftRight,
+  Baby,
   CalendarDays,
   ChartColumn,
   ChevronRight,
   MapPin,
   Pencil,
+  Stethoscope,
+  Undo2,
+  Venus,
   Tag,
   Weight,
 } from "lucide-react";
@@ -29,11 +33,13 @@ import {
   formatKg,
   Loading,
   PageHead,
+  StatusBadge,
 } from "../components/ui.tsx";
 import { useLocalAnimal } from "../state/local-data.ts";
 import { useSession } from "../state/session.tsx";
 import { useSync } from "../state/sync.tsx";
 import { PhotoGallery } from "../components/PhotoGallery.tsx";
+import { ReproSection } from "../components/ReproSection.tsx";
 import { RetagPanel } from "./Retag.tsx";
 
 const ORIGIN_LABEL: Record<string, string> = {
@@ -50,6 +56,11 @@ const EVENT_ICON: Record<string, IconComponent> = {
   identifier_added: Tag,
   retagged: Tag,
   updated: Pencil,
+  bred: Venus,
+  pregnancy_check: Stethoscope,
+  calved: Baby,
+  weaned: Baby,
+  correction: Undo2,
 };
 
 const EVENT_TITLE: Record<string, string> = {
@@ -59,6 +70,11 @@ const EVENT_TITLE: Record<string, string> = {
   identifier_added: "Identificador adicionado",
   retagged: "Troca de identificação",
   updated: "Dados atualizados",
+  bred: "Cobertura",
+  pregnancy_check: "Diagnóstico de prenhez",
+  calved: "Parto",
+  weaned: "Desmama",
+  correction: "Correção",
 };
 
 type Tab = "historico" | "fotos" | "dados";
@@ -111,8 +127,8 @@ export function AnimalPage() {
         ) : (
           <BrandCow size={96} aria-hidden="true" />
         )}
-        <span className={`badge pill ${active ? "badge-ok" : "badge-muted"}`}>
-          {animal.pending ? "Salvo no aparelho" : STATUS_LABEL[animal.status]}
+        <span className="pill">
+          <StatusBadge animal={animal} />
         </span>
         {animal.photo ? null : <span className="note">Sem foto</span>}
       </div>
@@ -132,28 +148,38 @@ export function AnimalPage() {
             <span>Peso atual</span>
           </div>
         </div>
-        <div className="stat">
-          {history?.adg ? (
-            <ChartColumn size={26} aria-hidden="true" />
-          ) : (
+        {animal.repro?.expectedCalvingOn ? (
+          <div className="stat">
             <CalendarDays size={26} aria-hidden="true" />
-          )}
-          <div>
-            {history?.adg ? (
-              <>
-                <strong>{history.adg.adgKgPerDay.toLocaleString("pt-BR")} kg/dia</strong>
-                <span>GMD ({history.adg.days} dias)</span>
-              </>
-            ) : (
-              <>
-                <strong>
-                  {animal.birthDate ? ageLabel(ageInMonths(animal.birthDate, today)) : "—"}
-                </strong>
-                <span>Idade</span>
-              </>
-            )}
+            <div>
+              <strong>{formatDate(animal.repro.expectedCalvingOn)}</strong>
+              <span>Parto previsto</span>
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="stat">
+            {history?.adg ? (
+              <ChartColumn size={26} aria-hidden="true" />
+            ) : (
+              <CalendarDays size={26} aria-hidden="true" />
+            )}
+            <div>
+              {history?.adg ? (
+                <>
+                  <strong>{history.adg.adgKgPerDay.toLocaleString("pt-BR")} kg/dia</strong>
+                  <span>GMD ({history.adg.days} dias)</span>
+                </>
+              ) : (
+                <>
+                  <strong>
+                    {animal.birthDate ? ageLabel(ageInMonths(animal.birthDate, today)) : "—"}
+                  </strong>
+                  <span>Idade</span>
+                </>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {active && can("events.write") ? (
@@ -164,6 +190,11 @@ export function AnimalPage() {
           <Link className="btn btn-secondary" to={`/registrar/movimentacao?animal=${animal.id}`}>
             <ArrowLeftRight size={20} /> Movimentar
           </Link>
+          {animal.repro ? (
+            <Link className="btn btn-secondary" to={`/registrar/nascimento?mae=${animal.id}`}>
+              <Baby size={20} /> Registrar nascimento
+            </Link>
+          ) : null}
         </div>
       ) : null}
       {animal.pending ? (
@@ -291,6 +322,7 @@ export function AnimalPage() {
                 </table>
               </>
             ) : null}
+            {animal.repro ? <ReproSection animalId={animal.id} /> : null}
             <h2 style={{ marginTop: 24 }}>Identificadores</h2>
             <ul className="list">
               {animal.identifiers.map((i) => (
