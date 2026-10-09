@@ -1,0 +1,420 @@
+// Rebania — schema do banco. Convenções:
+// - tabelas/colunas em snake_case (@@map/@map), modelos/campos em camelCase;
+// - toda tabela de negócio carrega organization_id (tenant);
+// - consistência de tenant reforçada por FKs compostas definidas em SQL
+//   declaradas nas relações abaixo (ver docs/adr/ADR-002-tenancy.md);
+// - índices parciais, CHECKs e triggers ficam em SQL nas migrations;
+// - histórico é append-only: correções criam novos registros.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  owner
+  manager
+  field
+  veterinarian
+  finance
+}
+
+enum SessionChannel {
+  web
+  mobile
+}
+
+enum AnimalSex {
+  female
+  male
+}
+
+enum AnimalCategory {
+  calf_female
+  calf_male
+  heifer
+  steer
+  cow
+  bull
+  ox
+}
+
+enum AnimalStatus {
+  active
+  sold
+  dead
+  culled
+  transferred_out
+}
+
+enum AnimalOrigin {
+  born_on_farm
+  purchased
+  transferred_in
+  unknown
+}
+
+enum IdentifierType {
+  visual_tag
+  rfid
+  nfc
+  qr
+  provisional
+  other
+}
+
+enum IdentifierStatus {
+  active
+  retired
+}
+
+enum WeightSource {
+  manual
+  scale
+  import
+}
+
+enum JobStatus {
+  queued
+  running
+  done
+  failed
+}
+
+model Organization {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String
+  slug      String   @unique
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  farms       Farm[]
+  memberships Membership[]
+  invitations Invitation[]
+
+  @@map("organizations")
+}
+
+model Farm {
+  id             String    @id @default(uuid()) @db.Uuid
+  organizationId String    @map("organization_id") @db.Uuid
+  name           String
+  timezone       String    @default("America/Sao_Paulo")
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  archivedAt     DateTime? @map("archived_at") @db.Timestamptz(3)
+
+  organization Organization        @relation(fields: [organizationId], references: [id])
+  animals      Animal[]
+  groups       Group[]
+  pastures     Pasture[]
+  memberFarms  MembershipFarm[]
+  identifiers  AnimalIdentifier[]
+  weights      WeightMeasurement[]
+  events       AnimalEvent[]
+  mutations    SyncMutation[]
+  changes      ChangeLog[]
+
+  @@unique([organizationId, id])
+  @@map("farms")
+}
+
+model User {
+  id           String    @id @default(uuid()) @db.Uuid
+  email        String    @unique
+  name         String
+  passwordHash String    @map("password_hash")
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  disabledAt   DateTime? @map("disabled_at") @db.Timestamptz(3)
+
+  memberships Membership[]
+  sessions    AuthSession[]
+
+  @@map("users")
+}
+
+model Membership {
+  id             String    @id @default(uuid()) @db.Uuid
+  organizationId String    @map("organization_id") @db.Uuid
+  userId         String    @map("user_id") @db.Uuid
+  role           Role
+  allFarms       Boolean   @default(false) @map("all_farms")
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  revokedAt      DateTime? @map("revoked_at") @db.Timestamptz(3)
+
+  organization Organization     @relation(fields: [organizationId], references: [id])
+  user         User             @relation(fields: [userId], references: [id])
+  farms        MembershipFarm[]
+
+  @@unique([organizationId, userId])
+  @@unique([organizationId, id])
+  @@map("memberships")
+}
+
+model MembershipFarm {
+  membershipId   String @map("membership_id") @db.Uuid
+  farmId         String @map("farm_id") @db.Uuid
+  organizationId String @map("organization_id") @db.Uuid
+
+  membership Membership @relation(fields: [organizationId, membershipId], references: [organizationId, id], onDelete: Cascade)
+  farm       Farm       @relation(fields: [organizationId, farmId], references: [organizationId, id])
+
+  @@id([membershipId, farmId])
+  @@map("membership_farms")
+}
+
+model Invitation {
+  id             String    @id @default(uuid()) @db.Uuid
+  organizationId String    @map("organization_id") @db.Uuid
+  email          String
+  role           Role
+  allFarms       Boolean   @default(false) @map("all_farms")
+  farmIds        String[]  @map("farm_ids") @db.Uuid
+  tokenHash      String    @unique @map("token_hash")
+  expiresAt      DateTime  @map("expires_at") @db.Timestamptz(3)
+  acceptedAt     DateTime? @map("accepted_at") @db.Timestamptz(3)
+  revokedAt      DateTime? @map("revoked_at") @db.Timestamptz(3)
+  invitedById    String?   @map("invited_by_id") @db.Uuid
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+
+  @@index([organizationId, email])
+  @@map("invitations")
+}
+
+model AuthSession {
+  id               String         @id @default(uuid()) @db.Uuid
+  userId           String         @map("user_id") @db.Uuid
+  channel          SessionChannel
+  accessHash       String         @unique @map("access_hash")
+  accessExpiresAt  DateTime       @map("access_expires_at") @db.Timestamptz(3)
+  refreshHash      String?        @unique @map("refresh_hash")
+  refreshExpiresAt DateTime?      @map("refresh_expires_at") @db.Timestamptz(3)
+  deviceLabel      String?        @map("device_label")
+  userAgent        String?        @map("user_agent")
+  createdAt        DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
+  lastUsedAt       DateTime       @default(now()) @map("last_used_at") @db.Timestamptz(3)
+  revokedAt        DateTime?      @map("revoked_at") @db.Timestamptz(3)
+  revokedReason    String?        @map("revoked_reason")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@map("auth_sessions")
+}
+
+model AuditEntry {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String?  @map("organization_id") @db.Uuid
+  farmId         String?  @map("farm_id") @db.Uuid
+  actorUserId    String?  @map("actor_user_id") @db.Uuid
+  action         String
+  entityType     String   @map("entity_type")
+  entityId       String?  @map("entity_id")
+  data           Json     @default("{}")
+  ip             String?
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([organizationId, createdAt])
+  @@index([entityType, entityId])
+  @@map("audit_entries")
+}
+
+model Group {
+  id             String    @id @default(uuid()) @db.Uuid
+  organizationId String    @map("organization_id") @db.Uuid
+  farmId         String    @map("farm_id") @db.Uuid
+  name           String
+  notes          String?
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  archivedAt     DateTime? @map("archived_at") @db.Timestamptz(3)
+
+  farm    Farm     @relation(fields: [organizationId, farmId], references: [organizationId, id])
+  animals Animal[]
+
+  @@unique([farmId, id])
+  @@map("groups")
+}
+
+model Pasture {
+  id             String    @id @default(uuid()) @db.Uuid
+  organizationId String    @map("organization_id") @db.Uuid
+  farmId         String    @map("farm_id") @db.Uuid
+  name           String
+  notes          String?
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  archivedAt     DateTime? @map("archived_at") @db.Timestamptz(3)
+
+  farm    Farm     @relation(fields: [organizationId, farmId], references: [organizationId, id])
+  animals Animal[]
+
+  @@unique([farmId, id])
+  @@map("pastures")
+}
+
+model Animal {
+  id                 String         @id @default(uuid()) @db.Uuid
+  organizationId     String         @map("organization_id") @db.Uuid
+  farmId             String         @map("farm_id") @db.Uuid
+  sex                AnimalSex
+  category           AnimalCategory
+  status             AnimalStatus   @default(active)
+  breed              String?
+  birthDate          DateTime?      @map("birth_date") @db.Date
+  birthDateEstimated Boolean        @default(false) @map("birth_date_estimated")
+  origin             AnimalOrigin
+  entryDate          DateTime?      @map("entry_date") @db.Date
+  groupId            String?        @map("group_id") @db.Uuid
+  pastureId          String?        @map("pasture_id") @db.Uuid
+  damId              String?        @map("dam_id") @db.Uuid
+  sireId             String?        @map("sire_id") @db.Uuid
+  notes              String?
+  version            Int            @default(1)
+  createdById        String?        @map("created_by_id") @db.Uuid
+  createdAt          DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt          DateTime       @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  farm            Farm                @relation(fields: [organizationId, farmId], references: [organizationId, id])
+  group           Group?              @relation(fields: [farmId, groupId], references: [farmId, id], onUpdate: Cascade)
+  pasture         Pasture?            @relation(fields: [farmId, pastureId], references: [farmId, id], onUpdate: Cascade)
+  dam             Animal?             @relation("Dam", fields: [organizationId, damId], references: [organizationId, id], onDelete: NoAction, onUpdate: NoAction)
+  sire            Animal?             @relation("Sire", fields: [organizationId, sireId], references: [organizationId, id], onDelete: NoAction, onUpdate: NoAction)
+  offspringAsDam  Animal[]            @relation("Dam")
+  offspringAsSire Animal[]            @relation("Sire")
+  identifiers     AnimalIdentifier[]
+  weights         WeightMeasurement[]
+  events          AnimalEvent[]
+
+  @@unique([organizationId, id])
+  @@unique([farmId, id])
+  @@index([farmId, status])
+  @@index([farmId, groupId])
+  @@map("animals")
+}
+
+model AnimalIdentifier {
+  id              String           @id @default(uuid()) @db.Uuid
+  organizationId  String           @map("organization_id") @db.Uuid
+  farmId          String           @map("farm_id") @db.Uuid
+  animalId        String           @map("animal_id") @db.Uuid
+  type            IdentifierType
+  rawValue        String           @map("raw_value")
+  normalizedValue String           @map("normalized_value")
+  status          IdentifierStatus @default(active)
+  source          String           @default("manual")
+  createdById     String?          @map("created_by_id") @db.Uuid
+  createdAt       DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
+  retiredAt       DateTime?        @map("retired_at") @db.Timestamptz(3)
+  retiredReason   String?          @map("retired_reason")
+
+  animal Animal @relation(fields: [farmId, animalId], references: [farmId, id], onUpdate: Cascade)
+  farm   Farm   @relation(fields: [organizationId, farmId], references: [organizationId, id], onUpdate: Cascade)
+
+  @@index([farmId, normalizedValue])
+  @@index([organizationId, normalizedValue])
+  @@index([animalId])
+  @@map("animal_identifiers")
+}
+
+model WeightMeasurement {
+  id             String       @id @default(uuid()) @db.Uuid
+  organizationId String       @map("organization_id") @db.Uuid
+  farmId         String       @map("farm_id") @db.Uuid
+  animalId       String       @map("animal_id") @db.Uuid
+  weightKg       Decimal      @map("weight_kg") @db.Decimal(7, 2)
+  measuredOn     DateTime     @map("measured_on") @db.Date
+  source         WeightSource @default(manual)
+  notes          String?
+  createdById    String?      @map("created_by_id") @db.Uuid
+  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamptz(3)
+  voidedAt       DateTime?    @map("voided_at") @db.Timestamptz(3)
+
+  animal Animal @relation(fields: [organizationId, animalId], references: [organizationId, id])
+  farm   Farm   @relation(fields: [organizationId, farmId], references: [organizationId, id])
+
+  @@index([animalId, measuredOn])
+  @@index([farmId, measuredOn])
+  @@map("weight_measurements")
+}
+
+/// Linha do tempo do animal (projeção append-only). Correções criam nova entrada
+/// apontando para a corrigida em `correctsEventId`.
+model AnimalEvent {
+  id               String   @id @default(uuid()) @db.Uuid
+  organizationId   String   @map("organization_id") @db.Uuid
+  farmId           String   @map("farm_id") @db.Uuid
+  animalId         String   @map("animal_id") @db.Uuid
+  type             String
+  occurredOn       DateTime @map("occurred_on") @db.Date
+  data             Json     @default("{}")
+  correctsEventId  String?  @map("corrects_event_id") @db.Uuid
+  sourceMutationId String?  @map("source_mutation_id") @db.Uuid
+  actorUserId      String?  @map("actor_user_id") @db.Uuid
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  animal Animal @relation(fields: [organizationId, animalId], references: [organizationId, id])
+  farm   Farm   @relation(fields: [organizationId, farmId], references: [organizationId, id])
+
+  @@index([animalId, occurredOn])
+  @@map("animal_events")
+}
+
+/// Recibo idempotente de mutações (sync offline e requisições com Idempotency-Key).
+model SyncMutation {
+  mutationId     String   @id @map("mutation_id") @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  farmId         String   @map("farm_id") @db.Uuid
+  deviceId       String?  @map("device_id") @db.Uuid
+  actorUserId    String   @map("actor_user_id") @db.Uuid
+  type           String
+  entityId       String?  @map("entity_id") @db.Uuid
+  requestHash    String   @map("request_hash")
+  receipt        Json
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  farm Farm @relation(fields: [organizationId, farmId], references: [organizationId, id])
+
+  @@index([organizationId, createdAt])
+  @@map("sync_mutations")
+}
+
+/// Feed de mudanças para o pull incremental (cursor = seq).
+model ChangeLog {
+  seq            BigInt   @id @default(autoincrement())
+  organizationId String   @map("organization_id") @db.Uuid
+  farmId         String   @map("farm_id") @db.Uuid
+  entity         String
+  entityId       String   @map("entity_id") @db.Uuid
+  op             String   @default("upsert")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  farm Farm @relation(fields: [organizationId, farmId], references: [organizationId, id])
+
+  @@index([farmId, seq])
+  @@map("change_log")
+}
+
+/// Fila persistente em PostgreSQL (sem Redis). Consumida com SKIP LOCKED.
+model Job {
+  id          String    @id @default(uuid()) @db.Uuid
+  queue       String
+  payload     Json      @default("{}")
+  status      JobStatus @default(queued)
+  runAt       DateTime  @default(now()) @map("run_at") @db.Timestamptz(3)
+  attempts    Int       @default(0)
+  maxAttempts Int       @default(5) @map("max_attempts")
+  lockedAt    DateTime? @map("locked_at") @db.Timestamptz(3)
+  lockedBy    String?   @map("locked_by")
+  lastError   String?   @map("last_error")
+  dedupeKey   String?   @unique @map("dedupe_key")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  finishedAt  DateTime? @map("finished_at") @db.Timestamptz(3)
+
+  @@index([status, queue, runAt])
+  @@map("jobs")
+}

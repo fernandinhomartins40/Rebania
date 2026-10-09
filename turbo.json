@@ -1,0 +1,13 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "ui": "stream",
+  "tasks": {
+    "build": { "dependsOn": ["^build", "@rebania/db#generate"], "outputs": ["dist/**"] },
+    "generate": { "cache": false },
+    "typecheck": { "dependsOn": ["@rebania/db#generate"] },
+    "lint": {},
+    "test": { "dependsOn": ["@rebania/db#generate"] },
+    "test:integration": { "dependsOn": ["@rebania/db#generate"], "cache": false },
+    "dev": { "cache": false, "persistent": true, "dependsOn": ["@rebania/db#generate"] }
+  }
+}

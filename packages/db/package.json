@@ -1,0 +1,26 @@
+{
+  "name": "@rebania/db",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "generate": "prisma generate",
+    "migrate:dev": "prisma migrate dev",
+    "migrate:deploy": "prisma migrate deploy",
+    "typecheck": "tsc -p tsconfig.json",
+    "lint": "eslint src --ignore-pattern src/generated"
+  },
+  "devDependencies": {
+    "@rebania/config": "workspace:*",
+    "@types/pg": "8.20.0",
+    "prisma": "7.10.0"
+  },
+  "dependencies": {
+    "@prisma/adapter-pg": "7.10.0",
+    "@prisma/client": "7.10.0",
+    "pg": "8.23.1"
+  }
+}
