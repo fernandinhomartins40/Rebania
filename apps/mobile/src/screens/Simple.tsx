@@ -1,40 +1,70 @@
 import type { OutboxItem } from "@rebania/sync-core";
-import { ChevronRight, LogOut, Weight } from "lucide-react-native";
-import { useEffect, useState } from "react";
+import { ArrowLeftRight, ChevronRight, LogOut, Weight } from "lucide-react-native";
+import { useEffect, useState, type ReactNode } from "react";
+import { BrandCow } from "../components/brand.tsx";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { SyncBadge } from "../components/SyncBadge.tsx";
 import { Button, Card, Muted, PageHead, s } from "../components/ui.tsx";
 import { useSession } from "../lib/session.tsx";
 import { color, radius, space } from "../theme.ts";
 
-export function RegisterScreen({ weigh }: { weigh: () => void }) {
+export function RegisterScreen({ open }: { open: (kind: "new" | "weigh" | "move") => void }) {
+  const items: {
+    kind: "new" | "weigh" | "move";
+    title: string;
+    desc: string;
+    icon: ReactNode;
+    ochre?: boolean;
+  }[] = [
+    {
+      kind: "new",
+      title: "Cadastrar animal",
+      desc: "Brinco ou ID provisório, categoria e origem.",
+      icon: <BrandCow size={30} color={color.brandPrimary} />,
+    },
+    {
+      kind: "weigh",
+      title: "Pesagem",
+      desc: "Ler ou digitar o brinco e informar o peso.",
+      icon: <Weight size={30} color={color.brandOchre} strokeWidth={1.8} />,
+      ochre: true,
+    },
+    {
+      kind: "move",
+      title: "Movimentação",
+      desc: "Trocar de lote ou pasto.",
+      icon: <ArrowLeftRight size={30} color={color.brandPrimary} strokeWidth={1.8} />,
+    },
+  ];
   return (
     <ScrollView contentContainerStyle={s.screen}>
       <PageHead title="Registrar" />
-      <Pressable
-        accessibilityRole="button"
-        onPress={weigh}
-        style={[s.card, { flexDirection: "row", alignItems: "center", gap: space.lg }]}
-      >
-        <View
-          style={{
-            width: 56,
-            height: 56,
-            borderRadius: radius.md,
-            backgroundColor: color.brandOchreSoft,
-            alignItems: "center",
-            justifyContent: "center",
-          }}
+      {items.map((i) => (
+        <Pressable
+          key={i.kind}
+          accessibilityRole="button"
+          onPress={() => open(i.kind)}
+          style={[s.card, { flexDirection: "row", alignItems: "center", gap: space.lg }]}
         >
-          <Weight size={30} color={color.brandOchre} strokeWidth={1.8} />
-        </View>
-        <View style={{ flex: 1 }}>
-          <Text style={s.rowTitle}>Pesagem</Text>
-          <Muted>Ler ou digitar o brinco e informar o peso.</Muted>
-        </View>
-        <ChevronRight size={22} color={color.textPrimary} />
-      </Pressable>
-      <Muted>Cadastro e movimentação estão no web; chegam ao app na próxima versão.</Muted>
+          <View
+            style={{
+              width: 56,
+              height: 56,
+              borderRadius: radius.md,
+              backgroundColor: i.ochre ? color.brandOchreSoft : color.brandSage,
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            {i.icon}
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={s.rowTitle}>{i.title}</Text>
+            <Muted>{i.desc}</Muted>
+          </View>
+          <ChevronRight size={22} color={color.textPrimary} />
+        </Pressable>
+      ))}
     </ScrollView>
   );
 }

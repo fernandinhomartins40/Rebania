@@ -3,6 +3,7 @@ import type { JobHandler } from "./handlers.ts";
 
 export interface RunnerOptions {
   db: Db;
+  mediaDir?: string;
   workerId: string;
   handlers: Record<string, JobHandler>;
   log?: (msg: string, extra?: Record<string, unknown>) => void;
@@ -10,7 +11,7 @@ export interface RunnerOptions {
 
 /** Processa até esvaziar a fila disponível. Retorna quantos jobs executou. */
 export async function drain(
-  { db, workerId, handlers, log = () => {} }: RunnerOptions,
+  { db, workerId, handlers, mediaDir = "./var/media", log = () => {} }: RunnerOptions,
   max = 100,
 ): Promise<number> {
   let processed = 0;
@@ -20,7 +21,7 @@ export async function drain(
     processed++;
     const handler = handlers[job.queue]!;
     try {
-      await handler(db, job.payload);
+      await handler({ db, mediaDir }, job.payload);
       await completeJob(db, job.id);
       log("job concluído", { id: job.id, queue: job.queue });
     } catch (err) {

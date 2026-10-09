@@ -23,6 +23,7 @@
     "@rebania/contracts": "workspace:*",
     "@rebania/db": "workspace:*",
     "@rebania/domain": "workspace:*",
+    "@rebania/media": "workspace:*",
     "@rebania/sync-core": "workspace:*",
     "fastify": "5.12.5",
     "zod": "4.3.5"
@@ -31,6 +32,7 @@
     "@rebania/config": "workspace:*",
     "@types/pg": "8.20.0",
     "pg": "8.23.1",
+    "sharp": "0.35.5",
     "tsup": "8.5.1",
     "tsx": "4.23.15"
   }

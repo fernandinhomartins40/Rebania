@@ -57,6 +57,9 @@ services:
       TRUST_PROXY: "true"
       LOG_LEVEL: info
       DB_POOL_MAX: "10"
+      MEDIA_DIR: /data/media
+    volumes:
+      - rebania_media:/data/media
     depends_on:
       postgres: { condition: service_healthy }
     networks: [internal]
@@ -70,6 +73,9 @@ services:
     environment:
       DATABASE_URL: postgresql://rebania:${POSTGRES_PASSWORD}@postgres:5432/rebania
       DB_POOL_MAX: "3"
+      MEDIA_DIR: /data/media
+    volumes:
+      - rebania_media:/data/media
     depends_on:
       postgres: { condition: service_healthy }
     networks: [internal]
@@ -95,3 +101,5 @@ networks:
 volumes:
   rebania_pgdata:
     name: rebania_pgdata
+  rebania_media:
+    name: rebania_media

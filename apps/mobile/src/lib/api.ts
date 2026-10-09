@@ -16,6 +16,7 @@ export class ApiError extends Error {
     public readonly status: number,
     public readonly code: string,
     message: string,
+    public readonly details?: Record<string, unknown>,
   ) {
     super(message);
   }
@@ -51,16 +52,29 @@ export async function hasSession() {
   return Boolean(await readTokens());
 }
 
-async function rawFetch(method: string, path: string, body: unknown, token: string | null) {
+async function rawFetch(
+  method: string,
+  path: string,
+  body: unknown,
+  token: string | null,
+  extraHeaders?: Record<string, string>,
+) {
+  const binary = body instanceof Uint8Array;
   try {
     return await fetch(`${API_URL}${path}`, {
       method,
       headers: {
         "x-rebania-csrf": "1",
-        ...(body !== undefined ? { "content-type": "application/json" } : {}),
+        ...(body !== undefined && !binary ? { "content-type": "application/json" } : {}),
         ...(token ? { authorization: `Bearer ${token}` } : {}),
+        ...extraHeaders,
       },
-      body: body === undefined ? undefined : JSON.stringify(body),
+      body:
+        body === undefined
+          ? undefined
+          : binary
+            ? (body as unknown as string)
+            : JSON.stringify(body),
     });
   } catch {
     throw new NetworkError();
@@ -86,20 +100,27 @@ async function refresh(): Promise<boolean> {
   return refreshing;
 }
 
+/** Token atual para imagens autenticadas (Image source headers). */
+export async function authHeaders(): Promise<Record<string, string>> {
+  const t = await readTokens();
+  return t ? { authorization: `Bearer ${t.accessToken}` } : {};
+}
+
 export async function api<T>(
   method: "GET" | "POST" | "PATCH",
   path: string,
   body?: unknown,
+  extraHeaders?: Record<string, string>,
 ): Promise<T> {
   let t = await readTokens();
   if (t && new Date(t.accessExpiresAt).getTime() - Date.now() < 30_000) {
     await refresh();
     t = await readTokens();
   }
-  let res = await rawFetch(method, path, body, t?.accessToken ?? null);
+  let res = await rawFetch(method, path, body, t?.accessToken ?? null, extraHeaders);
   if (res.status === 401 && t) {
     if (await refresh())
-      res = await rawFetch(method, path, body, (await readTokens())!.accessToken);
+      res = await rawFetch(method, path, body, (await readTokens())!.accessToken, extraHeaders);
   }
   if (res.status === 204) return undefined as T;
   const data = await res.json().catch(() => null);
@@ -109,6 +130,7 @@ export async function api<T>(
       res.status,
       data?.error?.code ?? "error",
       data?.error?.message ?? "Erro inesperado.",
+      data?.error?.details,
     );
   }
   return data as T;

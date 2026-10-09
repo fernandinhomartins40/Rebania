@@ -22,7 +22,9 @@ RUN pnpm --filter @rebania/api deploy --prod --legacy /out/api \
  && pnpm --filter @rebania/db deploy --legacy /out/db
 
 FROM ${NODE_IMAGE} AS runtime
-ENV NODE_ENV=production
+ENV NODE_ENV=production MEDIA_DIR=/data/media
+# Diretório do volume de mídia (compartilhado por api e worker) já pertencente ao usuário sem root.
+RUN mkdir -p /data/media && chown node:node /data/media
 WORKDIR /app
 USER node
 

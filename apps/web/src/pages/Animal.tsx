@@ -3,7 +3,6 @@ import {
   CalendarDays,
   ChartColumn,
   ChevronRight,
-  Image,
   MapPin,
   Pencil,
   Tag,
@@ -34,6 +33,7 @@ import {
 import { useLocalAnimal } from "../state/local-data.ts";
 import { useSession } from "../state/session.tsx";
 import { useSync } from "../state/sync.tsx";
+import { PhotoGallery } from "../components/PhotoGallery.tsx";
 import { RetagPanel } from "./Retag.tsx";
 
 const ORIGIN_LABEL: Record<string, string> = {
@@ -102,12 +102,19 @@ export function AnimalPage() {
         back="/rebanho"
       />
 
-      <div className="hero-photo" aria-label="Foto do animal (ainda não enviada)">
-        <BrandCow size={96} aria-hidden="true" />
+      <div
+        className="hero-photo"
+        aria-label={animal.photo ? "Foto do animal" : "Foto do animal (ainda não enviada)"}
+      >
+        {animal.photo ? (
+          <img src={animal.photo.displayUrl} alt="" />
+        ) : (
+          <BrandCow size={96} aria-hidden="true" />
+        )}
         <span className={`badge pill ${active ? "badge-ok" : "badge-muted"}`}>
           {animal.pending ? "Salvo no aparelho" : STATUS_LABEL[animal.status]}
         </span>
-        <span className="note">Sem foto</span>
+        {animal.photo ? null : <span className="note">Sem foto</span>}
       </div>
 
       <div className="stats">
@@ -214,14 +221,7 @@ export function AnimalPage() {
           )
         ) : null}
 
-        {tab === "fotos" ? (
-          <Empty title="Nenhuma foto ainda" icon={<Image size={48} aria-hidden="true" />}>
-            <p className="hint">
-              O envio de fotos com upload retomável chega na próxima entrega (memória visual do
-              animal).
-            </p>
-          </Empty>
-        ) : null}
+        {tab === "fotos" ? <PhotoGallery animalId={animal.id} /> : null}
 
         {tab === "dados" ? (
           <div className="card review">

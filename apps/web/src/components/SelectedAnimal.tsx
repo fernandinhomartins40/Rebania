@@ -12,7 +12,7 @@ export function SelectedAnimal({
 }) {
   return (
     <div className="card selected-animal">
-      <AnimalPhoto size="md" />
+      <AnimalPhoto size="md" src={animal.photo?.thumbUrl} />
       <div className="info">
         <strong>
           {CATEGORY_LABEL[animal.category]} {animal.primaryIdentifier}

@@ -1,4 +1,7 @@
 import { randomUUID } from "node:crypto";
+import { mkdtempSync } from "node:fs";
+import { tmpdir } from "node:os";
+import path from "node:path";
 import { createDb, type Db, type Role } from "@rebania/db";
 import type { FastifyInstance } from "fastify";
 import { buildApp } from "../src/app.ts";
@@ -12,6 +15,7 @@ export interface TestEnv {
   app: FastifyInstance;
   db: Db;
   clock: { now: Date };
+  mediaDir: string;
   close: () => Promise<void>;
 }
 
@@ -25,6 +29,7 @@ export async function createTestEnv(): Promise<TestEnv> {
       LOG_LEVEL: "silent",
       WEB_BASE_URL: "http://web.test",
     }),
+    mediaDir: mkdtempSync(path.join(tmpdir(), "rebania-media-")),
   };
   const db = createDb({ url, max: 5 });
   const clock = { now: new Date("2026-10-08T15:00:00Z") };
@@ -33,6 +38,7 @@ export async function createTestEnv(): Promise<TestEnv> {
     app,
     db,
     clock,
+    mediaDir: config.mediaDir,
     close: async () => {
       await app.close();
       await db.$disconnect();

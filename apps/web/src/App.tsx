@@ -8,6 +8,7 @@ import { AnimalPage } from "./pages/Animal.tsx";
 import { FarmPage } from "./pages/Farm.tsx";
 import { HerdPage } from "./pages/Herd.tsx";
 import { IdentifyPage } from "./pages/Identify.tsx";
+import { ImportPage } from "./pages/Import.tsx";
 import { LandingPage } from "./pages/landing/Landing.tsx";
 import { LoginPage } from "./pages/Login.tsx";
 import { MovePage } from "./pages/Move.tsx";
@@ -68,6 +69,7 @@ function Routed() {
           <Route path="agenda" element={<AgendaPage />} />
           <Route path="fazenda" element={<FarmPage />} />
           <Route path="fazenda/equipe" element={<TeamPage />} />
+          <Route path="fazenda/importar" element={<ImportPage />} />
           <Route path="fazenda/lotes" element={<PlacesPage />} />
           <Route path="fazenda/sincronizacao" element={<SyncCenterPage />} />
           <Route path="fazenda/conta" element={<AccountPage />} />

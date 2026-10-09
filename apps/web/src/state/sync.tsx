@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { SyncEngine, type SyncState } from "../offline/engine.ts";
+import { processUploads } from "../offline/uploads.ts";
 
 interface SyncValue {
   engine: SyncEngine;
@@ -19,7 +20,10 @@ export function SyncProvider({ farmId, children }: { farmId: string; children: R
     let lastPhase = engine.state.phase;
     const unsub = engine.subscribe((s) => {
       setState(s);
-      if (lastPhase === "syncing" && s.phase !== "syncing") setVersion((v) => v + 1);
+      if (lastPhase === "syncing" && s.phase !== "syncing") {
+        setVersion((v) => v + 1);
+        if (s.online) void processUploads();
+      }
       lastPhase = s.phase;
     });
     void engine.start();

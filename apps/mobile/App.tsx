@@ -11,6 +11,8 @@ import { SessionProvider, useSession } from "./src/lib/session.tsx";
 import { AnimalScreen } from "./src/screens/Animal.tsx";
 import { HerdScreen } from "./src/screens/Herd.tsx";
 import { LoginScreen } from "./src/screens/Login.tsx";
+import { MoveScreen } from "./src/screens/Move.tsx";
+import { NewAnimalScreen } from "./src/screens/NewAnimal.tsx";
 import { AgendaScreen, FarmScreen, RegisterScreen } from "./src/screens/Simple.tsx";
 import { TodayScreen } from "./src/screens/Today.tsx";
 import { WeighScreen } from "./src/screens/Weigh.tsx";
@@ -18,7 +20,11 @@ import { color } from "./src/theme.ts";
 
 type Tab = "hoje" | "rebanho" | "registrar" | "agenda" | "fazenda";
 type Overlay =
-  { kind: "animal"; animal: LocalAnimal } | { kind: "weigh"; animal?: LocalAnimal } | null;
+  | { kind: "animal"; animal: LocalAnimal }
+  | { kind: "weigh"; animal?: LocalAnimal }
+  | { kind: "new" }
+  | { kind: "move" }
+  | null;
 
 function initials(name?: string) {
   const p = (name ?? "?").trim().split(/\s+/);
@@ -43,6 +49,10 @@ function Shell() {
         weigh={() => setOverlay({ kind: "weigh", animal: overlay.animal })}
       />
     );
+  } else if (overlay?.kind === "new") {
+    content = <NewAnimalScreen back={() => setOverlay(null)} />;
+  } else if (overlay?.kind === "move") {
+    content = <MoveScreen back={() => setOverlay(null)} />;
   } else if (overlay?.kind === "weigh") {
     content = <WeighScreen preset={overlay.animal ?? null} back={() => setOverlay(null)} />;
   } else if (tab === "hoje") {
@@ -50,7 +60,7 @@ function Shell() {
   } else if (tab === "rebanho") {
     content = <HerdScreen open={(a) => setOverlay({ kind: "animal", animal: a })} />;
   } else if (tab === "registrar") {
-    content = <RegisterScreen weigh={() => setOverlay({ kind: "weigh" })} />;
+    content = <RegisterScreen open={(kind) => setOverlay({ kind })} />;
   } else if (tab === "agenda") {
     content = <AgendaScreen />;
   } else {

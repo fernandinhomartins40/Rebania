@@ -1,18 +1,21 @@
-import type { AnimalHistory } from "@rebania/contracts";
+import type { AnimalHistory, Media } from "@rebania/contracts";
 import { CATEGORY_LABEL, IDENTIFIER_LABEL, SEX_LABEL, STATUS_LABEL } from "@rebania/domain";
 import type { LocalAnimal } from "@rebania/sync-core";
+import * as ImagePicker from "expo-image-picker";
 import {
   ArrowLeftRight,
   CalendarDays,
+  Camera,
   ChartColumn,
+  ImagePlus,
   MapPin,
   Pencil,
   Tag,
   Weight,
   type LucideIcon,
 } from "lucide-react-native";
-import { useEffect, useState } from "react";
-import { ScrollView, Text, View } from "react-native";
+import { useCallback, useEffect, useState } from "react";
+import { Image, ScrollView, Text, View } from "react-native";
 import {
   Button,
   Card,
@@ -23,8 +26,9 @@ import {
   PhotoPlaceholder,
   s,
 } from "../components/ui.tsx";
-import { api } from "../lib/api.ts";
+import { api, API_URL, authHeaders } from "../lib/api.ts";
 import { useSession } from "../lib/session.tsx";
+import { pendingUploads, processUploads, queuePhoto, type PendingUpload } from "../lib/uploads.ts";
 import { color, space } from "../theme.ts";
 
 const EVENT: Record<string, { title: string; icon: LucideIcon }> = {
@@ -36,6 +40,7 @@ const EVENT: Record<string, { title: string; icon: LucideIcon }> = {
   updated: { title: "Dados atualizados", icon: Pencil },
 };
 
+/** Passaporte (T11) no app: foto, métricas, fotos com envio offline e histórico. */
 export function AnimalScreen({
   animal,
   back,
@@ -45,16 +50,63 @@ export function AnimalScreen({
   back: () => void;
   weigh: () => void;
 }) {
-  const { farm } = useSession();
+  const { farm, dataVersion } = useSession();
   const [history, setHistory] = useState<AnimalHistory | null>(null);
   const [offline, setOffline] = useState(false);
+  const [photos, setPhotos] = useState<Media[]>([]);
+  const [pending, setPending] = useState<PendingUpload[]>([]);
+  const [headers, setHeaders] = useState<Record<string, string>>({});
+  const [photoError, setPhotoError] = useState<string | null>(null);
+
+  const loadPhotos = useCallback(() => {
+    if (!farm) return;
+    api<Media[]>("GET", `/v1/farms/${farm.id}/animals/${animal.id}/media`).then(
+      setPhotos,
+      () => undefined,
+    );
+    void pendingUploads(animal.id).then(setPending);
+  }, [farm, animal.id]);
+
   useEffect(() => {
     if (!farm) return;
     api<AnimalHistory>("GET", `/v1/farms/${farm.id}/animals/${animal.id}/history`).then(
       setHistory,
       () => setOffline(true),
     );
-  }, [farm, animal.id]);
+    loadPhotos();
+    void authHeaders().then(setHeaders);
+  }, [farm, animal.id, dataVersion, loadPhotos]);
+
+  const addPhoto = async (camera: boolean) => {
+    if (!farm) return;
+    setPhotoError(null);
+    const perm = camera
+      ? await ImagePicker.requestCameraPermissionsAsync()
+      : await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!perm.granted) {
+      setPhotoError("Permissão negada. Ative nas configurações do aparelho.");
+      return;
+    }
+    const opts: ImagePicker.ImagePickerOptions = {
+      mediaTypes: ["images"],
+      quality: 0.8,
+      exif: false,
+    };
+    const r = camera
+      ? await ImagePicker.launchCameraAsync(opts)
+      : await ImagePicker.launchImageLibraryAsync(opts);
+    const asset = r.canceled ? undefined : r.assets[0];
+    if (!asset) return;
+    try {
+      await queuePhoto(farm.id, animal.id, asset.uri, asset.mimeType ?? "image/jpeg");
+    } catch {
+      setPhotoError("Não foi possível guardar a foto no aparelho.");
+      return;
+    }
+    loadPhotos();
+    await processUploads();
+    loadPhotos();
+  };
 
   const stats: [LucideIcon, string, string][] = [
     [MapPin, animal.groupName ?? "—", "Lote"],
@@ -71,7 +123,15 @@ export function AnimalScreen({
         onBack={back}
       />
       <View style={{ marginBottom: space.lg }}>
-        <PhotoPlaceholder width="100%" height={200} rounded={16} />
+        {animal.photo ? (
+          <Image
+            source={{ uri: `${API_URL}${animal.photo.displayUrl}`, headers }}
+            style={{ width: "100%", height: 220, borderRadius: 16 }}
+            accessibilityLabel="Foto do animal"
+          />
+        ) : (
+          <PhotoPlaceholder width="100%" height={200} rounded={16} />
+        )}
         <View style={[s.badge, { position: "absolute", left: 12, bottom: 12 }]}>
           <Text style={s.badgeText}>{STATUS_LABEL[animal.status]}</Text>
         </View>
@@ -106,6 +166,44 @@ export function AnimalScreen({
           onPress={weigh}
         />
       ) : null}
+
+      <Text style={[s.h2, { marginTop: space.md }]}>Fotos</Text>
+      {photoError ? <Muted>{photoError}</Muted> : null}
+      <View style={{ flexDirection: "row", gap: space.sm }}>
+        <View style={{ flex: 1 }}>
+          <Button
+            label="Fotografar"
+            variant="secondary"
+            icon={<Camera size={20} color={color.brandPrimary} />}
+            onPress={() => void addPhoto(true)}
+          />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Button
+            label="Galeria"
+            variant="secondary"
+            icon={<ImagePlus size={20} color={color.brandPrimary} />}
+            onPress={() => void addPhoto(false)}
+          />
+        </View>
+      </View>
+      {pending.length ? (
+        <Muted>{pending.length} foto(s) no aparelho aguardando envio.</Muted>
+      ) : null}
+      <View
+        style={{ flexDirection: "row", flexWrap: "wrap", gap: space.sm, marginBottom: space.md }}
+      >
+        {photos
+          .filter((p) => p.thumbUrl)
+          .map((p) => (
+            <Image
+              key={p.id}
+              source={{ uri: `${API_URL}${p.thumbUrl}`, headers }}
+              style={{ width: 104, height: 78, borderRadius: 8 }}
+              accessibilityLabel={`Foto de ${fmtDate((p.takenOn ?? p.createdAt).slice(0, 10))}`}
+            />
+          ))}
+      </View>
 
       <Text style={[s.h2, { marginTop: space.md }]}>Histórico</Text>
       {offline ? <Muted>Histórico completo disponível com conexão.</Muted> : null}

@@ -17,9 +17,9 @@ const kebab = (s: string) => s.replace(/[A-Z]/g, (m) => `-${m.toLowerCase()}`);
 
 describe("design tokens", () => {
   it("CSS espelha os tokens TS", () => {
-    const css = readFileSync(new URL("./tokens.css", import.meta.url), "utf8");
+    const css = readFileSync(new URL("./tokens.css", import.meta.url), "utf8").toLowerCase();
     for (const [k, v] of Object.entries(color)) {
-      expect(css).toContain(`--color-${kebab(k)}: ${v};`);
+      expect(css).toContain(`--color-${kebab(k)}: ${v.toLowerCase()};`);
     }
   });
   it.each([

@@ -33,6 +33,7 @@ function animal(id: string): LocalAnimal {
     identifiers: [],
     primaryIdentifier: "1",
     lastWeight: null,
+    photo: null,
     createdAt: "",
     updatedAt: "",
   };

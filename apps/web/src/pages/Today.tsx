@@ -259,7 +259,7 @@ export function TodayPage() {
                 {recent.map((a) => (
                   <tr key={a.id} onClick={() => navigate(`/rebanho/${a.id}`)}>
                     <td className="animal">
-                      <AnimalPhoto size="sm" />
+                      <AnimalPhoto size="sm" src={a.photo?.thumbUrl} />
                       <Link
                         to={`/rebanho/${a.id}`}
                         style={{ color: "inherit", textDecoration: "none" }}

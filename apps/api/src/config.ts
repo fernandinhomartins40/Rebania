@@ -16,6 +16,9 @@ const Env = z.object({
     .default("false")
     .transform((v) => v === "true"),
   DB_POOL_MAX: z.coerce.number().int().min(1).max(100).default(10),
+  // Relativo ao diretório do processo (apps/api ou apps/worker): ambos apontam
+  // para <raiz>/var/media. Em produção use caminho absoluto (volume /data/media).
+  MEDIA_DIR: z.string().default("../../var/media"),
 });
 
 export type Config = {
@@ -28,6 +31,7 @@ export type Config = {
   logLevel: z.infer<typeof Env>["LOG_LEVEL"];
   trustProxy: boolean;
   dbPoolMax: number;
+  mediaDir: string;
   /** Durações de sessão (ms). */
   webSessionTtlMs: number;
   mobileAccessTtlMs: number;
@@ -49,6 +53,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     logLevel: e.LOG_LEVEL,
     trustProxy: e.TRUST_PROXY,
     dbPoolMax: e.DB_POOL_MAX,
+    mediaDir: e.MEDIA_DIR,
     webSessionTtlMs: 12 * 3600_000,
     mobileAccessTtlMs: 15 * 60_000,
     mobileRefreshTtlMs: 30 * 24 * 3600_000,

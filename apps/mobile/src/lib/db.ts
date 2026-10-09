@@ -17,6 +17,7 @@ export function db() {
       CREATE INDEX IF NOT EXISTS animals_farm ON animals (farm_id);
       CREATE TABLE IF NOT EXISTS places (id TEXT PRIMARY KEY NOT NULL, farm_id TEXT NOT NULL, doc TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY NOT NULL, value TEXT NOT NULL);
+      CREATE TABLE IF NOT EXISTS uploads (id TEXT PRIMARY KEY NOT NULL, created_at TEXT NOT NULL, doc TEXT NOT NULL);
     `);
     return d;
   })();

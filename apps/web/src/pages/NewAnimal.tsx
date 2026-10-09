@@ -421,6 +421,7 @@ export function NewAnimalPage() {
                   })),
                   primaryIdentifier: normalizeIdentifier(d.idType, d.idValue),
                   lastWeight: null,
+                  photo: null,
                   createdAt: new Date().toISOString(),
                   updatedAt: new Date().toISOString(),
                   pending: true,

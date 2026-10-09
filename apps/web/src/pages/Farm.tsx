@@ -1,4 +1,12 @@
-import { ChevronRight, CloudUpload, MapPin, UserRound, Users, type LucideIcon } from "lucide-react";
+import {
+  ChevronRight,
+  CloudUpload,
+  FileSpreadsheet,
+  MapPin,
+  UserRound,
+  Users,
+  type LucideIcon,
+} from "lucide-react";
 import { ROLE_LABEL } from "@rebania/domain";
 import { Link } from "react-router";
 import { PageHead } from "../components/ui.tsx";
@@ -13,6 +21,13 @@ export function FarmPage() {
       desc: "Organização do rebanho para manejo e indicadores.",
       icon: MapPin,
       show: true,
+    },
+    {
+      to: "/fazenda/importar",
+      title: "Importar rebanho",
+      desc: "Planilha CSV com revisão antes de gravar.",
+      icon: FileSpreadsheet,
+      show: can("animals.write"),
     },
     {
       to: "/fazenda/equipe",

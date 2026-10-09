@@ -16,7 +16,9 @@
     "@prisma/client": "7.10.0",
     "@rebania/db": "workspace:*",
     "@rebania/domain": "workspace:*",
-    "pg": "8.23.1"
+    "@rebania/media": "workspace:*",
+    "pg": "8.23.1",
+    "sharp": "0.35.5"
   },
   "devDependencies": {
     "@rebania/config": "workspace:*",

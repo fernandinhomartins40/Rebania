@@ -1,4 +1,6 @@
+import { useCallback, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
+import { CameraScanner } from "../components/CameraScanner.tsx";
 import { IdentifyAnimal } from "../components/IdentifyAnimal.tsx";
 import { Alert, Loading, PageHead } from "../components/ui.tsx";
 import { useLocalHerd } from "../state/local-data.ts";
@@ -11,6 +13,9 @@ export function IdentifyPage() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const reader = params.get("modo") === "leitor";
+  const camera = params.get("modo") === "camera";
+  const [scanned, setScanned] = useState<string | null>(null);
+  const onDetect = useCallback((v: string) => setScanned(v), []);
   if (!animals) return <Loading />;
   return (
     <section>
@@ -22,8 +27,15 @@ export function IdentifyPage() {
           homologação do aparelho.
         </Alert>
       ) : null}
+      {camera && !scanned ? <CameraScanner onDetect={onDetect} /> : null}
+      {camera && scanned ? <Alert kind="success">Código lido: {scanned}</Alert> : null}
       <div className="card">
-        <IdentifyAnimal animals={animals} onSelect={(a) => navigate(`/rebanho/${a.id}`)} />
+        <IdentifyAnimal
+          key={scanned ?? "manual"}
+          initialQuery={scanned ?? undefined}
+          animals={animals}
+          onSelect={(a) => navigate(`/rebanho/${a.id}`)}
+        />
       </div>
     </section>
   );

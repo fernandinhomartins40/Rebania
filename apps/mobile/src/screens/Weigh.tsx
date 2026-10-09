@@ -1,6 +1,5 @@
 import {
   assertWeightKg,
-  candidateIdentifiers,
   CATEGORY_LABEL,
   DomainError,
   todayInTimezone,
@@ -8,8 +7,8 @@ import {
 } from "@rebania/domain";
 import { ReadDeduper } from "@rebania/hardware";
 import type { LocalAnimal, SubmitResult } from "@rebania/sync-core";
-import { ArrowRight, ScanBarcode, Weight } from "lucide-react-native";
-import { useMemo, useRef, useState } from "react";
+import { ArrowRight, Weight } from "lucide-react-native";
+import { useRef, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import {
   Button,
@@ -22,6 +21,7 @@ import {
   s,
   Steps,
 } from "../components/ui.tsx";
+import { IdentifyField } from "../components/IdentifyField.tsx";
 import { sqliteCache } from "../lib/db.ts";
 import { mutationBase, useSession } from "../lib/session.tsx";
 import { space } from "../theme.ts";
@@ -33,24 +33,11 @@ export function WeighScreen({ back, preset }: { back: () => void; preset?: Local
   const { animals } = useHerd();
   const [step, setStep] = useState<1 | 2 | 3>(preset ? 2 : 1);
   const [animal, setAnimal] = useState<LocalAnimal | null>(preset ?? null);
-  const [query, setQuery] = useState("");
   const [weight, setWeight] = useState("");
   const [result, setResult] = useState<SubmitResult | null>(null);
   const [busy, setBusy] = useState(false);
   const deduper = useRef(new ReadDeduper());
   const today = farm ? todayInTimezone(farm.timezone) : "";
-
-  const matches = useMemo(() => {
-    if (!query.trim() || !animals) return [];
-    const values = candidateIdentifiers(query).map((c) => c.value);
-    return animals
-      .filter(
-        (a) =>
-          a.status === "active" &&
-          a.identifiers.some((i) => values.some((v) => i.value.startsWith(v))),
-      )
-      .slice(0, 8);
-  }, [animals, query]);
 
   const kg = Number(weight.replace(",", "."));
   let weightError: string | null = null;
@@ -95,7 +82,6 @@ export function WeighScreen({ back, preset }: { back: () => void; preset?: Local
             setResult(null);
             setAnimal(null);
             setWeight("");
-            setQuery("");
             setStep(1);
           }}
         />
@@ -108,41 +94,7 @@ export function WeighScreen({ back, preset }: { back: () => void; preset?: Local
     <ScrollView contentContainerStyle={s.screen} keyboardShouldPersistTaps="handled">
       <PageHead title="Pesagem" onBack={back} />
       <Steps current={step} />
-      {step === 1 ? (
-        <>
-          <Field
-            label="Brinco, RFID ou ID provisório"
-            icon={<ScanBarcode size={20} color="#182A24" />}
-            autoFocus
-            autoCapitalize="characters"
-            value={query}
-            onChangeText={setQuery}
-            onSubmitEditing={() => matches.length === 1 && select(matches[0]!)}
-          />
-          {query && matches.length === 0 ? (
-            <Notice kind="warning" text="Identificador não encontrado nesta fazenda." />
-          ) : null}
-          {matches.map((a) => (
-            <Pressable
-              key={a.id}
-              accessibilityRole="button"
-              onPress={() => select(a)}
-              style={[
-                s.card,
-                { flexDirection: "row", alignItems: "center", gap: space.md, padding: space.md },
-              ]}
-            >
-              <PhotoPlaceholder width={64} height={48} rounded={8} />
-              <View style={{ flex: 1 }}>
-                <Text style={s.rowTitle}>
-                  {CATEGORY_LABEL[a.category]} {a.primaryIdentifier}
-                </Text>
-                <Muted>{a.groupName ?? "Sem lote"}</Muted>
-              </View>
-            </Pressable>
-          ))}
-        </>
-      ) : null}
+      {step === 1 && animals ? <IdentifyField animals={animals} onSelect={select} /> : null}
       {step >= 2 && animal ? (
         <Card style={{ flexDirection: "row", alignItems: "center", gap: space.md }}>
           <PhotoPlaceholder width={84} height={64} />

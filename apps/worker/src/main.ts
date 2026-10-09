@@ -8,6 +8,7 @@ if (!url) throw new Error("DATABASE_URL não definido");
 const db = createDb({ url, max: Number(process.env.DB_POOL_MAX ?? 3) });
 const workerId = `${hostname()}:${process.pid}`;
 const pollMs = Number(process.env.WORKER_POLL_MS ?? 2000);
+const mediaDir = process.env.MEDIA_DIR ?? "../../var/media";
 const log = (msg: string, extra: Record<string, unknown> = {}) =>
   console.log(
     JSON.stringify({ level: "info", time: new Date().toISOString(), workerId, msg, ...extra }),
@@ -29,7 +30,7 @@ while (!stopping) {
       await scheduleRecurring(db, schedules);
       lastMaintenance = Date.now();
     }
-    const n = await drain({ db, workerId, handlers, log });
+    const n = await drain({ db, workerId, handlers, mediaDir, log });
     if (n === 0) await new Promise((r) => setTimeout(r, pollMs));
   } catch (err) {
     log("erro no loop do worker", { error: err instanceof Error ? err.message : String(err) });

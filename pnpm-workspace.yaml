@@ -5,3 +5,4 @@ onlyBuiltDependencies:
   - "@prisma/engines"
   - "prisma"
   - "esbuild"
+  - "sharp"

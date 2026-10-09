@@ -1,22 +1,28 @@
 /** Wrapper mínimo de IndexedDB (sem dependências). */
 const DB_NAME = "rebania";
-const VERSION = 1;
+const VERSION = 2;
 
-export type StoreName = "outbox" | "animals" | "places" | "meta";
+export type StoreName = "outbox" | "animals" | "places" | "meta" | "uploads";
 
 let dbPromise: Promise<IDBDatabase> | null = null;
 
 export function openDb(): Promise<IDBDatabase> {
   dbPromise ??= new Promise((resolve, reject) => {
     const req = indexedDB.open(DB_NAME, VERSION);
-    req.onupgradeneeded = () => {
+    req.onupgradeneeded = (ev) => {
       const db = req.result;
-      db.createObjectStore("outbox", { keyPath: "mutation.mutationId" });
-      const animals = db.createObjectStore("animals", { keyPath: "id" });
-      animals.createIndex("farmId", "farmId");
-      const places = db.createObjectStore("places", { keyPath: "id" });
-      places.createIndex("farmId", "farmId");
-      db.createObjectStore("meta");
+      if (ev.oldVersion < 1) {
+        db.createObjectStore("outbox", { keyPath: "mutation.mutationId" });
+        const animals = db.createObjectStore("animals", { keyPath: "id" });
+        animals.createIndex("farmId", "farmId");
+        const places = db.createObjectStore("places", { keyPath: "id" });
+        places.createIndex("farmId", "farmId");
+        db.createObjectStore("meta");
+      }
+      if (ev.oldVersion < 2) {
+        // Fotos aguardando envio (Blob + metadados), retomáveis por offset.
+        db.createObjectStore("uploads", { keyPath: "id" });
+      }
     };
     req.onsuccess = () => resolve(req.result);
     req.onerror = () => reject(req.error);
@@ -83,7 +89,7 @@ export async function idbDeleteMany(store: StoreName, keys: IDBValidKey[]) {
 export async function clearAll() {
   const db = await openDb();
   await Promise.all(
-    (["outbox", "animals", "places", "meta"] as const).map(
+    (["outbox", "animals", "places", "meta", "uploads"] as const).map(
       (name) =>
         new Promise<void>((resolve, reject) => {
           const t = db.transaction(name, "readwrite");

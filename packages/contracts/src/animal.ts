@@ -115,6 +115,8 @@ export const Animal = z.object({
   identifiers: z.array(Identifier),
   primaryIdentifier: z.string().nullable(),
   lastWeight: z.object({ weightKg: z.number(), measuredOn: z.string() }).nullable(),
+  /** Foto mais recente pronta (rotas autenticadas). */
+  photo: z.object({ id: uuid, thumbUrl: z.string(), displayUrl: z.string() }).nullable(),
   createdAt: z.string(),
   updatedAt: z.string(),
 });

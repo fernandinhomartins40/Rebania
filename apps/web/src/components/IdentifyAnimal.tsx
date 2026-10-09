@@ -13,13 +13,16 @@ export function IdentifyAnimal({
   animals,
   onSelect,
   filter,
+  initialQuery,
 }: {
   animals: LocalAnimal[];
   onSelect: (a: LocalAnimal) => void;
   filter?: (a: LocalAnimal) => boolean;
+  /** Valor vindo de leitura (câmera/QR); é tratado como busca confirmada. */
+  initialQuery?: string;
 }) {
-  const [query, setQuery] = useState("");
-  const [submitted, setSubmitted] = useState("");
+  const [query, setQuery] = useState(initialQuery ?? "");
+  const [submitted, setSubmitted] = useState(initialQuery ?? "");
 
   const results = useMemo(() => {
     const q = submitted || query;
@@ -92,7 +95,7 @@ export function IdentifyAnimal({
             style={{ textAlign: "left", font: "inherit", cursor: "pointer", padding: 0 }}
             onClick={() => onSelect(animal)}
           >
-            <AnimalPhoto size="md" />
+            <AnimalPhoto size="md" src={animal.photo?.thumbUrl} />
             <span className="body">
               <span className="name">
                 {CATEGORY_LABEL[animal.category]} {animal.primaryIdentifier ?? ""}

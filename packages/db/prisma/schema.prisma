@@ -78,6 +78,13 @@ enum WeightSource {
   import
 }
 
+enum AttachmentStatus {
+  uploading
+  processing
+  ready
+  failed
+}
+
 enum JobStatus {
   queued
   running
@@ -116,6 +123,8 @@ model Farm {
   events       AnimalEvent[]
   mutations    SyncMutation[]
   changes      ChangeLog[]
+  attachments  Attachment[]
+  imports      ImportBatch[]
 
   @@unique([organizationId, id])
   @@map("farms")
@@ -289,6 +298,7 @@ model Animal {
   identifiers     AnimalIdentifier[]
   weights         WeightMeasurement[]
   events          AnimalEvent[]
+  attachments     Attachment[]
 
   @@unique([organizationId, id])
   @@unique([farmId, id])
@@ -417,4 +427,52 @@ model Job {
 
   @@index([status, queue, runAt])
   @@map("jobs")
+}
+
+/// Foto/documento do animal ou evento. Arquivos ficam no volume de mídia
+/// (MEDIA_DIR), servidos apenas por rota autenticada. Upload retomável por offset.
+model Attachment {
+  id             String           @id @default(uuid()) @db.Uuid
+  organizationId String           @map("organization_id") @db.Uuid
+  farmId         String           @map("farm_id") @db.Uuid
+  animalId       String?          @map("animal_id") @db.Uuid
+  eventId        String?          @map("event_id") @db.Uuid
+  kind           String           @default("photo")
+  mime           String
+  sizeBytes      Int              @map("size_bytes")
+  sha256         String
+  uploadedBytes  Int              @default(0) @map("uploaded_bytes")
+  status         AttachmentStatus @default(uploading)
+  width          Int?
+  height         Int?
+  caption        String?
+  takenOn        DateTime?        @map("taken_on") @db.Date
+  createdById    String?          @map("created_by_id") @db.Uuid
+  createdAt      DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
+  readyAt        DateTime?        @map("ready_at") @db.Timestamptz(3)
+  deletedAt      DateTime?        @map("deleted_at") @db.Timestamptz(3)
+  failureReason  String?          @map("failure_reason")
+
+  farm   Farm    @relation(fields: [organizationId, farmId], references: [organizationId, id])
+  animal Animal? @relation(fields: [organizationId, animalId], references: [organizationId, id])
+
+  @@index([animalId, createdAt])
+  @@map("attachments")
+}
+
+/// Registro de cada importação confirmada (auditoria; as linhas viram animais normais).
+model ImportBatch {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  farmId         String   @map("farm_id") @db.Uuid
+  fileName       String   @map("file_name")
+  totalRows      Int      @map("total_rows")
+  acceptedRows   Int      @map("accepted_rows")
+  rejectedRows   Int      @map("rejected_rows")
+  createdById    String   @map("created_by_id") @db.Uuid
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  farm Farm @relation(fields: [organizationId, farmId], references: [organizationId, id])
+
+  @@map("import_batches")
 }

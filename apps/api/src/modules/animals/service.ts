@@ -50,7 +50,16 @@ const ANIMAL_INCLUDE = {
     orderBy: [{ measuredOn: "desc" }, { createdAt: "desc" }],
     take: 1,
   },
+  attachments: {
+    where: { status: "ready", deletedAt: null, kind: "photo" },
+    orderBy: { createdAt: "desc" },
+    take: 1,
+    select: { id: true },
+  },
 } satisfies Prisma.AnimalInclude;
+
+export const mediaUrl = (farmId: string, id: string, variant: "thumb" | "display" | "original") =>
+  `/v1/farms/${farmId}/media/${id}/${variant}`;
 
 type AnimalWithRelations = Prisma.AnimalGetPayload<{ include: typeof ANIMAL_INCLUDE }>;
 
@@ -60,6 +69,7 @@ export function toAnimalDto(a: AnimalWithRelations): AnimalDto {
   const active = a.identifiers.filter((i) => i.status === "active");
   const primary = PRIMARY_ORDER.map((t) => active.find((i) => i.type === t)).find(Boolean);
   const last = a.weights[0];
+  const photo = a.attachments[0];
   return {
     id: a.id,
     farmId: a.farmId,
@@ -91,6 +101,13 @@ export function toAnimalDto(a: AnimalWithRelations): AnimalDto {
     primaryIdentifier: primary ? formatIdentifier(primary.type, primary.normalizedValue) : null,
     lastWeight: last
       ? { weightKg: Number(last.weightKg), measuredOn: dateToCivil(last.measuredOn) }
+      : null,
+    photo: photo
+      ? {
+          id: photo.id,
+          thumbUrl: mediaUrl(a.farmId, photo.id, "thumb"),
+          displayUrl: mediaUrl(a.farmId, photo.id, "display"),
+        }
       : null,
     createdAt: a.createdAt.toISOString(),
     updatedAt: a.updatedAt.toISOString(),

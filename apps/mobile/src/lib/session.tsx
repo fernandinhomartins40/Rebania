@@ -1,6 +1,7 @@
+import { uuid } from "./ids.ts";
+import { processUploads } from "./uploads.ts";
 import type { Animal, MeResponse, SyncPullResponse } from "@rebania/contracts";
 import { newMutationBase, SyncEngine, type SyncState } from "@rebania/sync-core";
-import * as Crypto from "expo-crypto";
 import * as Network from "expo-network";
 import {
   createContext,
@@ -49,7 +50,7 @@ interface SessionValue {
 
 const Ctx = createContext<SessionValue | null>(null);
 
-export const uuid = () => Crypto.randomUUID();
+export { uuid };
 export const mutationBase = (entityId: string) => newMutationBase(entityId, uuid);
 
 async function getDeviceId() {
@@ -141,7 +142,10 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       let lastPhase = e.state.phase;
       unsub = e.subscribe((s) => {
         setSync(s);
-        if (lastPhase === "syncing" && s.phase !== "syncing") setDataVersion((v) => v + 1);
+        if (lastPhase === "syncing" && s.phase !== "syncing") {
+          setDataVersion((v) => v + 1);
+          if (s.online) void processUploads().then(() => setDataVersion((v) => v + 1));
+        }
         lastPhase = s.phase;
       });
       setEngine(e);

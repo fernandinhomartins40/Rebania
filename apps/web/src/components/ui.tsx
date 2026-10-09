@@ -3,8 +3,13 @@ import { BrandCow } from "./brand.tsx";
 import type { ReactNode } from "react";
 import { Link } from "react-router";
 
-export function Steps({ current }: { current: 1 | 2 | 3 }) {
-  const labels = ["Identificar", "Informar", "Confirmar"];
+export function Steps({
+  current,
+  labels = ["Identificar", "Informar", "Confirmar"],
+}: {
+  current: 1 | 2 | 3;
+  labels?: [string, string, string];
+}) {
   return (
     <ol className="steps" aria-label="Etapas">
       {labels.map((l, i) => {
@@ -141,8 +146,25 @@ export function Loading({ label = "Carregando…" }: { label?: string }) {
   );
 }
 
-/** Espaço da foto do animal. Fotos chegam com o módulo de mídia; até lá, ilustração neutra. */
-export function AnimalPhoto({ size = "list" }: { size?: "list" | "sm" | "md" }) {
+/** Foto do animal (rota autenticada) ou ilustração neutra quando ainda não há foto. */
+export function AnimalPhoto({
+  size = "list",
+  src,
+}: {
+  size?: "list" | "sm" | "md";
+  src?: string | null;
+}) {
+  if (src) {
+    return (
+      <img
+        className={`photo ${size === "list" ? "" : size}`}
+        src={src}
+        alt=""
+        loading="lazy"
+        decoding="async"
+      />
+    );
+  }
   return (
     <div className={`photo ${size === "list" ? "" : size}`} aria-hidden="true">
       <BrandCow size={size === "sm" ? 26 : size === "md" ? 40 : 46} />

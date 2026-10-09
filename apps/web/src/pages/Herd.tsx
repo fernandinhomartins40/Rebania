@@ -16,6 +16,7 @@ import {
 import { useMemo, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router";
 import { ageLabel, AnimalPhoto, Empty, formatKg, Loading } from "../components/ui.tsx";
+import { cameraScanSupported } from "../components/CameraScanner.tsx";
 import { useLocalHerd } from "../state/local-data.ts";
 import { useSession } from "../state/session.tsx";
 
@@ -178,9 +179,14 @@ export function HerdPage() {
         animals.length === 0 ? (
           <Empty title="Nenhum animal cadastrado">
             {can("animals.write") ? (
-              <Link className="btn btn-primary" to="/registrar/animal">
-                Cadastrar primeiro animal
-              </Link>
+              <div className="actions" style={{ justifyContent: "center" }}>
+                <Link className="btn btn-primary" to="/registrar/animal">
+                  Cadastrar primeiro animal
+                </Link>
+                <Link className="btn btn-secondary" to="/fazenda/importar">
+                  Importar planilha
+                </Link>
+              </div>
             ) : null}
           </Empty>
         ) : (
@@ -190,7 +196,7 @@ export function HerdPage() {
         <div className="animal-list">
           {list.map((a) => (
             <Link key={a.id} className="animal-card" to={`/rebanho/${a.id}`}>
-              <AnimalPhoto />
+              <AnimalPhoto src={a.photo?.thumbUrl} />
               <div className="body">
                 <span className="name">
                   {CATEGORY_LABEL[a.category]} {a.primaryIdentifier ?? "s/ identificação"}
@@ -232,10 +238,16 @@ export function HerdPage() {
         <button
           type="button"
           className="id-tile"
-          disabled
-          title="Leitura de QR/OCR pela câmera chega na próxima entrega"
+          disabled={!cameraScanSupported()}
+          title={
+            cameraScanSupported()
+              ? "Ler QR ou código de barras"
+              : "Este navegador não lê códigos pela câmera; use Leitor ou Digitar"
+          }
+          onClick={() => navigate("/rebanho/identificar?modo=camera")}
         >
-          <Camera size={34} aria-hidden="true" /> Câmera <small>em breve</small>
+          <Camera size={34} aria-hidden="true" /> Câmera{" "}
+          {cameraScanSupported() ? null : <small>indisponível aqui</small>}
         </button>
         <button
           type="button"
