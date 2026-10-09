@@ -1,8 +1,10 @@
-import { CATEGORY_LABEL, daysBetween, isCivilDate, todayInTimezone } from "@rebania/domain";
+import { ArrowRight, CalendarDays } from "lucide-react";
+import { SelectedAnimal } from "../components/SelectedAnimal.tsx";
+import { daysBetween, isCivilDate, todayInTimezone } from "@rebania/domain";
 import { useState } from "react";
 import { useSearchParams } from "react-router";
 import { IdentifyAnimal } from "../components/IdentifyAnimal.tsx";
-import { Alert, Field, formatDate, Loading, Steps } from "../components/ui.tsx";
+import { Alert, Field, formatDate, Loading, Steps, PageHead } from "../components/ui.tsx";
 import { newMutationBase, putLocalAnimal, type SubmitResult } from "../offline/engine.ts";
 import { useDraft } from "../state/draft.ts";
 import { useLocalHerd } from "../state/local-data.ts";
@@ -53,7 +55,7 @@ export function MovePage() {
   if (result && doneId) {
     return (
       <section>
-        <h1>Movimentação</h1>
+        <PageHead title="Movimentação" back="/registrar" />
         <SubmitOutcome
           result={result}
           successText="Movimentação registrada"
@@ -66,7 +68,7 @@ export function MovePage() {
 
   return (
     <section>
-      <h1>Movimentação</h1>
+      <PageHead title="Movimentação" back="/registrar" />
       <Steps current={step} />
       {step === 1 ? (
         <div className="card">
@@ -80,15 +82,12 @@ export function MovePage() {
         </div>
       ) : null}
       {step === 2 && animal ? (
-        <form className="card" onSubmit={(e) => {
+        <form onSubmit={(e) => {
           e.preventDefault();
           if (!dateError && !unchanged) setD((p) => ({ ...p, step: 3, expectedVersion: p.expectedVersion || animal.version }));
         }}>
-          <p>
-            <strong>{animal.primaryIdentifier}</strong> · {CATEGORY_LABEL[animal.category]}
-            <br />
-            <span className="hint">Atual: {animal.groupName ?? "sem lote"} · {animal.pastureName ?? "sem pasto"}</span>
-          </p>
+          <SelectedAnimal animal={animal} onChange={() => setD((p) => ({ ...p, step: 1, animalId: "" }))} />
+          <p className="hint">Atual: {animal.groupName ?? "sem lote"} · {animal.pastureName ?? "sem pasto"}</p>
           <div className="grid two">
             <Field id="dest-group" label="Lote de destino">
               <select id="dest-group" value={d.groupId} onChange={(e) => set("groupId", e.target.value)}>
@@ -103,7 +102,7 @@ export function MovePage() {
               </select>
             </Field>
           </div>
-          <Field id="effectiveOn" label="Data efetiva" error={dateError}>
+          <Field id="effectiveOn" label="Data efetiva" error={dateError} icon={<CalendarDays size={22} aria-hidden="true" />}>
             <input id="effectiveOn" type="date" max={today} value={d.effectiveOn} onChange={(e) => set("effectiveOn", e.target.value)} />
           </Field>
           <Field id="reason" label="Motivo" hint="opcional">
@@ -111,8 +110,9 @@ export function MovePage() {
           </Field>
           {unchanged ? <Alert kind="info">Escolha um destino diferente do atual.</Alert> : null}
           <div className="actions">
-            <button className="btn btn-primary" disabled={Boolean(dateError || unchanged)}>Revisar</button>
-            <button type="button" className="btn btn-ghost" onClick={() => setD((p) => ({ ...p, step: 1, animalId: "" }))}>Trocar animal</button>
+            <button className="btn btn-primary btn-lg btn-block" disabled={Boolean(dateError || unchanged)}>
+              Revisar movimentação <ArrowRight size={20} aria-hidden="true" />
+            </button>
           </div>
         </form>
       ) : null}

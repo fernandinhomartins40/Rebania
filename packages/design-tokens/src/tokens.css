@@ -1,16 +1,19 @@
-/* Gerado a partir de src/index.ts — manter em sincronia (verificado em teste). */
+/* Espelha src/index.ts (verificado em teste). Valores alinhados ao pacote docs/brand/pacote-landing/design/tokens.css. */
 :root {
   --color-brand-primary: #163E32;
   --color-brand-primary-hover: #0F2E25;
   --color-brand-sage: #DDE6D8;
   --color-brand-ochre: #C48A38;
-  --color-brand-ochre-text: #8A5A16;
+  --color-brand-ochre-display: #A87228;
+  --color-brand-ochre-soft: #F4E5CC;
+  --color-brand-ochre-text: #825519;
   --color-canvas: #F7F4ED;
   --color-surface: #FFFFFF;
   --color-surface-muted: #EFEBE1;
-  --color-border: #D9D4C7;
+  --color-brand-leaf: #3F8F4E;
+  --color-border: #CBD5CC;
   --color-text-primary: #182A24;
-  --color-text-secondary: #4B5A54;
+  --color-text-secondary: #4E6158;
   --color-text-on-brand: #FFFFFF;
   --color-success: #2E6B3F;
   --color-success-bg: #E3F0E4;
@@ -30,7 +33,7 @@
   --radius-md: 10px;
   --radius-lg: 16px;
   --radius-pill: 999px;
-  --font-family: "Source Sans 3", "Segoe UI", Roboto, system-ui, sans-serif;
+  --font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-body: 16px;
   --font-small: 14px;
   --font-title: 22px;

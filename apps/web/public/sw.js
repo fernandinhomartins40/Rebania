@@ -1,7 +1,7 @@
 /* Service worker do Rebania: cache do "app shell" para abrir sem conexão.
  * Dados operacionais ficam no IndexedDB (src/offline); a API NUNCA é cacheada aqui. */
 const CACHE = "rebania-shell-v1";
-const SHELL = ["/", "/index.html", "/manifest.webmanifest", "/icon.svg"];
+const SHELL = ["/", "/index.html", "/manifest.webmanifest", "/icon-192.png", "/brand/logo-mark.png", "/brand/logo-mark-light.png"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));

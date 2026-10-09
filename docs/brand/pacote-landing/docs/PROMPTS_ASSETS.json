@@ -1,0 +1,52 @@
+[
+  {
+    "key": "hero",
+    "args": {
+      "transparent_background": false,
+      "referenced_image_paths": [
+        "/workspace/scratch/b43a813ed22c/generated_images/exec-ae2f2c6b-38d1-4424-9bd3-c5551af13057.png"
+      ],
+      "prompt": "Extract/recreate as a SEPARATE high quality photorealistic landing-page photographic asset: Brazilian cattle rancher from reference hero, natural olive work shirt, light straw hat, calmly using smartphone alongside healthy Nelore cattle in pasture at golden hour. Landscape 3:2. Rancher in right half, readable natural silhouette, pasture and herd around. Use reference for atmosphere and subject, faithful same scene. ONLY photograph, NO text/logo/UI/device screen overlays/margins/background panels. Correct hands and phone anatomy, candid premium agricultural editorial photo, warm greens and sunlight. Composition supports cropping to 4:5 mobile without losing rancher. Request 2400x1600; native generated size should be preserved."
+    }
+  },
+  {
+    "key": "animal",
+    "args": {
+      "transparent_background": false,
+      "referenced_image_paths": [
+        "/workspace/scratch/b43a813ed22c/generated_images/exec-ae2f2c6b-38d1-4424-9bd3-c5551af13057.png"
+      ],
+      "prompt": "Recreate standalone photo asset from cow history section in reference: beautiful healthy white Nelore cattle head front-facing with broad ears, natural muzzle, small ochre ear identification tag, pasture and distant herd in gentle blur, warm golden daylight. Landscape 3:2, cow center-left with enough room around ears, no cropped ear. NO tag text or numbers, no brand/logo, no lettering, no UI, no decorative frame. Professional photorealistic livestock portrait, natural anatomy, high detail, cohesive same campaign as reference. This single photo will also supply animal card thumbnails; no extra thumbnail collage."
+    }
+  },
+  {
+    "key": "pasture",
+    "args": {
+      "transparent_background": false,
+      "referenced_image_paths": [
+        "/workspace/scratch/b43a813ed22c/generated_images/exec-ae2f2c6b-38d1-4424-9bd3-c5551af13057.png"
+      ],
+      "prompt": "Create standalone panoramic photograph for closing CTA in referenced Rebania landing. Wide 3:1 composition. Brazilian pasture at sunset with a small herd of healthy white Nelore cattle toward right half, one rancher standing naturally near fence far right. Warm golden sky, deep green pasture. Left half less detailed darker grass and sky suitable for overlay text later, but NO actual text, no logo, no UI, no gradients painted, no decorative borders. Real premium agricultural editorial photograph coherent with reference."
+    }
+  },
+  {
+    "key": "symbol",
+    "args": {
+      "transparent_background": true,
+      "referenced_image_paths": [
+        "/workspace/scratch/b43a813ed22c/generated_images/exec-e15794ee-3e8f-4548-9084-183b079c732f.png"
+      ],
+      "prompt": "Extract ONLY the exact existing bovine head symbol from reference logo as standalone transparent PNG square icon, tightly framed with 8% clear margin. Preserve original cattle face geometry, both horns/ears/muzzle, forest green #163E32 and small ochre #C48A38 ear tag. No wordmark or tagline. Genuine alpha transparency, no background, no shadow, no new symbols. Match precisely latest logo, not a redesign."
+    }
+  },
+  {
+    "key": "logo",
+    "args": {
+      "transparent_background": true,
+      "referenced_image_paths": [
+        "/workspace/scratch/b43a813ed22c/generated_images/exec-e15794ee-3e8f-4548-9084-183b079c732f.png"
+      ],
+      "prompt": "Preserve EXACT complete existing logo from reference: front-facing cattle head with ochre ear tag + lowercase rounded wordmark rebania + original thin tagline Sua fazenda em dia. Same letterforms, weight, spacing and colors forest green #163E32 and ochre #C48A38. Only adjust canvas to tightly fit this existing horizontal lockup, approximately 3:1, only 4% transparent margins so it is usable as website logo asset without excessive blank canvas. NO redesign, NO extra text, NO recoloring, NO 3D/shadow. Genuine transparent PNG. High crisp resolution."
+    }
+  }
+]

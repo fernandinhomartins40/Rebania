@@ -1,0 +1,9 @@
+{
+  "extends": "@rebania/config/tsconfig.base.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "lib": ["ES2023"],
+    "types": []
+  },
+  "include": ["index.ts", "App.tsx", "src"]
+}

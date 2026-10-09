@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router";
 import { errorMessage, get, post } from "../api/client.ts";
-import { Alert, formatDateTime, Loading } from "../components/ui.tsx";
+import { Alert, formatDateTime, Loading, PageHead } from "../components/ui.tsx";
 import { useSession } from "../state/session.tsx";
 import { useSync } from "../state/sync.tsx";
 
@@ -18,8 +18,7 @@ export function AccountPage() {
 
   return (
     <section>
-      <p><Link to="/fazenda">‹ Fazenda</Link></p>
-      <h1>Minha conta</h1>
+      <PageHead title="Minha conta" back="/fazenda" />
       <div className="card">
         <p><strong>{me?.user.name}</strong><br /><span className="hint">{me?.user.email}</span></p>
         {unsent > 0 ? (

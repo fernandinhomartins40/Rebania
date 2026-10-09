@@ -1,0 +1,82 @@
+{
+  "files": [
+    {
+      "path": "assets/photos/hero-rancher.png",
+      "width": 1536,
+      "height": 1024,
+      "mode": "RGB",
+      "transparent": false,
+      "bytes": 2385657,
+      "sha256": "3a514919b77fd043d00a969fde91c4a820c3106f3fb53705a9bf3ca64053ee4b",
+      "source": "exec-7628fe25-56d2-44d3-80f4-a812b11f7cbf.png",
+      "generation": "imagegen; unchanged original bytes"
+    },
+    {
+      "path": "assets/photos/animal-history.png",
+      "width": 1536,
+      "height": 1024,
+      "mode": "RGB",
+      "transparent": false,
+      "bytes": 2351987,
+      "sha256": "579c153b5b0b14186bd024a0d727d69d1285c705f8f6e116c75ad69514f2c384",
+      "source": "exec-43dcae5f-b93e-49a2-a2d4-bb21988ce263.png",
+      "generation": "imagegen; unchanged original bytes"
+    },
+    {
+      "path": "assets/photos/pasture-cta.png",
+      "width": 2172,
+      "height": 724,
+      "mode": "RGB",
+      "transparent": false,
+      "bytes": 2347536,
+      "sha256": "3d504702fd61ecf87e4f4231e525406238cce62ee43b3cf748831e97124a9863",
+      "source": "exec-e571a533-da66-4b2c-9c94-fe8d24c6d7ed.png",
+      "generation": "imagegen; unchanged original bytes"
+    },
+    {
+      "path": "assets/brand/rebania-symbol.png",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "transparent": true,
+      "bytes": 496126,
+      "sha256": "05a02d588c3c357fd9556baf6d1a274a2775c7ea0bc46123e0082c9b8c9cad80",
+      "source": "exec-7f2591e9-20b0-487b-9006-6b7d30bc0e86.png",
+      "generation": "imagegen; unchanged original bytes"
+    },
+    {
+      "path": "assets/brand/rebania-logo.png",
+      "width": 2170,
+      "height": 725,
+      "mode": "RGBA",
+      "transparent": true,
+      "bytes": 607746,
+      "sha256": "f69e3ce7342ee5cee522ed25867c9527482db56c868fc2d444b60a6cd94b3291",
+      "source": "exec-086e59d4-9231-4083-8d61-faf952b0b555.png",
+      "generation": "imagegen; unchanged original bytes"
+    },
+    {
+      "path": "assets/brand/rebania-logo-reference.png",
+      "width": 1672,
+      "height": 941,
+      "mode": "RGBA",
+      "transparent": true,
+      "bytes": 387298,
+      "sha256": "cea1227129d568a00752618dd078eb621789140dd0db7e793629e9be2e15a0f2",
+      "source": "exec-e15794ee-3e8f-4548-9084-183b079c732f.png",
+      "generation": "imagegen; unchanged original bytes"
+    },
+    {
+      "path": "design/landing-desktop-revisada.png",
+      "width": 736,
+      "height": 2135,
+      "mode": "RGB",
+      "transparent": false,
+      "bytes": 2052222,
+      "sha256": "5c4821599f0062170f8efeb1c4521c153130db35a4decf65d18634391c472116",
+      "source": "exec-40aa95f0-56b0-4314-a372-e9dde678b9e3.png",
+      "generation": "imagegen; unchanged original bytes"
+    }
+  ],
+  "note": "Dimensões nativas; não são arquivos 4K garantidos. Não otimizados."
+}

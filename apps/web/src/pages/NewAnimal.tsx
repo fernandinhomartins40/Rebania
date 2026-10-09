@@ -1,3 +1,4 @@
+import { ArrowRight, CalendarDays, ScanBarcode, Tag } from "lucide-react";
 import type { CreateAnimalInput } from "@rebania/contracts";
 import {
   CATEGORIES,
@@ -16,7 +17,7 @@ import {
 } from "@rebania/domain";
 import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
-import { Field, Steps, formatDate } from "../components/ui.tsx";
+import { Field, Steps, formatDate, PageHead } from "../components/ui.tsx";
 import { newMutationBase, putLocalAnimal, type LocalAnimal, type SubmitResult } from "../offline/engine.ts";
 import { useDraft } from "../state/draft.ts";
 import { useLocalHerd } from "../state/local-data.ts";
@@ -107,7 +108,7 @@ export function NewAnimalPage() {
   if (result) {
     return (
       <section>
-        <h1>Cadastrar animal</h1>
+        <PageHead title="Cadastrar animal" back="/registrar" />
         <SubmitOutcome
           result={result}
           successText="Animal cadastrado"
@@ -122,7 +123,7 @@ export function NewAnimalPage() {
 
   return (
     <section>
-      <h1>Cadastrar animal</h1>
+      <PageHead title="Cadastrar animal" back="/registrar" />
       <Steps current={d.step} />
 
       {d.step === 1 ? (
@@ -132,14 +133,14 @@ export function NewAnimalPage() {
               {(["visual_tag", "provisional"] as const).map((t) => <option key={t} value={t}>{IDENTIFIER_LABEL[t]}</option>)}
             </select>
           </Field>
-          <Field id="id-value" label={d.idType === "visual_tag" ? "Número do brinco" : "ID provisório"} error={d.idValue ? idError : null}>
+          <Field id="id-value" label={d.idType === "visual_tag" ? "Número do brinco" : "ID provisório"} error={d.idValue ? idError : null} icon={<Tag size={22} aria-hidden="true" />}>
             <input id="id-value" autoFocus value={d.idValue} onChange={(e) => set("idValue", e.target.value)} aria-invalid={Boolean(d.idValue && idError)} />
           </Field>
-          <Field id="rfid" label="RFID (ISO 11784)" hint="opcional, 15 dígitos" error={rfidError}>
+          <Field id="rfid" label="RFID (ISO 11784)" hint="opcional, 15 dígitos" error={rfidError} icon={<ScanBarcode size={22} aria-hidden="true" />}>
             <input id="rfid" inputMode="numeric" value={d.rfid} onChange={(e) => set("rfid", e.target.value)} aria-invalid={Boolean(rfidError)} />
           </Field>
           <div className="actions">
-            <button className="btn btn-primary" disabled={Boolean(idError || rfidError)}>Continuar</button>
+            <button className="btn btn-primary btn-lg" disabled={Boolean(idError || rfidError)}>Continuar <ArrowRight size={20} aria-hidden="true" /></button>
             <button type="button" className="btn btn-ghost" onClick={() => { clear(); navigate("/registrar"); }}>Cancelar</button>
           </div>
         </form>
@@ -154,7 +155,7 @@ export function NewAnimalPage() {
             </select>
           </Field>
           <Field id="origin" label="Origem">
-            <div className="radio-row" role="radiogroup" aria-labelledby="origin">
+            <div className="seg" role="radiogroup" aria-label="Origem">
               {ORIGINS.map((o) => (
                 <label key={o.v}>
                   <input type="radio" name="origin" checked={d.origin === o.v} onChange={() => set("origin", o.v)} /> {o.l}
@@ -163,10 +164,10 @@ export function NewAnimalPage() {
             </div>
           </Field>
           <div className="grid two">
-            <Field id="birth" label="Nascimento" hint="opcional" error={birthError}>
+            <Field id="birth" label="Nascimento" hint="opcional" error={birthError} icon={<CalendarDays size={22} aria-hidden="true" />}>
               <input id="birth" type="date" max={today} value={d.birthDate} onChange={(e) => set("birthDate", e.target.value)} />
             </Field>
-            <Field id="entry" label="Entrada na fazenda" hint="opcional" error={entryError}>
+            <Field id="entry" label="Entrada na fazenda" hint="opcional" error={entryError} icon={<CalendarDays size={22} aria-hidden="true" />}>
               <input id="entry" type="date" max={today} value={d.entryDate} onChange={(e) => set("entryDate", e.target.value)} />
             </Field>
           </div>
@@ -193,7 +194,7 @@ export function NewAnimalPage() {
             <textarea id="notes" rows={2} value={d.notes} onChange={(e) => set("notes", e.target.value)} />
           </Field>
           <div className="actions">
-            <button className="btn btn-primary" disabled={!step2Valid}>Revisar</button>
+            <button className="btn btn-primary btn-lg" disabled={!step2Valid}>Revisar cadastro <ArrowRight size={20} aria-hidden="true" /></button>
             <button type="button" className="btn btn-ghost" onClick={() => set("step", 1)}>Voltar</button>
           </div>
         </form>

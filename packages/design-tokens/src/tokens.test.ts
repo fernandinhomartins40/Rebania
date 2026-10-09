@@ -35,6 +35,9 @@ describe("design tokens", () => {
   ] as const)("contraste WCAG AA para %s sobre %s", (fg, bg) => {
     expect(contrast(color[fg], color[bg])).toBeGreaterThanOrEqual(4.5);
   });
+  it("ocre de título grande atinge 3:1 (WCAG AA texto grande)", () => {
+    expect(contrast(color.brandOchreDisplay, color.canvas)).toBeGreaterThanOrEqual(3);
+  });
   it("ocre puro NÃO é seguro para texto pequeno sobre branco", () => {
     expect(contrast(color.brandOchre, color.surface)).toBeLessThan(4.5);
   });

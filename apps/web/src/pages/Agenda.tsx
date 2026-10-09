@@ -1,7 +1,8 @@
+import { PageHead } from "../components/ui.tsx";
 export function AgendaPage() {
   return (
     <section>
-      <h1>Agenda</h1>
+      <PageHead title="Agenda" />
       <div className="card">
         <h2>Sem tarefas por enquanto</h2>
         <p className="hint">

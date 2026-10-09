@@ -1,0 +1,19 @@
+{
+  "brand": "Rebania",
+  "tagline": "Sua fazenda em dia.",
+  "status": "Em desenvolvimento",
+  "navigation": ["Como funciona", "Recursos", "Inteligência", "Contratação"],
+  "hero": {"title": "Sua fazenda em dia. Seu tempo de volta.", "body": "Gestão de gado de corte, do nascimento à venda, com manejos simples e inteligência a seu lado.", "primary": "Solicitar demonstração", "secondary": "Conhecer o Rebania"},
+  "benefits": {"title": "Do campo à gestão, tudo conectado.", "items": ["Histórico de cada animal", "Manejos em grupo", "Próximas tarefas à vista"]},
+  "steps": {"title": "Três etapas para seguir em frente.", "items": [{"title": "Identifique", "body": "Selecione o animal ou o grupo do manejo."}, {"title": "Informe", "body": "Registre os dados necessários à tarefa."}, {"title": "Confirme", "body": "Revise o resultado e siga para o próximo manejo."}]},
+  "resources": {"title": "Completo para o rebanho. Simples para quem cuida.", "items": ["Nascimento e reprodução", "Vacinação e sanidade", "Pesagem, recria e engorda", "Lotes, pastos e movimentações", "Estoque e gestão financeira"]},
+  "history": {"title": "Cada animal tem uma história.", "body": "Fotos, pesagens e manejos organizados em uma linha do tempo.", "items": ["Nascimento", "Reprodução", "Pesagem"]},
+  "assistant": {"title": "Sua fazenda também pode responder.", "body": "Consulte informações e prepare tarefas com o assistente inteligente.", "question": "Quais tarefas estão pendentes?", "response": "Vamos revisar a agenda da fazenda.", "control": "Você revisa. Você confirma."},
+  "platforms": {"title": "No escritório e no campo.", "channels": ["Web", "Android e iOS", "Alternativa PWA"], "body": "Operação offline planejada para o campo, com sincronização ao reconectar.", "note": "Recursos e integrações sujeitos à homologação. O suporte depende da plataforma e do equipamento."},
+  "contract": {"title": "Uma contratação clara.", "items": [{"title": "Implantação", "body": "Sua fazenda configurada e equipe orientada."}, {"title": "Mensalidade", "body": "Acesso ao sistema e acompanhamento da operação."}, {"title": "Créditos de IA", "body": "Pacotes para usar o assistente conforme sua necessidade."}], "note": "Os manejos manuais continuam mesmo sem créditos de IA."},
+  "faq": {"title": "Perguntas de quem está no campo.", "items": [{"question": "É indicado para cria, recria e engorda?", "answer": "O Rebania está sendo desenvolvido para o ciclo completo da pecuária de corte. Os recursos serão apresentados conforme as fases de implementação."}, {"question": "Como funciona a identificação dos animais?", "answer": "RFID com leitor homologado, NFC compatível, câmera ou busca manual. A compatibilidade depende do equipamento e da plataforma."}, {"question": "Preciso usar a inteligência artificial?", "answer": "Não. O produto prevê fluxos manuais para os manejos e consultas. Créditos de IA são opcionais."}, {"question": "Como será a implantação?", "answer": "A implantação prevê configuração da fazenda, revisão e importação dos dados, orientação da equipe e acompanhamento inicial."}]},
+  "closing": {"title": "Mais clareza na gestão. Mais presença no campo.", "button": "Solicitar demonstração"},
+  "form": {"title": "Vamos conhecer sua fazenda.", "labels": ["Nome", "E-mail", "Perfil da operação"], "options": ["Cria", "Recria", "Engorda", "Ciclo completo"], "button": "Solicitar contato", "previewNote": "Formulário previsto para integração."},
+  "previewLabel": "Tela ilustrativa",
+  "destinations": {"primary": "#demonstracao", "secondary": "#recursos"}
+}

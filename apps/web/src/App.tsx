@@ -7,6 +7,8 @@ import { AgendaPage } from "./pages/Agenda.tsx";
 import { AnimalPage } from "./pages/Animal.tsx";
 import { FarmPage } from "./pages/Farm.tsx";
 import { HerdPage } from "./pages/Herd.tsx";
+import { IdentifyPage } from "./pages/Identify.tsx";
+import { LandingPage } from "./pages/landing/Landing.tsx";
 import { LoginPage } from "./pages/Login.tsx";
 import { MovePage } from "./pages/Move.tsx";
 import { NewAnimalPage } from "./pages/NewAnimal.tsx";
@@ -25,8 +27,10 @@ function Routed() {
   if (status === "anonymous") {
     return (
       <Routes>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/entrar" element={<LoginPage />} />
         <Route path="/convite" element={<AcceptInvitePage />} />
-        <Route path="*" element={<LoginPage />} />
+        <Route path="*" element={<Navigate to="/entrar" replace />} />
       </Routes>
     );
   }
@@ -44,9 +48,11 @@ function Routed() {
     <SyncProvider key={farm.id} farmId={farm.id}>
       <Routes>
         <Route path="/convite" element={<AcceptInvitePage />} />
+        <Route path="/entrar" element={<Navigate to="/" replace />} />
         <Route element={<Layout />}>
           <Route index element={<TodayPage />} />
           <Route path="rebanho" element={<HerdPage />} />
+          <Route path="rebanho/identificar" element={<IdentifyPage />} />
           <Route path="rebanho/:id" element={<AnimalPage />} />
           <Route path="registrar" element={<RegisterPage />} />
           <Route path="registrar/animal" element={<NewAnimalPage />} />

@@ -1,62 +1,83 @@
-import { NavLink, Outlet } from "react-router";
+import { Bell, CalendarDays, CirclePlus, House, MapPin, Plus, Warehouse } from "lucide-react";
+import { BrandCow, type IconComponent } from "./brand.tsx";
+import { NavLink, Outlet, Link } from "react-router";
 import { useSession } from "../state/session.tsx";
+import { initials, Logo } from "./brand.tsx";
 import { SyncBadge } from "./SyncBadge.tsx";
 
-const NAV = [
-  { to: "/", label: "Hoje", icon: "☀", end: true },
-  { to: "/rebanho", label: "Rebanho", icon: "🐄" },
-  { to: "/registrar", label: "Registrar", icon: "+", cta: true },
-  { to: "/agenda", label: "Agenda", icon: "📅" },
-  { to: "/fazenda", label: "Fazenda", icon: "🏠" },
+const NAV: { to: string; label: string; icon: IconComponent; end?: boolean }[] = [
+  { to: "/", label: "Hoje", icon: House, end: true },
+  { to: "/rebanho", label: "Rebanho", icon: BrandCow },
+  { to: "/registrar", label: "Registrar", icon: CirclePlus },
+  { to: "/agenda", label: "Agenda", icon: CalendarDays },
+  { to: "/fazenda", label: "Fazenda", icon: Warehouse },
 ];
 
+/** Atalhos do desktop: só áreas implementadas (Reprodução, Sanidade etc. entram nos próximos goals). */
+const SHORTCUTS: { to: string; label: string; icon: IconComponent }[] = [{ to: "/fazenda/lotes", label: "Lotes e pastos", icon: MapPin }];
+
 export function Layout() {
-  const { farm, farms, selectFarm } = useSession();
+  const { me } = useSession();
   return (
     <div className="shell">
       <nav className="sidebar" aria-label="Navegação principal">
-        <div className="brand">rebania</div>
+        <Logo light />
         {NAV.map((n) => (
-          <NavLink key={n.to} to={n.to} end={n.end}>
-            <span className="navicon" aria-hidden="true">{n.icon}</span>
+          <NavLink key={n.to} to={n.to} end={n.end} className="nav">
+            {({ isActive }) => (
+              <>
+                <n.icon size={24} className={isActive ? "icon-active" : undefined} aria-hidden="true" />
+                {n.label}
+              </>
+            )}
+          </NavLink>
+        ))}
+        <hr />
+        {SHORTCUTS.map((n) => (
+          <NavLink key={n.to} to={n.to} className="nav">
+            <n.icon size={24} aria-hidden="true" />
             {n.label}
           </NavLink>
         ))}
       </nav>
-      <main className="main">
-        <div className="content">
-          <header className="topbar">
-            <div>
-              {farms.length > 1 ? (
-                <select
-                  aria-label="Fazenda ativa"
-                  value={farm?.id}
-                  onChange={(e) => selectFarm(e.target.value)}
-                  style={{ width: "auto" }}
-                >
-                  {farms.map((f) => (
-                    <option key={f.id} value={f.id}>
-                      {f.name} · {f.organizationName}
-                    </option>
-                  ))}
-                </select>
-              ) : (
-                <strong>{farm?.name}</strong>
-              )}
-              <div className="farm">{farm?.organizationName}</div>
-            </div>
-            <SyncBadge />
-          </header>
+      <div className="main">
+        <header className="appbar">
+          <Logo />
+          <span style={{ flex: 1 }} />
+          <div className="appbar-actions">
+            <SyncBadge compact />
+            <Link to="/agenda" className="icon-btn" aria-label="Avisos e tarefas">
+              <Bell size={26} />
+            </Link>
+            <Link to="/fazenda/conta" className="avatar" aria-label={`Conta de ${me?.user.name ?? ""}`}>
+              {initials(me?.user.name)}
+            </Link>
+          </div>
+        </header>
+        <main className="content">
           <Outlet />
-        </div>
-      </main>
+        </main>
+      </div>
       <nav className="bottomnav" aria-label="Navegação principal">
-        {NAV.map((n) => (
-          <NavLink key={n.to} to={n.to} end={n.end} className={n.cta ? "register-cta" : undefined}>
-            <span className="navicon" aria-hidden="true">{n.icon}</span>
-            <span>{n.label}</span>
-          </NavLink>
-        ))}
+        {NAV.map((n) =>
+          n.to === "/registrar" ? (
+            <NavLink key={n.to} to={n.to} className="register-cta">
+              <span className="fab" aria-hidden="true">
+                <Plus size={26} />
+              </span>
+              <span>{n.label}</span>
+            </NavLink>
+          ) : (
+            <NavLink key={n.to} to={n.to} end={n.end}>
+              {({ isActive }) => (
+                <>
+                  <n.icon size={26} className={isActive ? "icon-active" : undefined} aria-hidden="true" />
+                  <span>{n.label}</span>
+                </>
+              )}
+            </NavLink>
+          ),
+        )}
       </nav>
     </div>
   );

@@ -2,6 +2,7 @@ import { ROLE_LABEL } from "@rebania/domain";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { errorMessage, get, post } from "../api/client.ts";
+import { FullLogo } from "../components/brand.tsx";
 import { Alert, Field, Loading } from "../components/ui.tsx";
 import { useSession } from "../state/session.tsx";
 
@@ -35,8 +36,8 @@ export function AcceptInvitePage() {
   return (
     <div className="center-page">
       <div className="card auth-card">
-        <p className="wordmark">rebania</p>
-        <p className="tagline">Convite para participar da fazenda</p>
+        <div className="auth-brand"><FullLogo height={72} /></div>
+        <h1 style={{ fontSize: 24, marginBottom: 16 }}>Convite para participar da fazenda</h1>
         {error ? <Alert kind="danger">{error}</Alert> : null}
         {!preview && !error ? <Loading /> : null}
         {preview ? (

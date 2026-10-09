@@ -16,6 +16,7 @@
     "@rebania/design-tokens": "workspace:*",
     "@rebania/domain": "workspace:*",
     "@rebania/sync-core": "workspace:*",
+    "lucide-react": "1.53.0",
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "react-router": "7.14.0",

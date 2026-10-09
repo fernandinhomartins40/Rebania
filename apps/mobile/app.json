@@ -1,0 +1,22 @@
+{
+  "expo": {
+    "name": "Rebania",
+    "slug": "rebania",
+    "scheme": "rebania",
+    "version": "0.1.0",
+    "orientation": "default",
+    "userInterfaceStyle": "light",
+    "backgroundColor": "#F7F4ED",
+    "primaryColor": "#163E32",
+    "ios": {
+      "bundleIdentifier": "com.rebania.app",
+      "supportsTablet": true
+    },
+    "android": {
+      "package": "com.rebania.app",
+      "permissions": []
+    },
+    "plugins": ["expo-secure-store", "expo-sqlite"],
+    "experiments": { "typedRoutes": false }
+  }
+}

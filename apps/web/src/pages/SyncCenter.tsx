@@ -1,7 +1,7 @@
 import type { OutboxItem } from "@rebania/sync-core";
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router";
-import { Alert, Empty, formatDateTime, Loading } from "../components/ui.tsx";
+import { Alert, Empty, formatDateTime, Loading, PageHead } from "../components/ui.tsx";
 import { useSync } from "../state/sync.tsx";
 
 const TYPE_LABEL: Record<string, string> = {
@@ -20,8 +20,7 @@ export function SyncCenterPage() {
 
   return (
     <section>
-      <p><Link to="/fazenda">‹ Fazenda</Link></p>
-      <h1>Sincronização</h1>
+      <PageHead title="Sincronização" back="/fazenda" />
       <div className="card">
         <p>
           {state.online ? "Conectado" : "Sem internet"} · Última sincronização: {formatDateTime(state.lastSyncAt)}

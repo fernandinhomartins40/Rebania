@@ -2,7 +2,7 @@ import type { Group } from "@rebania/contracts";
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router";
 import { errorMessage, get, post } from "../api/client.ts";
-import { Alert, Empty, Field, Loading } from "../components/ui.tsx";
+import { Alert, Empty, Field, Loading, PageHead } from "../components/ui.tsx";
 import { useSession } from "../state/session.tsx";
 import { useSync } from "../state/sync.tsx";
 
@@ -59,8 +59,7 @@ function PlaceSection({ kind }: { kind: "groups" | "pastures" }) {
 export function PlacesPage() {
   return (
     <section>
-      <p><Link to="/fazenda">‹ Fazenda</Link></p>
-      <h1>Lotes e pastos</h1>
+      <PageHead title="Lotes e pastos" back="/fazenda" />
       <p className="hint">A localização vem do manejo declarado, não de rastreamento GPS do animal.</p>
       <div className="grid two">
         <PlaceSection kind="groups" />

@@ -1,9 +1,8 @@
 import type { Member } from "@rebania/contracts";
 import { canAssignRole, ROLE_LABEL, ROLES, type Role } from "@rebania/domain";
 import { useCallback, useEffect, useState } from "react";
-import { Link } from "react-router";
 import { errorMessage, get, post } from "../api/client.ts";
-import { Alert, Field, formatDate, Loading } from "../components/ui.tsx";
+import { Alert, Field, formatDate, Loading, PageHead } from "../components/ui.tsx";
 import { useSession } from "../state/session.tsx";
 
 interface Pending { id: string; email: string; role: Role; expiresAt: string }
@@ -35,8 +34,7 @@ export function TeamPage() {
 
   return (
     <section>
-      <p><Link to="/fazenda">‹ Fazenda</Link></p>
-      <h1>Equipe</h1>
+      <PageHead title="Equipe" back="/fazenda" />
       {error ? <Alert kind="danger">{error}</Alert> : null}
       <div className="card">
         {!members ? <Loading /> : (
