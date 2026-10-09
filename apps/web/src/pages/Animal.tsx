@@ -1,16 +1,40 @@
-import { ArrowLeftRight, CalendarDays, ChartColumn, ChevronRight, Image, MapPin, Pencil, Tag, Weight } from "lucide-react";
+import {
+  ArrowLeftRight,
+  CalendarDays,
+  ChartColumn,
+  ChevronRight,
+  Image,
+  MapPin,
+  Pencil,
+  Tag,
+  Weight,
+} from "lucide-react";
 import { BrandCow, type IconComponent } from "../components/brand.tsx";
 import type { AnimalHistory } from "@rebania/contracts";
-import { ageInMonths, CATEGORY_LABEL, IDENTIFIER_LABEL, SEX_LABEL, STATUS_LABEL, todayInTimezone } from "@rebania/domain";
+import {
+  ageInMonths,
+  CATEGORY_LABEL,
+  IDENTIFIER_LABEL,
+  SEX_LABEL,
+  STATUS_LABEL,
+  todayInTimezone,
+} from "@rebania/domain";
 import { useEffect, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router";
 import { errorMessage, get } from "../api/client.ts";
-import { ageLabel, Alert, Empty, formatDate, formatKg, Loading, PageHead } from "../components/ui.tsx";
+import {
+  ageLabel,
+  Alert,
+  Empty,
+  formatDate,
+  formatKg,
+  Loading,
+  PageHead,
+} from "../components/ui.tsx";
 import { useLocalAnimal } from "../state/local-data.ts";
 import { useSession } from "../state/session.tsx";
 import { useSync } from "../state/sync.tsx";
 import { RetagPanel } from "./Retag.tsx";
-
 
 const ORIGIN_LABEL: Record<string, string> = {
   born_on_farm: "Nascido na fazenda",
@@ -53,12 +77,18 @@ export function AnimalPage() {
   useEffect(() => {
     if (!id || !farm) return;
     setHistoryError(null);
-    get<AnimalHistory>(`/v1/farms/${farm.id}/animals/${id}/history`).then(setHistory, (e) => setHistoryError(errorMessage(e)));
+    get<AnimalHistory>(`/v1/farms/${farm.id}/animals/${id}/history`).then(setHistory, (e) =>
+      setHistoryError(errorMessage(e)),
+    );
   }, [id, farm, version]);
 
   if (animal === undefined) return <Loading />;
   if (animal === null) {
-    return <Empty title="Animal não encontrado nesta fazenda"><Link to="/rebanho">Voltar ao rebanho</Link></Empty>;
+    return (
+      <Empty title="Animal não encontrado nesta fazenda">
+        <Link to="/rebanho">Voltar ao rebanho</Link>
+      </Empty>
+    );
   }
 
   const today = todayInTimezone(farm!.timezone);
@@ -67,18 +97,26 @@ export function AnimalPage() {
 
   return (
     <section>
-      <PageHead title={`${CATEGORY_LABEL[animal.category]} ${animal.primaryIdentifier ?? ""}`} back="/rebanho" />
+      <PageHead
+        title={`${CATEGORY_LABEL[animal.category]} ${animal.primaryIdentifier ?? ""}`}
+        back="/rebanho"
+      />
 
       <div className="hero-photo" aria-label="Foto do animal (ainda não enviada)">
         <BrandCow size={96} aria-hidden="true" />
-        <span className={`badge pill ${active ? "badge-ok" : "badge-muted"}`}>{animal.pending ? "Salvo no aparelho" : STATUS_LABEL[animal.status]}</span>
+        <span className={`badge pill ${active ? "badge-ok" : "badge-muted"}`}>
+          {animal.pending ? "Salvo no aparelho" : STATUS_LABEL[animal.status]}
+        </span>
         <span className="note">Sem foto</span>
       </div>
 
       <div className="stats">
         <div className="stat">
           <MapPin size={26} aria-hidden="true" />
-          <div><strong>{animal.groupName ?? "—"}</strong><span>Lote</span></div>
+          <div>
+            <strong>{animal.groupName ?? "—"}</strong>
+            <span>Lote</span>
+          </div>
         </div>
         <div className="stat">
           <Weight size={26} aria-hidden="true" />
@@ -88,12 +126,24 @@ export function AnimalPage() {
           </div>
         </div>
         <div className="stat">
-          {history?.adg ? <ChartColumn size={26} aria-hidden="true" /> : <CalendarDays size={26} aria-hidden="true" />}
+          {history?.adg ? (
+            <ChartColumn size={26} aria-hidden="true" />
+          ) : (
+            <CalendarDays size={26} aria-hidden="true" />
+          )}
           <div>
             {history?.adg ? (
-              <><strong>{history.adg.adgKgPerDay.toLocaleString("pt-BR")} kg/dia</strong><span>GMD ({history.adg.days} dias)</span></>
+              <>
+                <strong>{history.adg.adgKgPerDay.toLocaleString("pt-BR")} kg/dia</strong>
+                <span>GMD ({history.adg.days} dias)</span>
+              </>
             ) : (
-              <><strong>{animal.birthDate ? ageLabel(ageInMonths(animal.birthDate, today)) : "—"}</strong><span>Idade</span></>
+              <>
+                <strong>
+                  {animal.birthDate ? ageLabel(ageInMonths(animal.birthDate, today)) : "—"}
+                </strong>
+                <span>Idade</span>
+              </>
             )}
           </div>
         </div>
@@ -101,15 +151,28 @@ export function AnimalPage() {
 
       {active && can("events.write") ? (
         <div className="actions" style={{ marginTop: 0, marginBottom: 16 }}>
-          <Link className="btn btn-primary" to={`/registrar/pesagem?animal=${animal.id}`}><Weight size={20} /> Registrar pesagem</Link>
-          <Link className="btn btn-secondary" to={`/registrar/movimentacao?animal=${animal.id}`}><ArrowLeftRight size={20} /> Movimentar</Link>
+          <Link className="btn btn-primary" to={`/registrar/pesagem?animal=${animal.id}`}>
+            <Weight size={20} /> Registrar pesagem
+          </Link>
+          <Link className="btn btn-secondary" to={`/registrar/movimentacao?animal=${animal.id}`}>
+            <ArrowLeftRight size={20} /> Movimentar
+          </Link>
         </div>
       ) : null}
-      {animal.pending ? <Alert kind="warning">Há alterações deste animal salvas no aparelho aguardando envio.</Alert> : null}
+      {animal.pending ? (
+        <Alert kind="warning">
+          Há alterações deste animal salvas no aparelho aguardando envio.
+        </Alert>
+      ) : null}
 
       <div className="tabs" role="tablist">
         {(["historico", "fotos", "dados"] as const).map((t) => (
-          <button key={t} role="tab" aria-selected={tab === t} onClick={() => setParams({ aba: t }, { replace: true })}>
+          <button
+            key={t}
+            role="tab"
+            aria-selected={tab === t}
+            onClick={() => setParams({ aba: t }, { replace: true })}
+          >
             {t === "historico" ? "Histórico" : t === "fotos" ? "Fotos" : "Dados"}
           </button>
         ))}
@@ -130,14 +193,18 @@ export function AnimalPage() {
                 return (
                   <li key={e.id}>
                     <span className="node" aria-hidden="true" />
-                    <span className="ic" aria-hidden="true"><Ic size={24} /></span>
+                    <span className="ic" aria-hidden="true">
+                      <Ic size={24} />
+                    </span>
                     <div className="txt">
                       <strong>{EVENT_TITLE[e.type] ?? e.summary}</strong>
                       <span>
                         {formatDate(e.occurredOn)} · {detail(e.summary)}
                         {e.actorName ? ` · ${e.actorName}` : ""}
                       </span>
-                      {typeof e.data.warning === "string" ? <span style={{ color: "var(--color-warning)" }}>{e.data.warning}</span> : null}
+                      {typeof e.data.warning === "string" ? (
+                        <span style={{ color: "var(--color-warning)" }}>{e.data.warning}</span>
+                      ) : null}
                     </div>
                     <ChevronRight size={20} aria-hidden="true" />
                   </li>
@@ -149,35 +216,75 @@ export function AnimalPage() {
 
         {tab === "fotos" ? (
           <Empty title="Nenhuma foto ainda" icon={<Image size={48} aria-hidden="true" />}>
-            <p className="hint">O envio de fotos com upload retomável chega na próxima entrega (memória visual do animal).</p>
+            <p className="hint">
+              O envio de fotos com upload retomável chega na próxima entrega (memória visual do
+              animal).
+            </p>
           </Empty>
         ) : null}
 
         {tab === "dados" ? (
           <div className="card review">
             <dl>
-              <dt>Situação</dt><dd>{STATUS_LABEL[animal.status]}</dd>
-              <dt>Sexo</dt><dd>{SEX_LABEL[animal.sex]}</dd>
-              <dt>Raça</dt><dd>{animal.breed ?? "Não informada"}</dd>
-              <dt>Nascimento</dt><dd>{formatDate(animal.birthDate)}{animal.birthDateEstimated ? " (estimada)" : ""}</dd>
-              <dt>Origem</dt><dd>{ORIGIN_LABEL[animal.origin]}</dd>
-              <dt>Entrada</dt><dd>{formatDate(animal.entryDate)}</dd>
-              <dt>Pasto</dt><dd>{animal.pastureName ?? "—"}</dd>
-              <dt>Mãe</dt><dd>{animal.damId ? <Link to={`/rebanho/${animal.damId}`}>Ver mãe</Link> : "Não informada"}</dd>
-              <dt>Pai</dt><dd>{animal.sireId ? <Link to={`/rebanho/${animal.sireId}`}>Ver pai</Link> : "Não informado"}</dd>
-              <dt>Observações</dt><dd>{animal.notes ?? "—"}</dd>
+              <dt>Situação</dt>
+              <dd>{STATUS_LABEL[animal.status]}</dd>
+              <dt>Sexo</dt>
+              <dd>{SEX_LABEL[animal.sex]}</dd>
+              <dt>Raça</dt>
+              <dd>{animal.breed ?? "Não informada"}</dd>
+              <dt>Nascimento</dt>
+              <dd>
+                {formatDate(animal.birthDate)}
+                {animal.birthDateEstimated ? " (estimada)" : ""}
+              </dd>
+              <dt>Origem</dt>
+              <dd>{ORIGIN_LABEL[animal.origin]}</dd>
+              <dt>Entrada</dt>
+              <dd>{formatDate(animal.entryDate)}</dd>
+              <dt>Pasto</dt>
+              <dd>{animal.pastureName ?? "—"}</dd>
+              <dt>Mãe</dt>
+              <dd>
+                {animal.damId ? (
+                  <Link to={`/rebanho/${animal.damId}`}>Ver mãe</Link>
+                ) : (
+                  "Não informada"
+                )}
+              </dd>
+              <dt>Pai</dt>
+              <dd>
+                {animal.sireId ? (
+                  <Link to={`/rebanho/${animal.sireId}`}>Ver pai</Link>
+                ) : (
+                  "Não informado"
+                )}
+              </dd>
+              <dt>Observações</dt>
+              <dd>{animal.notes ?? "—"}</dd>
             </dl>
             {history && history.weights.length ? (
               <>
                 <h2 style={{ marginTop: 24 }}>Pesagens</h2>
                 <table className="data">
-                  <thead><tr><th>Data</th><th>Peso vivo</th><th>Origem</th></tr></thead>
+                  <thead>
+                    <tr>
+                      <th>Data</th>
+                      <th>Peso vivo</th>
+                      <th>Origem</th>
+                    </tr>
+                  </thead>
                   <tbody>
                     {[...history.weights].reverse().map((w) => (
                       <tr key={w.id} style={{ cursor: "default" }}>
                         <td>{formatDate(w.measuredOn)}</td>
                         <td>{formatKg(w.weightKg)}</td>
-                        <td>{w.source === "scale" ? "Balança" : w.source === "import" ? "Importação" : "Digitado"}</td>
+                        <td>
+                          {w.source === "scale"
+                            ? "Balança"
+                            : w.source === "import"
+                              ? "Importação"
+                              : "Digitado"}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -193,12 +300,16 @@ export function AnimalPage() {
                     <div className="meta">{IDENTIFIER_LABEL[i.type]}</div>
                   </span>
                   <span className={`badge ${i.status === "active" ? "badge-ok" : "badge-muted"}`}>
-                    {i.status === "active" ? "Ativo" : `Substituído em ${formatDate(i.retiredAt?.slice(0, 10))}`}
+                    {i.status === "active"
+                      ? "Ativo"
+                      : `Substituído em ${formatDate(i.retiredAt?.slice(0, 10))}`}
                   </span>
                 </li>
               ))}
             </ul>
-            {active && can("animals.write") ? <RetagPanel animalId={animal.id} canReplace={can("animals.retag")} /> : null}
+            {active && can("animals.write") ? (
+              <RetagPanel animalId={animal.id} canReplace={can("animals.retag")} />
+            ) : null}
           </div>
         ) : null}
       </div>

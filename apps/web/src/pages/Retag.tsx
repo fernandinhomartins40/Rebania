@@ -1,5 +1,11 @@
 import type { Animal } from "@rebania/contracts";
-import { IDENTIFIER_LABEL, IDENTIFIER_TYPES, normalizeIdentifier, DomainError, type IdentifierType } from "@rebania/domain";
+import {
+  IDENTIFIER_LABEL,
+  IDENTIFIER_TYPES,
+  normalizeIdentifier,
+  DomainError,
+  type IdentifierType,
+} from "@rebania/domain";
 import { useState } from "react";
 import { errorMessage, post } from "../api/client.ts";
 import { Alert, Field } from "../components/ui.tsx";
@@ -22,7 +28,9 @@ export function RetagPanel({ animalId, canReplace }: { animalId: string; canRepl
   if (!open) {
     return (
       <div className="actions">
-        <button className="btn btn-secondary" onClick={() => setOpen(true)}>Adicionar ou trocar identificador</button>
+        <button className="btn btn-secondary" onClick={() => setOpen(true)}>
+          Adicionar ou trocar identificador
+        </button>
         {msg ? <Alert kind={msg.kind}>{msg.text}</Alert> : null}
       </div>
     );
@@ -43,18 +51,37 @@ export function RetagPanel({ animalId, canReplace }: { animalId: string; canRepl
       {!review ? (
         <>
           <Field id="rt-type" label="Tipo">
-            <select id="rt-type" value={type} onChange={(e) => setType(e.target.value as IdentifierType)}>
-              {IDENTIFIER_TYPES.map((t) => <option key={t} value={t}>{IDENTIFIER_LABEL[t]}</option>)}
+            <select
+              id="rt-type"
+              value={type}
+              onChange={(e) => setType(e.target.value as IdentifierType)}
+            >
+              {IDENTIFIER_TYPES.map((t) => (
+                <option key={t} value={t}>
+                  {IDENTIFIER_LABEL[t]}
+                </option>
+              ))}
             </select>
           </Field>
           <Field id="rt-value" label="Valor" error={value ? error : null}>
-            <input id="rt-value" value={value} onChange={(e) => setValue(e.target.value)} aria-invalid={Boolean(value && error)} />
+            <input
+              id="rt-value"
+              value={value}
+              onChange={(e) => setValue(e.target.value)}
+              aria-invalid={Boolean(value && error)}
+            />
           </Field>
           {canReplace ? (
             <div className="field">
               <label style={{ fontWeight: 400, display: "flex", gap: 8, alignItems: "center" }}>
-                <input type="checkbox" style={{ width: "auto", minHeight: 0 }} checked={replace} onChange={(e) => setReplace(e.target.checked)} />
-                Substituir o {IDENTIFIER_LABEL[type].toLowerCase()} atual (o antigo fica no histórico)
+                <input
+                  type="checkbox"
+                  style={{ width: "auto", minHeight: 0 }}
+                  checked={replace}
+                  onChange={(e) => setReplace(e.target.checked)}
+                />
+                Substituir o {IDENTIFIER_LABEL[type].toLowerCase()} atual (o antigo fica no
+                histórico)
               </label>
             </div>
           ) : null}
@@ -64,17 +91,28 @@ export function RetagPanel({ animalId, canReplace }: { animalId: string; canRepl
             </Field>
           ) : null}
           <div className="actions">
-            <button className="btn btn-primary" disabled={!value || Boolean(error)} onClick={() => setReview(true)}>Revisar</button>
-            <button className="btn btn-ghost" onClick={() => setOpen(false)}>Cancelar</button>
+            <button
+              className="btn btn-primary"
+              disabled={!value || Boolean(error)}
+              onClick={() => setReview(true)}
+            >
+              Revisar
+            </button>
+            <button className="btn btn-ghost" onClick={() => setOpen(false)}>
+              Cancelar
+            </button>
           </div>
         </>
       ) : (
         <>
           <div className="review">
             <dl>
-              <dt>Tipo</dt><dd>{IDENTIFIER_LABEL[type]}</dd>
-              <dt>Valor</dt><dd>{normalized}</dd>
-              <dt>Ação</dt><dd>{replace ? "Substituir o atual (preservado no histórico)" : "Adicionar"}</dd>
+              <dt>Tipo</dt>
+              <dd>{IDENTIFIER_LABEL[type]}</dd>
+              <dt>Valor</dt>
+              <dd>{normalized}</dd>
+              <dt>Ação</dt>
+              <dd>{replace ? "Substituir o atual (preservado no histórico)" : "Adicionar"}</dd>
             </dl>
           </div>
           <div className="actions">
@@ -86,7 +124,12 @@ export function RetagPanel({ animalId, canReplace }: { animalId: string; canRepl
                 try {
                   const a = await post<Animal>(
                     `/v1/farms/${farm!.id}/animals/${animalId}/identifiers`,
-                    { type, value, replaceActiveOfSameType: replace, ...(reason ? { reason } : {}) },
+                    {
+                      type,
+                      value,
+                      replaceActiveOfSameType: replace,
+                      ...(reason ? { reason } : {}),
+                    },
                     { idempotencyKey: key },
                   );
                   await putLocalAnimal(a);
@@ -105,7 +148,9 @@ export function RetagPanel({ animalId, canReplace }: { animalId: string; canRepl
             >
               Confirmar
             </button>
-            <button className="btn btn-ghost" onClick={() => setReview(false)}>Editar</button>
+            <button className="btn btn-ghost" onClick={() => setReview(false)}>
+              Editar
+            </button>
           </div>
         </>
       )}

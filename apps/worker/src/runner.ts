@@ -9,7 +9,10 @@ export interface RunnerOptions {
 }
 
 /** Processa até esvaziar a fila disponível. Retorna quantos jobs executou. */
-export async function drain({ db, workerId, handlers, log = () => {} }: RunnerOptions, max = 100): Promise<number> {
+export async function drain(
+  { db, workerId, handlers, log = () => {} }: RunnerOptions,
+  max = 100,
+): Promise<number> {
   let processed = 0;
   while (processed < max) {
     const job = await claimJob(db, workerId, Object.keys(handlers));
@@ -29,10 +32,19 @@ export async function drain({ db, workerId, handlers, log = () => {} }: RunnerOp
   return processed;
 }
 
-export async function scheduleRecurring(db: Db, schedules: { queue: string; everyMs: number }[], now = Date.now()) {
+export async function scheduleRecurring(
+  db: Db,
+  schedules: { queue: string; everyMs: number }[],
+  now = Date.now(),
+) {
   for (const s of schedules) {
     const window = Math.floor(now / s.everyMs);
-    await enqueueJob(db, s.queue, {}, { dedupeKey: `${s.queue}:${window}`, runAt: new Date(window * s.everyMs) });
+    await enqueueJob(
+      db,
+      s.queue,
+      {},
+      { dedupeKey: `${s.queue}:${window}`, runAt: new Date(window * s.everyMs) },
+    );
   }
 }
 

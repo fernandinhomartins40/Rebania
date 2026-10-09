@@ -11,16 +11,26 @@ beforeEach(async () => {
 describe("fila PostgreSQL", () => {
   it("executa uma vez mesmo com vários workers concorrentes", async () => {
     let runs = 0;
-    const handlers = { "test.count": async () => { runs++; } };
+    const handlers = {
+      "test.count": async () => {
+        runs++;
+      },
+    };
     for (let i = 0; i < 20; i++) await enqueueJob(db, "test.count");
-    const counts = await Promise.all(["w1", "w2", "w3"].map((workerId) => drain({ db, workerId, handlers })));
+    const counts = await Promise.all(
+      ["w1", "w2", "w3"].map((workerId) => drain({ db, workerId, handlers })),
+    );
     expect(counts.reduce((a, b) => a + b, 0)).toBe(20);
     expect(runs).toBe(20);
     expect(await db.job.count({ where: { status: "done" } })).toBe(20);
   });
 
   it("falha reagenda com backoff e marca failed ao esgotar tentativas", async () => {
-    const handlers = { "test.fail": async () => { throw new Error("boom"); } };
+    const handlers = {
+      "test.fail": async () => {
+        throw new Error("boom");
+      },
+    };
     const job = await enqueueJob(db, "test.fail", {}, { maxAttempts: 2 });
     await drain({ db, workerId: "w", handlers });
     let row = await db.job.findUniqueOrThrow({ where: { id: job.id } });

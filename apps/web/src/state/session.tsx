@@ -1,6 +1,14 @@
 import type { FarmSummary, MeResponse } from "@rebania/contracts";
 import type { Permission, Role } from "@rebania/domain";
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
 import { get, post } from "../api/client.ts";
 import { clearAll } from "../offline/idb.ts";
 
@@ -58,7 +66,12 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const farms = useMemo<CurrentFarm[]>(
     () =>
       me?.memberships.flatMap((m) =>
-        m.farms.map((f) => ({ ...f, organizationName: m.organizationName, role: m.role, permissions: m.permissions })),
+        m.farms.map((f) => ({
+          ...f,
+          organizationName: m.organizationName,
+          role: m.role,
+          permissions: m.permissions,
+        })),
       ) ?? [],
     [me],
   );

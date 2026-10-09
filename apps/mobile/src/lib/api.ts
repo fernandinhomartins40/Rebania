@@ -4,12 +4,19 @@ import { Platform } from "react-native";
 
 /** Credenciais ficam no Keychain/Keystore (expo-secure-store), nunca em AsyncStorage. */
 const KEY = "rebania.tokens";
-export const API_URL = (process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:3000").replace(/\/$/, "");
+export const API_URL = (process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:3000").replace(
+  /\/$/,
+  "",
+);
 
 type Tokens = NonNullable<LoginResponse["tokens"]>;
 
 export class ApiError extends Error {
-  constructor(public readonly status: number, public readonly code: string, message: string) {
+  constructor(
+    public readonly status: number,
+    public readonly code: string,
+    message: string,
+  ) {
     super(message);
   }
 }
@@ -79,7 +86,11 @@ async function refresh(): Promise<boolean> {
   return refreshing;
 }
 
-export async function api<T>(method: "GET" | "POST" | "PATCH", path: string, body?: unknown): Promise<T> {
+export async function api<T>(
+  method: "GET" | "POST" | "PATCH",
+  path: string,
+  body?: unknown,
+): Promise<T> {
   let t = await readTokens();
   if (t && new Date(t.accessExpiresAt).getTime() - Date.now() < 30_000) {
     await refresh();
@@ -87,13 +98,18 @@ export async function api<T>(method: "GET" | "POST" | "PATCH", path: string, bod
   }
   let res = await rawFetch(method, path, body, t?.accessToken ?? null);
   if (res.status === 401 && t) {
-    if (await refresh()) res = await rawFetch(method, path, body, (await readTokens())!.accessToken);
+    if (await refresh())
+      res = await rawFetch(method, path, body, (await readTokens())!.accessToken);
   }
   if (res.status === 204) return undefined as T;
   const data = await res.json().catch(() => null);
   if (!res.ok) {
     if (res.status === 401) onSessionLost?.();
-    throw new ApiError(res.status, data?.error?.code ?? "error", data?.error?.message ?? "Erro inesperado.");
+    throw new ApiError(
+      res.status,
+      data?.error?.code ?? "error",
+      data?.error?.message ?? "Erro inesperado.",
+    );
   }
   return data as T;
 }
@@ -106,7 +122,12 @@ export async function login(email: string, password: string) {
     null,
   );
   const data = await res.json().catch(() => null);
-  if (!res.ok) throw new ApiError(res.status, data?.error?.code ?? "error", data?.error?.message ?? "Falha ao entrar.");
+  if (!res.ok)
+    throw new ApiError(
+      res.status,
+      data?.error?.code ?? "error",
+      data?.error?.message ?? "Falha ao entrar.",
+    );
   await saveTokens((data as LoginResponse).tokens!);
 }
 

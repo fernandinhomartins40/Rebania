@@ -2,8 +2,26 @@ import type { Animal, MeResponse, SyncPullResponse } from "@rebania/contracts";
 import { newMutationBase, SyncEngine, type SyncState } from "@rebania/sync-core";
 import * as Crypto from "expo-crypto";
 import * as Network from "expo-network";
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { api, ApiError, errorMessage, hasSession, login as apiLogin, logout as apiLogout, NetworkError, setSessionLostHandler } from "./api.ts";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
+import {
+  api,
+  ApiError,
+  errorMessage,
+  hasSession,
+  login as apiLogin,
+  logout as apiLogout,
+  NetworkError,
+  setSessionLostHandler,
+} from "./api.ts";
 import { db, sqliteCache, sqliteOutbox, wipeLocalData } from "./db.ts";
 
 export interface Farm {
@@ -75,7 +93,9 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     setSessionLostHandler(() => setStatus("anonymous"));
     void db().then(loadMe);
-    const sub = Network.addNetworkStateListener((s) => setOnline(Boolean(s.isConnected && s.isInternetReachable !== false)));
+    const sub = Network.addNetworkStateListener((s) =>
+      setOnline(Boolean(s.isConnected && s.isInternetReachable !== false)),
+    );
     return () => sub.remove();
   }, [loadMe]);
 
@@ -86,7 +106,13 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const farms = useMemo<Farm[]>(
     () =>
       me?.memberships.flatMap((m) =>
-        m.farms.map((f) => ({ id: f.id, name: f.name, timezone: f.timezone, organizationName: m.organizationName, permissions: m.permissions })),
+        m.farms.map((f) => ({
+          id: f.id,
+          name: f.name,
+          timezone: f.timezone,
+          organizationName: m.organizationName,
+          permissions: m.permissions,
+        })),
       ) ?? [],
     [me],
   );
@@ -105,7 +131,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         isOnline: () => onlineRef.current,
         api: {
           push: (input) => api("POST", "/v1/sync/push", input),
-          pull: (f, cursor) => api<SyncPullResponse>("GET", `/v1/sync/pull?farmId=${f}&cursor=${cursor}&limit=500`),
+          pull: (f, cursor) =>
+            api<SyncPullResponse>("GET", `/v1/sync/pull?farmId=${f}&cursor=${cursor}&limit=500`),
           getAnimal: (f, id) => api<Animal>("GET", `/v1/farms/${f}/animals/${id}`),
           isNetworkError: (err) => err instanceof NetworkError,
           errorMessage,

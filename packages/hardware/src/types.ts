@@ -5,7 +5,8 @@ import type { IdentifierType } from "@rebania/domain";
  * tipo de tag precisa de homologação física antes de ser anunciada como suportada.
  * Sem aparelho homologado, o adapter pode existir mas a homologação fica PENDENTE.
  */
-export type Transport = "keyboard_wedge" | "ble" | "usb_serial" | "nfc_native" | "camera" | "manual";
+export type Transport =
+  "keyboard_wedge" | "ble" | "usb_serial" | "nfc_native" | "camera" | "manual";
 
 export interface Capability {
   transport: Transport;

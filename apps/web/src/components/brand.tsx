@@ -54,13 +54,20 @@ export function BrandCow({
 export function initials(name: string | undefined): string {
   if (!name) return "?";
   const parts = name.trim().split(/\s+/);
-  return ((parts[0]?.[0] ?? "") + (parts.length > 1 ? (parts[parts.length - 1]?.[0] ?? "") : "")).toUpperCase();
+  return (
+    (parts[0]?.[0] ?? "") + (parts.length > 1 ? (parts[parts.length - 1]?.[0] ?? "") : "")
+  ).toUpperCase();
 }
 
 /** Paisagem ilustrada (vetorial) do cabeçalho "Hoje" — sem recortar as pranchas. */
 export function Landscape() {
   return (
-    <svg className="hero-landscape" viewBox="0 0 400 76" preserveAspectRatio="none" aria-hidden="true">
+    <svg
+      className="hero-landscape"
+      viewBox="0 0 400 76"
+      preserveAspectRatio="none"
+      aria-hidden="true"
+    >
       <defs>
         <linearGradient id="sky" x1="0" x2="0" y1="0" y2="1">
           <stop offset="0" stopColor="#F7F4ED" stopOpacity="0" />
@@ -71,7 +78,14 @@ export function Landscape() {
       <path d="M0 44 C60 34 110 40 170 36 S300 30 400 38 V76 H0Z" fill="#C9D3B4" />
       <path d="M0 54 C80 46 150 52 230 48 S340 44 400 50 V76 H0Z" fill="#B7C59A" />
       <path d="M0 64 C90 58 200 64 400 58 V76 H0Z" fill="#A8B886" />
-      {[[30, 40, 9], [62, 38, 7], [118, 39, 8], [205, 35, 7], [258, 37, 9], [336, 30, 16]].map(([x, y, r]) => (
+      {[
+        [30, 40, 9],
+        [62, 38, 7],
+        [118, 39, 8],
+        [205, 35, 7],
+        [258, 37, 9],
+        [336, 30, 16],
+      ].map(([x, y, r]) => (
         <g key={x} fill="#4F6B3E">
           <rect x={x! - 1} y={y!} width="2" height={r! * 0.9} fill="#5B4A33" />
           <ellipse cx={x} cy={y} rx={r! * 1.3} ry={r! * 0.75} />
@@ -82,4 +96,9 @@ export function Landscape() {
 }
 
 /** Ícone aceito na navegação: Lucide ou a figura da marca. */
-export type IconComponent = ComponentType<{ size?: number; className?: string; color?: string; "aria-hidden"?: boolean | "true" }>;
+export type IconComponent = ComponentType<{
+  size?: number;
+  className?: string;
+  color?: string;
+  "aria-hidden"?: boolean | "true";
+}>;

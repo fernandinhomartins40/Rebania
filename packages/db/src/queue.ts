@@ -40,7 +40,11 @@ export interface ClaimedJob {
 }
 
 /** Reserva o próximo job disponível com FOR UPDATE SKIP LOCKED (seguro com vários workers). */
-export async function claimJob(db: PrismaClient, workerId: string, queues: string[]): Promise<ClaimedJob | null> {
+export async function claimJob(
+  db: PrismaClient,
+  workerId: string,
+  queues: string[],
+): Promise<ClaimedJob | null> {
   const rows = await db.$queryRaw<ClaimedJob[]>`
     UPDATE jobs SET status = 'running', locked_at = now(), locked_by = ${workerId}, attempts = attempts + 1
     WHERE id = (
@@ -55,7 +59,10 @@ export async function claimJob(db: PrismaClient, workerId: string, queues: strin
 }
 
 export async function completeJob(db: PrismaClient, id: string) {
-  await db.job.update({ where: { id }, data: { status: "done", finishedAt: new Date(), lockedAt: null } });
+  await db.job.update({
+    where: { id },
+    data: { status: "done", finishedAt: new Date(), lockedAt: null },
+  });
 }
 
 /** Falha: reagenda com backoff exponencial até `maxAttempts`, depois marca como failed. */
@@ -65,8 +72,18 @@ export async function failJob(db: PrismaClient, job: ClaimedJob, error: string) 
   await db.job.update({
     where: { id: job.id },
     data: exhausted
-      ? { status: "failed", lastError: error.slice(0, 2000), finishedAt: new Date(), lockedAt: null }
-      : { status: "queued", lastError: error.slice(0, 2000), runAt: new Date(Date.now() + delayMs), lockedAt: null },
+      ? {
+          status: "failed",
+          lastError: error.slice(0, 2000),
+          finishedAt: new Date(),
+          lockedAt: null,
+        }
+      : {
+          status: "queued",
+          lastError: error.slice(0, 2000),
+          runAt: new Date(Date.now() + delayMs),
+          lockedAt: null,
+        },
   });
 }
 

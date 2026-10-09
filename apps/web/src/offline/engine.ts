@@ -57,7 +57,8 @@ export class SyncEngine extends CoreEngine {
       isOnline: () => navigator.onLine,
       api: {
         push: (input) => post("/v1/sync/push", input),
-        pull: (f, cursor) => get<SyncPullResponse>(`/v1/sync/pull?farmId=${f}&cursor=${cursor}&limit=500`),
+        pull: (f, cursor) =>
+          get<SyncPullResponse>(`/v1/sync/pull?farmId=${f}&cursor=${cursor}&limit=500`),
         getAnimal: (f, id) => get<Animal>(`/v1/farms/${f}/animals/${id}`),
         isNetworkError: (err) => err instanceof NetworkError,
         errorMessage: (err) => (err instanceof Error ? errorMessage(err) : "Falha ao sincronizar."),
@@ -84,4 +85,5 @@ export const localAnimals = (farmId: string) => idbByFarm<LocalAnimal>("animals"
 export const localAnimal = (id: string) => idbGet<LocalAnimal>("animals", id);
 export const localPlaces = (farmId: string) => idbByFarm<Place>("places", farmId);
 export const putLocalAnimal = (a: LocalAnimal) => idbPut("animals", a);
-export const newMutationBase = (entityId: string) => baseMutation(entityId, () => crypto.randomUUID());
+export const newMutationBase = (entityId: string) =>
+  baseMutation(entityId, () => crypto.randomUUID());

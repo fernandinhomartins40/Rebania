@@ -44,7 +44,12 @@ export async function api<T>(
   if (!res.ok) {
     const err = data?.error ?? {};
     if (res.status === 401) window.dispatchEvent(new CustomEvent("rebania:unauthorized"));
-    throw new ApiError(res.status, err.code ?? "error", err.message ?? "Erro inesperado.", err.details);
+    throw new ApiError(
+      res.status,
+      err.code ?? "error",
+      err.message ?? "Erro inesperado.",
+      err.details,
+    );
   }
   return data as T;
 }

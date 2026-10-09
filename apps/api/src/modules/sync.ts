@@ -52,7 +52,11 @@ export function syncRoutes(app: FastifyInstance, ctx: AppContext) {
     return { receipts, cursor: (last?.seq ?? 0n).toString() };
   });
 
-  async function processMutation(fctx: FarmContext, deviceId: string, raw: unknown): Promise<SyncReceipt> {
+  async function processMutation(
+    fctx: FarmContext,
+    deviceId: string,
+    raw: unknown,
+  ): Promise<SyncReceipt> {
     const parsed = SyncMutation.safeParse(raw);
     if (!parsed.success) {
       const id = (raw as { mutationId?: unknown })?.mutationId;
@@ -111,7 +115,10 @@ export function syncRoutes(app: FastifyInstance, ctx: AppContext) {
     // Mantém apenas a última mudança de cada entidade na página.
     const latest = new Map<string, (typeof page)[number]>();
     for (const r of page) latest.set(`${r.entity}:${r.entityId}`, r);
-    const pick = (e: string) => [...latest.values()].filter((r) => r.entity === e && r.op === "upsert").map((r) => r.entityId);
+    const pick = (e: string) =>
+      [...latest.values()]
+        .filter((r) => r.entity === e && r.op === "upsert")
+        .map((r) => r.entityId);
 
     const [animals, groups, pastures, weights] = await Promise.all([
       getAnimalDtos(db, fctx.farmId, pick("animal")),
@@ -121,18 +128,29 @@ export function syncRoutes(app: FastifyInstance, ctx: AppContext) {
     ]);
     const data = new Map<string, unknown>();
     for (const a of animals) data.set(`animal:${a.id}`, a);
-    for (const g of [...groups.map((g) => ["group", g] as const), ...pastures.map((p) => ["pasture", p] as const)]) {
+    for (const g of [
+      ...groups.map((g) => ["group", g] as const),
+      ...pastures.map((p) => ["pasture", p] as const),
+    ]) {
       const [entity, row] = g;
-      data.set(`${entity}:${row.id}`, row.archivedAt ? null : { id: row.id, name: row.name, notes: row.notes });
+      data.set(
+        `${entity}:${row.id}`,
+        row.archivedAt ? null : { id: row.id, name: row.name, notes: row.notes },
+      );
     }
     for (const w of weights) {
-      data.set(`weight:${w.id}`, w.voidedAt ? null : {
-        id: w.id,
-        animalId: w.animalId,
-        weightKg: Number(w.weightKg),
-        measuredOn: dateToCivil(w.measuredOn),
-        source: w.source,
-      });
+      data.set(
+        `weight:${w.id}`,
+        w.voidedAt
+          ? null
+          : {
+              id: w.id,
+              animalId: w.animalId,
+              weightKg: Number(w.weightKg),
+              measuredOn: dateToCivil(w.measuredOn),
+              source: w.source,
+            },
+      );
     }
     const changes: SyncChange[] = [...latest.values()]
       .sort((a, b) => (a.seq < b.seq ? -1 : 1))

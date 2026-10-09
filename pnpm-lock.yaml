@@ -44,6 +44,12 @@ importers:
       '@fastify/rate-limit':
         specifier: 11.2.1
         version: 11.2.1
+      '@prisma/adapter-pg':
+        specifier: 7.10.0
+        version: 7.10.0
+      '@prisma/client':
+        specifier: 7.10.0
+        version: 7.10.0(prisma@7.10.0(@types/react-dom@19.2.3(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(typescript@6.0.3))(typescript@6.0.3)
       '@rebania/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
@@ -194,16 +200,28 @@ importers:
 
   apps/worker:
     dependencies:
+      '@prisma/adapter-pg':
+        specifier: 7.10.0
+        version: 7.10.0
+      '@prisma/client':
+        specifier: 7.10.0
+        version: 7.10.0(prisma@7.10.0(@types/react-dom@19.2.3(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(typescript@6.0.3))(typescript@6.0.3)
       '@rebania/db':
         specifier: workspace:*
         version: link:../../packages/db
       '@rebania/domain':
         specifier: workspace:*
         version: link:../../packages/domain
+      pg:
+        specifier: 8.23.1
+        version: 8.23.1
     devDependencies:
       '@rebania/config':
         specifier: workspace:*
         version: link:../../packages/config
+      tsup:
+        specifier: 8.5.1
+        version: 8.5.1(jiti@2.7.0)(postcss@8.5.29)(tsx@4.23.15)(typescript@6.0.3)(yaml@2.9.1)
 
   packages/config: {}
 

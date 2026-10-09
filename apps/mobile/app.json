@@ -14,9 +14,21 @@
     },
     "android": {
       "package": "com.rebania.app",
-      "permissions": []
+      "permissions": [],
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/icon.png",
+        "backgroundColor": "#F7F4ED"
+      }
     },
     "plugins": ["expo-secure-store", "expo-sqlite"],
-    "experiments": { "typedRoutes": false }
+    "experiments": {
+      "typedRoutes": false
+    },
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/brand/rebania-logo.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#F7F4ED"
+    }
   }
 }

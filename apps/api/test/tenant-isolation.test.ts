@@ -3,7 +3,16 @@
  */
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { createTenant, createTestEnv, createUser, login, newAnimal, type Client, type Tenant, type TestEnv } from "./helpers.ts";
+import {
+  createTenant,
+  createTestEnv,
+  createUser,
+  login,
+  newAnimal,
+  type Client,
+  type Tenant,
+  type TestEnv,
+} from "./helpers.ts";
 
 let env: TestEnv;
 let A: Tenant;
@@ -21,7 +30,10 @@ beforeAll(async () => {
   clientA = await login(env.app, ua.email);
   const clientB = await login(env.app, ub.email);
   groupB = (await clientB.post(`/v1/farms/${B.farmId}/groups`, { name: "Lote B" })).json().id;
-  const created = await clientB.post(`/v1/farms/${B.farmId}/animals`, newAnimal({ identifiers: [{ type: "visual_tag", value: "0284" }] }));
+  const created = await clientB.post(
+    `/v1/farms/${B.farmId}/animals`,
+    newAnimal({ identifiers: [{ type: "visual_tag", value: "0284" }] }),
+  );
   expect(created.statusCode).toBe(201);
   animalB = created.json().id;
 });
@@ -48,14 +60,31 @@ describe("isolamento entre organizações", () => {
     const before = await env.db.animal.count({ where: { farmId: B.farmId } });
     const attempts = [
       clientA.post(`/v1/farms/${B.farmId}/animals`, newAnimal()),
-      clientA.post(`/v1/farms/${B.farmId}/animals/${animalB}/weights`, { weightKg: 300, measuredOn: "2026-10-01" }),
+      clientA.post(`/v1/farms/${B.farmId}/animals/${animalB}/weights`, {
+        weightKg: 300,
+        measuredOn: "2026-10-01",
+      }),
       clientA.post(`/v1/farms/${B.farmId}/groups`, { name: "invasor" }),
-      clientA.post(`/v1/orgs/${B.orgId}/invitations`, { email: "x@x.dev", role: "owner", allFarms: true }),
+      clientA.post(`/v1/orgs/${B.orgId}/invitations`, {
+        email: "x@x.dev",
+        role: "owner",
+        allFarms: true,
+      }),
       clientA.post(`/v1/orgs/${B.orgId}/farms`, { name: "invasora" }),
       clientA.post(`/v1/sync/push`, {
         farmId: B.farmId,
         deviceId: randomUUID(),
-        mutations: [{ type: "weight.record", mutationId: randomUUID(), entityId: animalB, occurredAt: new Date().toISOString(), createdAt: new Date().toISOString(), schemaVersion: 1, payload: { weightKg: 300, measuredOn: "2026-10-01" } }],
+        mutations: [
+          {
+            type: "weight.record",
+            mutationId: randomUUID(),
+            entityId: animalB,
+            occurredAt: new Date().toISOString(),
+            createdAt: new Date().toISOString(),
+            schemaVersion: 1,
+            payload: { weightKg: 300, measuredOn: "2026-10-01" },
+          },
+        ],
       }),
     ];
     for (const res of await Promise.all(attempts)) expect(res.statusCode).toBe(404);
@@ -65,16 +94,27 @@ describe("isolamento entre organizações", () => {
 
   it("A não acessa animal de B usando a própria fazenda na URL", async () => {
     expect((await clientA.get(`/v1/farms/${A.farmId}/animals/${animalB}`)).statusCode).toBe(404);
-    const w = await clientA.post(`/v1/farms/${A.farmId}/animals/${animalB}/weights`, { weightKg: 300, measuredOn: "2026-10-01" });
+    const w = await clientA.post(`/v1/farms/${A.farmId}/animals/${animalB}/weights`, {
+      weightKg: 300,
+      measuredOn: "2026-10-01",
+    });
     expect(w.statusCode).toBe(404);
-    expect((await clientA.get(`/v1/farms/${A.farmId}/animals/${animalB}/history`)).statusCode).toBe(404);
+    expect((await clientA.get(`/v1/farms/${A.farmId}/animals/${animalB}/history`)).statusCode).toBe(
+      404,
+    );
   });
 
   it("A não referencia lote, mãe ou animal de B ao cadastrar", async () => {
-    const withGroup = await clientA.post(`/v1/farms/${A.farmId}/animals`, newAnimal({ groupId: groupB }));
+    const withGroup = await clientA.post(
+      `/v1/farms/${A.farmId}/animals`,
+      newAnimal({ groupId: groupB }),
+    );
     expect(withGroup.statusCode).toBe(422);
     expect(withGroup.json().error.code).toBe("group_not_found");
-    const withDam = await clientA.post(`/v1/farms/${A.farmId}/animals`, newAnimal({ category: "calf_female", birthDate: "2026-09-01", damId: animalB }));
+    const withDam = await clientA.post(
+      `/v1/farms/${A.farmId}/animals`,
+      newAnimal({ category: "calf_female", birthDate: "2026-09-01", damId: animalB }),
+    );
     expect(withDam.statusCode).toBe(422);
     expect(withDam.json().error.code).toBe("parent_not_found");
     // Mesmo id de animal gerado pelo cliente: não sobrescreve/colide com B
@@ -84,7 +124,10 @@ describe("isolamento entre organizações", () => {
   });
 
   it("A pode usar o mesmo número de brinco que B (unicidade por fazenda)", async () => {
-    const res = await clientA.post(`/v1/farms/${A.farmId}/animals`, newAnimal({ identifiers: [{ type: "visual_tag", value: "0284" }] }));
+    const res = await clientA.post(
+      `/v1/farms/${A.farmId}/animals`,
+      newAnimal({ identifiers: [{ type: "visual_tag", value: "0284" }] }),
+    );
     expect(res.statusCode).toBe(201);
     const resolve = await clientA.get(`/v1/farms/${A.farmId}/identifiers/resolve?value=0284`);
     expect(resolve.json().matches).toHaveLength(1);
@@ -98,7 +141,13 @@ describe("isolamento entre organizações", () => {
     ).rejects.toThrow();
     await expect(
       env.db.weightMeasurement.create({
-        data: { organizationId: A.orgId, farmId: A.farmId, animalId: animalB, weightKg: "300", measuredOn: new Date("2026-10-01") },
+        data: {
+          organizationId: A.orgId,
+          farmId: A.farmId,
+          animalId: animalB,
+          weightKg: "300",
+          measuredOn: new Date("2026-10-01"),
+        },
       }),
     ).rejects.toThrow();
   });
@@ -108,10 +157,14 @@ describe("isolamento entre organizações", () => {
     const ub = await createUser(env.db, B.orgId, "owner");
     const clientB = await login(env.app, ub.email);
     const body = { weightKg: 301, measuredOn: "2026-10-01" };
-    const okB = await clientB.post(`/v1/farms/${B.farmId}/animals/${animalB}/weights`, body, { "idempotency-key": mutationId });
+    const okB = await clientB.post(`/v1/farms/${B.farmId}/animals/${animalB}/weights`, body, {
+      "idempotency-key": mutationId,
+    });
     expect(okB.statusCode).toBe(201);
     const animalA = (await clientA.post(`/v1/farms/${A.farmId}/animals`, newAnimal())).json().id;
-    const reuse = await clientA.post(`/v1/farms/${A.farmId}/animals/${animalA}/weights`, body, { "idempotency-key": mutationId });
+    const reuse = await clientA.post(`/v1/farms/${A.farmId}/animals/${animalA}/weights`, body, {
+      "idempotency-key": mutationId,
+    });
     expect(reuse.statusCode).toBe(422);
     expect(reuse.json().error.code).toBe("mutation_id_reused");
     expect(JSON.stringify(reuse.json())).not.toContain(animalB);

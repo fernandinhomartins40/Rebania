@@ -73,7 +73,9 @@ export async function accessibleFarms(db: Db, userId: string) {
   const memberships = await db.membership.findMany({
     where: { userId, revokedAt: null },
     include: {
-      organization: { include: { farms: { where: { archivedAt: null }, orderBy: { name: "asc" } } } },
+      organization: {
+        include: { farms: { where: { archivedAt: null }, orderBy: { name: "asc" } } },
+      },
       farms: { select: { farmId: true } },
     },
     orderBy: { createdAt: "asc" },

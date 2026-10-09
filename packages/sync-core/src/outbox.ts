@@ -89,7 +89,13 @@ export class Outbox {
 
   /** Envia pendentes em lotes ordenados. Rejeitados/conflitos ficam visíveis, nunca somem. */
   async flush(transport: SyncTransport): Promise<FlushResult> {
-    const result: FlushResult = { accepted: 0, rejected: 0, conflicts: 0, networkError: false, remaining: 0 };
+    const result: FlushResult = {
+      accepted: 0,
+      rejected: 0,
+      conflicts: 0,
+      networkError: false,
+      remaining: 0,
+    };
     const now = this.now();
     const due = (await this.items()).filter((i) => i.state === "pending" && i.nextAttemptAt <= now);
     const byFarm = new Map<string, OutboxItem[]>();

@@ -22,7 +22,11 @@ export const unauthorized = (message = "Sessão expirada. Entre novamente.") =>
 
 /** Violação de unicidade/FK do Postgres via Prisma (driver adapter). */
 export function isUniqueViolation(err: unknown): boolean {
-  const e = err as { code?: string; cause?: { code?: string }; meta?: { driverAdapterError?: { cause?: { kind?: string } } } };
+  const e = err as {
+    code?: string;
+    cause?: { code?: string };
+    meta?: { driverAdapterError?: { cause?: { kind?: string } } };
+  };
   return (
     e?.code === "P2002" ||
     e?.cause?.code === "23505" ||
@@ -44,11 +48,7 @@ export function zodDetails(err: ZodError) {
   };
 }
 
-export function errorHandler(
-  err: FastifyError | Error,
-  req: FastifyRequest,
-  reply: FastifyReply,
-) {
+export function errorHandler(err: FastifyError | Error, req: FastifyRequest, reply: FastifyReply) {
   if (err instanceof HttpError) {
     return reply
       .status(err.status)
@@ -61,7 +61,11 @@ export function errorHandler(
   }
   if (err instanceof ZodError) {
     return reply.status(400).send({
-      error: { code: "validation_error", message: "Confira os campos informados.", details: zodDetails(err) },
+      error: {
+        code: "validation_error",
+        message: "Confira os campos informados.",
+        details: zodDetails(err),
+      },
     });
   }
   const fe = err as FastifyError;

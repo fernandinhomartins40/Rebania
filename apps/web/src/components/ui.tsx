@@ -10,9 +10,21 @@ export function Steps({ current }: { current: 1 | 2 | 3 }) {
       {labels.map((l, i) => {
         const n = i + 1;
         return [
-          i > 0 ? <span key={`b${n}`} className={`bar ${n <= current ? "done" : ""}`} aria-hidden="true" /> : null,
-          <li key={l} aria-current={n === current ? "step" : undefined} className={n < current ? "done" : undefined}>
-            <span className="n" aria-hidden="true">{n < current ? <Check size={16} /> : n}</span>
+          i > 0 ? (
+            <span
+              key={`b${n}`}
+              className={`bar ${n <= current ? "done" : ""}`}
+              aria-hidden="true"
+            />
+          ) : null,
+          <li
+            key={l}
+            aria-current={n === current ? "step" : undefined}
+            className={n < current ? "done" : undefined}
+          >
+            <span className="n" aria-hidden="true">
+              {n < current ? <Check size={16} /> : n}
+            </span>
             {l}
           </li>,
         ];
@@ -21,7 +33,15 @@ export function Steps({ current }: { current: 1 | 2 | 3 }) {
   );
 }
 
-export function PageHead({ title, back, aside }: { title: string; back?: string; aside?: ReactNode }) {
+export function PageHead({
+  title,
+  back,
+  aside,
+}: {
+  title: string;
+  back?: string;
+  aside?: ReactNode;
+}) {
   return (
     <div className="page-head">
       {back ? (
@@ -55,7 +75,14 @@ export function Field({
       <label htmlFor={id}>
         {label} {hint ? <span className="hint">({hint})</span> : null}
       </label>
-      {icon ? <div className="input-icon">{icon}{children}</div> : children}
+      {icon ? (
+        <div className="input-icon">
+          {icon}
+          {children}
+        </div>
+      ) : (
+        children
+      )}
       {error ? (
         <div className="field-error" id={`${id}-error`} role="alert">
           {error}
@@ -65,9 +92,20 @@ export function Field({
   );
 }
 
-const ALERT_ICON = { success: CircleCheck, warning: TriangleAlert, danger: CircleAlert, info: Info } as const;
+const ALERT_ICON = {
+  success: CircleCheck,
+  warning: TriangleAlert,
+  danger: CircleAlert,
+  info: Info,
+} as const;
 
-export function Alert({ kind, children }: { kind: "success" | "warning" | "danger" | "info"; children: ReactNode }) {
+export function Alert({
+  kind,
+  children,
+}: {
+  kind: "success" | "warning" | "danger" | "info";
+  children: ReactNode;
+}) {
   const Icon = ALERT_ICON[kind];
   return (
     <div className={`alert alert-${kind}`} role={kind === "danger" ? "alert" : "status"}>
@@ -77,7 +115,15 @@ export function Alert({ kind, children }: { kind: "success" | "warning" | "dange
   );
 }
 
-export function Empty({ title, icon, children }: { title: string; icon?: ReactNode; children?: ReactNode }) {
+export function Empty({
+  title,
+  icon,
+  children,
+}: {
+  title: string;
+  icon?: ReactNode;
+  children?: ReactNode;
+}) {
   return (
     <div className="empty">
       {icon}

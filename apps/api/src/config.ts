@@ -41,7 +41,9 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     databaseUrl: e.DATABASE_URL,
     port: e.API_PORT,
     host: e.API_HOST,
-    webOrigins: e.WEB_ORIGINS.split(",").map((s) => s.trim()).filter(Boolean),
+    webOrigins: e.WEB_ORIGINS.split(",")
+      .map((s) => s.trim())
+      .filter(Boolean),
     webBaseUrl: e.WEB_BASE_URL.replace(/\/$/, ""),
     cookieSecure: e.COOKIE_SECURE,
     logLevel: e.LOG_LEVEL,

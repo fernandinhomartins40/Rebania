@@ -77,7 +77,9 @@ export async function runIdempotent(input: IdempotentInput): Promise<SyncReceipt
 }
 
 async function readPrior(input: IdempotentInput): Promise<SyncReceipt | null> {
-  const existing = await input.db.syncMutation.findUnique({ where: { mutationId: input.mutationId } });
+  const existing = await input.db.syncMutation.findUnique({
+    where: { mutationId: input.mutationId },
+  });
   if (!existing) return null;
   if (
     existing.organizationId !== input.fctx.organizationId ||

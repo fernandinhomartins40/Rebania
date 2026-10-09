@@ -3,3 +3,6 @@ docs/referencia/
 packages/db/src/generated/
 packages/db/prisma/migrations/
 dist/
+apps/web/src/pages/landing/copy.json
+infra/compose/.env*
+**/*.md

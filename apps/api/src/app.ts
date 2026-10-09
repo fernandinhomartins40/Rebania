@@ -30,7 +30,6 @@ export async function buildApp(ctx: AppContext) {
     },
     trustProxy: ctx.config.trustProxy,
     bodyLimit: 256 * 1024,
-    disableRequestLogging: false,
   });
 
   app.setErrorHandler(errorHandler);

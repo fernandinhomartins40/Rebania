@@ -5,17 +5,21 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch --env-file-if-exists=../../.env src/main.ts",
-    "build": "tsup src/main.ts --format esm --platform node --target node22 --sourcemap --clean --no-external @rebania/db --no-external @rebania/domain",
+    "build": "tsup",
     "start": "node dist/main.js",
     "typecheck": "tsc -p tsconfig.json",
     "lint": "eslint src test",
     "test:integration": "vitest run"
   },
   "dependencies": {
+    "@prisma/adapter-pg": "7.10.0",
+    "@prisma/client": "7.10.0",
     "@rebania/db": "workspace:*",
-    "@rebania/domain": "workspace:*"
+    "@rebania/domain": "workspace:*",
+    "pg": "8.23.1"
   },
   "devDependencies": {
-    "@rebania/config": "workspace:*"
+    "@rebania/config": "workspace:*",
+    "tsup": "8.5.1"
   }
 }

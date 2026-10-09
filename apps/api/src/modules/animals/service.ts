@@ -19,7 +19,6 @@ import {
   assertEventDate,
   assertWeightKg,
   CATEGORY_LABEL,
-
   daysBetween,
   DomainError,
   formatIdentifier,
@@ -46,7 +45,11 @@ const ANIMAL_INCLUDE = {
   group: { select: { name: true } },
   pasture: { select: { name: true } },
   identifiers: { orderBy: { createdAt: "asc" } },
-  weights: { where: { voidedAt: null }, orderBy: [{ measuredOn: "desc" }, { createdAt: "desc" }], take: 1 },
+  weights: {
+    where: { voidedAt: null },
+    orderBy: [{ measuredOn: "desc" }, { createdAt: "desc" }],
+    take: 1,
+  },
 } satisfies Prisma.AnimalInclude;
 
 type AnimalWithRelations = Prisma.AnimalGetPayload<{ include: typeof ANIMAL_INCLUDE }>;
@@ -86,7 +89,9 @@ export function toAnimalDto(a: AnimalWithRelations): AnimalDto {
       retiredAt: i.retiredAt?.toISOString() ?? null,
     })),
     primaryIdentifier: primary ? formatIdentifier(primary.type, primary.normalizedValue) : null,
-    lastWeight: last ? { weightKg: Number(last.weightKg), measuredOn: dateToCivil(last.measuredOn) } : null,
+    lastWeight: last
+      ? { weightKg: Number(last.weightKg), measuredOn: dateToCivil(last.measuredOn) }
+      : null,
     createdAt: a.createdAt.toISOString(),
     updatedAt: a.updatedAt.toISOString(),
   };
@@ -99,7 +104,10 @@ export async function getAnimalDto(db: Db | Tx, farmId: string, id: string): Pro
 }
 
 export async function getAnimalDtos(db: Db | Tx, farmId: string, ids: string[]) {
-  const rows = await db.animal.findMany({ where: { id: { in: ids }, farmId }, include: ANIMAL_INCLUDE });
+  const rows = await db.animal.findMany({
+    where: { id: { in: ids }, farmId },
+    include: ANIMAL_INCLUDE,
+  });
   return rows.map(toAnimalDto);
 }
 
@@ -114,18 +122,29 @@ async function assertGroupAndPasture(
   pastureId: string | null | undefined,
 ) {
   if (groupId) {
-    const g = await tx.group.findFirst({ where: { id: groupId, farmId: fctx.farmId, archivedAt: null } });
+    const g = await tx.group.findFirst({
+      where: { id: groupId, farmId: fctx.farmId, archivedAt: null },
+    });
     if (!g) throw new DomainError("group_not_found", "Lote não encontrado nesta fazenda.");
   }
   if (pastureId) {
-    const p = await tx.pasture.findFirst({ where: { id: pastureId, farmId: fctx.farmId, archivedAt: null } });
+    const p = await tx.pasture.findFirst({
+      where: { id: pastureId, farmId: fctx.farmId, archivedAt: null },
+    });
     if (!p) throw new DomainError("pasture_not_found", "Pasto não encontrado nesta fazenda.");
   }
 }
 
-async function assertParent(tx: Tx, fctx: FarmContext, id: string | null | undefined, sex: "female" | "male", selfId: string) {
+async function assertParent(
+  tx: Tx,
+  fctx: FarmContext,
+  id: string | null | undefined,
+  sex: "female" | "male",
+  selfId: string,
+) {
   if (!id) return;
-  if (id === selfId) throw new DomainError("parent_self", "O animal não pode ser pai/mãe de si mesmo.");
+  if (id === selfId)
+    throw new DomainError("parent_self", "O animal não pode ser pai/mãe de si mesmo.");
   const parent = await tx.animal.findFirst({ where: { id, organizationId: fctx.organizationId } });
   if (!parent) throw new DomainError("parent_not_found", "Mãe/pai não encontrado(a).");
   if (parent.sex !== sex) {
@@ -195,7 +214,8 @@ export async function createAnimal(
   const id = input.id ?? randomUUID();
   assertCategoryMatchesSex(input.category, input.sex);
   if (input.birthDate) assertEventDate(input.birthDate, { today });
-  if (input.entryDate) assertEventDate(input.entryDate, { today, birthDate: input.birthDate ?? null });
+  if (input.entryDate)
+    assertEventDate(input.entryDate, { today, birthDate: input.birthDate ?? null });
   await assertGroupAndPasture(tx, fctx, input.groupId, input.pastureId);
   await assertParent(tx, fctx, input.damId, "female", id);
   await assertParent(tx, fctx, input.sireId, "male", id);
@@ -208,7 +228,8 @@ export async function createAnimal(
   const seen = new Set<string>();
   for (const i of identifiers) {
     const key = `${i.type}:${i.normalized}`;
-    if (seen.has(key)) throw new DomainError("identifier_duplicated", "Identificador repetido no cadastro.");
+    if (seen.has(key))
+      throw new DomainError("identifier_duplicated", "Identificador repetido no cadastro.");
     seen.add(key);
     await assertIdentifierAvailable(tx, fctx, i.type, i.normalized);
   }
@@ -309,10 +330,19 @@ export async function updateAnimal(
     const key = k as keyof typeof patch;
     const prev = current[key as keyof typeof current];
     before[key] = prev instanceof Date ? dateToCivil(prev) : prev;
-    (data as Record<string, unknown>)[key] = key === "birthDate" && typeof v === "string" ? civilToDate(v) : v;
+    (data as Record<string, unknown>)[key] =
+      key === "birthDate" && typeof v === "string" ? civilToDate(v) : v;
   }
   const version = await bumpVersion(tx, fctx, id, expectedVersion, data);
-  await addEvent(tx, fctx, id, "updated", today, { before, after: patch } as Prisma.InputJsonValue, meta);
+  await addEvent(
+    tx,
+    fctx,
+    id,
+    "updated",
+    today,
+    { before, after: patch } as Prisma.InputJsonValue,
+    meta,
+  );
   await recordChange(tx, fctx, "animal", id);
   return { entityId: id, version };
 }
@@ -327,7 +357,8 @@ export async function moveAnimal(
   const input = MoveAnimalSchema.parse(raw);
   const current = await loadForWrite(tx, fctx, id);
   assertAnimalAcceptsHandling(current.status);
-  if (current.version !== input.expectedVersion) throw new VersionConflictError(id, current.version);
+  if (current.version !== input.expectedVersion)
+    throw new VersionConflictError(id, current.version);
   const today = todayInTimezone(fctx.timezone, meta.now);
   assertEventDate(input.effectiveOn, { today, birthDate: dateToCivil(current.birthDate) });
   await assertGroupAndPasture(tx, fctx, input.groupId, input.pastureId);
@@ -374,7 +405,9 @@ export async function recordWeight(
     orderBy: [{ measuredOn: "desc" }, { createdAt: "desc" }],
   });
   const warning = weightConsistencyWarning(
-    previous ? { measuredOn: dateToCivil(previous.measuredOn), weightKg: Number(previous.weightKg) } : undefined,
+    previous
+      ? { measuredOn: dateToCivil(previous.measuredOn), weightKg: Number(previous.weightKg) }
+      : undefined,
     { measuredOn: input.measuredOn, weightKg: input.weightKg },
   );
   const id = input.id ?? meta.mutationId ?? randomUUID();
@@ -474,7 +507,11 @@ export async function addIdentifier(
 
 // ---- Linha do tempo --------------------------------------------------------
 
-export function summarizeEvent(type: string, data: Record<string, unknown>, names: Map<string, string>): string {
+export function summarizeEvent(
+  type: string,
+  data: Record<string, unknown>,
+  names: Map<string, string>,
+): string {
   switch (type) {
     case "registered":
       return `Cadastrado como ${CATEGORY_LABEL[data.category as keyof typeof CATEGORY_LABEL] ?? "animal"}`;
@@ -503,14 +540,23 @@ export function summarizeEvent(type: string, data: Record<string, unknown>, name
   }
 }
 
-export async function getTimeline(db: Db, fctx: FarmContext, animalId: string): Promise<TimelineEntry[]> {
+export async function getTimeline(
+  db: Db,
+  fctx: FarmContext,
+  animalId: string,
+): Promise<TimelineEntry[]> {
   const events = await db.animalEvent.findMany({
     where: { animalId, organizationId: fctx.organizationId },
     orderBy: [{ occurredOn: "desc" }, { createdAt: "desc" }],
     take: 500,
   });
-  const actorIds = [...new Set(events.map((e) => e.actorUserId).filter((x): x is string => Boolean(x)))];
-  const actors = await db.user.findMany({ where: { id: { in: actorIds } }, select: { id: true, name: true } });
+  const actorIds = [
+    ...new Set(events.map((e) => e.actorUserId).filter((x): x is string => Boolean(x))),
+  ];
+  const actors = await db.user.findMany({
+    where: { id: { in: actorIds } },
+    select: { id: true, name: true },
+  });
   const actorName = new Map(actors.map((a) => [a.id, a.name]));
   const [groups, pastures] = await Promise.all([
     db.group.findMany({ where: { farmId: fctx.farmId }, select: { id: true, name: true } }),
@@ -527,4 +573,3 @@ export async function getTimeline(db: Db, fctx: FarmContext, animalId: string): 
     recordedAt: e.createdAt.toISOString(),
   }));
 }
-

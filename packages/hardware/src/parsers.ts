@@ -30,7 +30,9 @@ export function parseScaleLine(line: string): { weightKg: number; stable: boolea
   const text = line.trim().toUpperCase();
   if (!text) return null;
   const unstable = /\bUS\b|MOTION|INSTAV/.test(text);
-  const m = /([+-]?\s*\d+(?:[.,]\d+)?)\s*(KG)?\s*$/.exec(text.replace(/[^\d.,+\-KG\s]/g, " ").trim());
+  const m = /([+-]?\s*\d+(?:[.,]\d+)?)\s*(KG)?\s*$/.exec(
+    text.replace(/[^\d.,+\-KG\s]/g, " ").trim(),
+  );
   if (!m) return null;
   const n = Number(m[1]!.replace(/\s/g, "").replace(",", "."));
   if (!Number.isFinite(n) || n <= 0) return null;

@@ -52,7 +52,11 @@ export function farmRoutes(app: FastifyInstance, ctx: AppContext) {
         select: { animalId: true },
       }),
       db.animal.count({ where: { ...active, identifiers: { none: { status: "active" } } } }),
-      db.changeLog.findFirst({ where: { farmId: fctx.farmId }, orderBy: { seq: "desc" }, select: { createdAt: true } }),
+      db.changeLog.findFirst({
+        where: { farmId: fctx.farmId },
+        orderBy: { seq: "desc" },
+        select: { createdAt: true },
+      }),
     ]);
     const summary: FarmTodaySummary = {
       farmId: fctx.farmId,
@@ -106,7 +110,11 @@ export function farmRoutes(app: FastifyInstance, ctx: AppContext) {
       const body = CreateNamedRequest.parse(req.body);
       const delegate = kind === "group" ? db.group : db.pasture;
       const dup = await (delegate as typeof db.group).findFirst({
-        where: { farmId: fctx.farmId, archivedAt: null, name: { equals: body.name, mode: "insensitive" } },
+        where: {
+          farmId: fctx.farmId,
+          archivedAt: null,
+          name: { equals: body.name, mode: "insensitive" },
+        },
       });
       if (dup) throw new HttpError(409, "duplicate_name", `${label} "${body.name}" já existe.`);
       const created = await db.$transaction(async (tx) => {
@@ -116,7 +124,8 @@ export function farmRoutes(app: FastifyInstance, ctx: AppContext) {
           name: body.name,
           notes: body.notes ?? null,
         };
-        const row = kind === "group" ? await tx.group.create({ data }) : await tx.pasture.create({ data });
+        const row =
+          kind === "group" ? await tx.group.create({ data }) : await tx.pasture.create({ data });
         await recordChange(tx, fctx, kind, row.id);
         await audit(tx, {
           organizationId: fctx.organizationId,
@@ -142,15 +151,26 @@ export function farmRoutes(app: FastifyInstance, ctx: AppContext) {
       const fctx = await farm(req as unknown as FastifyRequest<FarmParams>, "groups.manage");
       const id = req.params.id;
       const inUse = await db.animal.count({
-        where: { farmId: fctx.farmId, status: "active", ...(kind === "group" ? { groupId: id } : { pastureId: id }) },
+        where: {
+          farmId: fctx.farmId,
+          status: "active",
+          ...(kind === "group" ? { groupId: id } : { pastureId: id }),
+        },
       });
       if (inUse > 0) {
-        throw new HttpError(422, `${kind}_not_empty`, `${label} ainda tem ${inUse} animal(is) ativo(s). Mova-os antes.`);
+        throw new HttpError(
+          422,
+          `${kind}_not_empty`,
+          `${label} ainda tem ${inUse} animal(is) ativo(s). Mova-os antes.`,
+        );
       }
       await db.$transaction(async (tx) => {
         const where = { id, farmId: fctx.farmId, archivedAt: null };
         const data = { archivedAt: ctx.now() };
-        const r = kind === "group" ? await tx.group.updateMany({ where, data }) : await tx.pasture.updateMany({ where, data });
+        const r =
+          kind === "group"
+            ? await tx.group.updateMany({ where, data })
+            : await tx.pasture.updateMany({ where, data });
         if (r.count !== 1) throw new HttpError(404, "not_found", `${label} não encontrado.`);
         await recordChange(tx, fctx, kind as Kind, id, "delete");
       });

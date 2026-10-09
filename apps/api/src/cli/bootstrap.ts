@@ -20,7 +20,9 @@ const { values } = parseArgs({
 });
 
 if (!values.org || !values.farm || !values.email) {
-  console.error('Uso: bootstrap --org "Nome" --farm "Fazenda" --email dono@exemplo.com [--timezone America/Sao_Paulo]');
+  console.error(
+    'Uso: bootstrap --org "Nome" --farm "Fazenda" --email dono@exemplo.com [--timezone America/Sao_Paulo]',
+  );
   process.exit(1);
 }
 if (!isValidTimezone(values.timezone!)) {
@@ -57,13 +59,21 @@ const result = await db.$transaction(async (tx) => {
     },
   });
   await tx.auditEntry.create({
-    data: { organizationId: org.id, action: "org.bootstrapped", entityType: "organization", entityId: org.id, data: { farmId: farm.id, invitationId: inv.id } },
+    data: {
+      organizationId: org.id,
+      action: "org.bootstrapped",
+      entityType: "organization",
+      entityId: org.id,
+      data: { farmId: farm.id, invitationId: inv.id },
+    },
   });
   return { org, farm, inv };
 });
 
 console.log(`Organização: ${result.org.name} (${result.org.id})`);
 console.log(`Fazenda:     ${result.farm.name} (${result.farm.id})`);
-console.log(`Convite do proprietário (${result.inv.email}), válido até ${result.inv.expiresAt.toISOString()}:`);
+console.log(
+  `Convite do proprietário (${result.inv.email}), válido até ${result.inv.expiresAt.toISOString()}:`,
+);
 console.log(`${config.webBaseUrl}/convite#token=${token}`);
 await db.$disconnect();

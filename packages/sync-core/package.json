@@ -13,7 +13,6 @@
   },
   "dependencies": {
     "@rebania/contracts": "workspace:*"
-    
   },
   "devDependencies": {
     "@rebania/config": "workspace:*"

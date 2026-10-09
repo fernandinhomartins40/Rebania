@@ -23,7 +23,12 @@ import { SyncProvider } from "./state/sync.tsx";
 
 function Routed() {
   const { status, farm } = useSession();
-  if (status === "loading") return <div className="center-page"><Loading /></div>;
+  if (status === "loading")
+    return (
+      <div className="center-page">
+        <Loading />
+      </div>
+    );
   if (status === "anonymous") {
     return (
       <Routes>
@@ -39,7 +44,9 @@ function Routed() {
       <div className="center-page">
         <div className="card auth-card">
           <h2>Nenhuma fazenda disponível</h2>
-          <p className="hint">Seu acesso ainda não inclui fazendas. Fale com o proprietário ou gerente.</p>
+          <p className="hint">
+            Seu acesso ainda não inclui fazendas. Fale com o proprietário ou gerente.
+          </p>
         </div>
       </div>
     );

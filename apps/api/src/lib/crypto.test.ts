@@ -10,7 +10,9 @@ describe("crypto", () => {
     expect(await verifyPassword("x", "lixo")).toBe(false);
   });
   it("hash estável independe da ordem das chaves", () => {
-    expect(stableHash({ a: 1, b: { c: 2, d: [1, 2] } })).toBe(stableHash({ b: { d: [1, 2], c: 2 }, a: 1 }));
+    expect(stableHash({ a: 1, b: { c: 2, d: [1, 2] } })).toBe(
+      stableHash({ b: { d: [1, 2], c: 2 }, a: 1 }),
+    );
     expect(stableHash({ a: 1 })).not.toBe(stableHash({ a: 2 }));
   });
 });

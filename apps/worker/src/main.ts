@@ -9,7 +9,9 @@ const db = createDb({ url, max: Number(process.env.DB_POOL_MAX ?? 3) });
 const workerId = `${hostname()}:${process.pid}`;
 const pollMs = Number(process.env.WORKER_POLL_MS ?? 2000);
 const log = (msg: string, extra: Record<string, unknown> = {}) =>
-  console.log(JSON.stringify({ level: "info", time: new Date().toISOString(), workerId, msg, ...extra }));
+  console.log(
+    JSON.stringify({ level: "info", time: new Date().toISOString(), workerId, msg, ...extra }),
+  );
 
 let stopping = false;
 const stop = () => {

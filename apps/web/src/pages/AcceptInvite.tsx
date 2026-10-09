@@ -30,13 +30,17 @@ export function AcceptInvitePage() {
       setError("Link de convite incompleto.");
       return;
     }
-    get<Preview>(`/v1/auth/invitations/${encodeURIComponent(token)}`).then(setPreview, (e) => setError(errorMessage(e)));
+    get<Preview>(`/v1/auth/invitations/${encodeURIComponent(token)}`).then(setPreview, (e) =>
+      setError(errorMessage(e)),
+    );
   }, [token]);
 
   return (
     <div className="center-page">
       <div className="card auth-card">
-        <div className="auth-brand"><FullLogo height={72} /></div>
+        <div className="auth-brand">
+          <FullLogo height={72} />
+        </div>
         <h1 style={{ fontSize: 24, marginBottom: 16 }}>Convite para participar da fazenda</h1>
         {error ? <Alert kind="danger">{error}</Alert> : null}
         {!preview && !error ? <Loading /> : null}
@@ -47,7 +51,11 @@ export function AcceptInvitePage() {
               setBusy(true);
               setError(null);
               try {
-                await post("/v1/auth/invitations/accept", { token, password, ...(preview.existingUser ? {} : { name }) });
+                await post("/v1/auth/invitations/accept", {
+                  token,
+                  password,
+                  ...(preview.existingUser ? {} : { name }),
+                });
                 await post("/v1/auth/login", { email: preview.email, password, channel: "web" });
                 setPassword("");
                 await reload();
@@ -60,17 +68,28 @@ export function AcceptInvitePage() {
             }}
           >
             <p>
-              <strong>{preview.organizationName}</strong> convidou <strong>{preview.email}</strong> como{" "}
-              <strong>{ROLE_LABEL[preview.role]}</strong>.
+              <strong>{preview.organizationName}</strong> convidou <strong>{preview.email}</strong>{" "}
+              como <strong>{ROLE_LABEL[preview.role]}</strong>.
             </p>
             {preview.existingUser ? (
               <p className="hint">Você já tem conta. Confirme sua senha para aceitar.</p>
             ) : (
               <Field id="name" label="Seu nome">
-                <input id="name" required minLength={2} autoComplete="name" value={name} onChange={(e) => setName(e.target.value)} />
+                <input
+                  id="name"
+                  required
+                  minLength={2}
+                  autoComplete="name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                />
               </Field>
             )}
-            <Field id="password" label={preview.existingUser ? "Senha" : "Crie uma senha"} hint={preview.existingUser ? undefined : "mínimo 10 caracteres"}>
+            <Field
+              id="password"
+              label={preview.existingUser ? "Senha" : "Crie uma senha"}
+              hint={preview.existingUser ? undefined : "mínimo 10 caracteres"}
+            >
               <input
                 id="password"
                 type="password"

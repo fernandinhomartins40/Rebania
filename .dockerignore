@@ -1,0 +1,10 @@
+**/node_modules
+**/dist
+**/.turbo
+**/.env
+**/.env.*
+.git
+docs
+packages/db/src/generated
+apps/mobile/*
+!apps/mobile/package.json

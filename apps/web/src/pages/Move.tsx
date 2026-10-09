@@ -32,7 +32,13 @@ export function MovePage() {
   const today = todayInTimezone(farm!.timezone);
   const preset = params.get("animal");
   const [d, setD, clear] = useDraft<Draft>(`move:${farm!.id}`, {
-    step: 1, animalId: preset ?? "", groupId: "", pastureId: "", effectiveOn: today, reason: "", expectedVersion: 0,
+    step: 1,
+    animalId: preset ?? "",
+    groupId: "",
+    pastureId: "",
+    effectiveOn: today,
+    reason: "",
+    expectedVersion: 0,
   });
   const [result, setResult] = useState<SubmitResult | null>(null);
   const [doneId, setDoneId] = useState<string | null>(null);
@@ -50,7 +56,8 @@ export function MovePage() {
     : daysBetween(today, d.effectiveOn) > 0
       ? "A data não pode estar no futuro."
       : null;
-  const unchanged = animal && (animal.groupId ?? "") === d.groupId && (animal.pastureId ?? "") === d.pastureId;
+  const unchanged =
+    animal && (animal.groupId ?? "") === d.groupId && (animal.pastureId ?? "") === d.pastureId;
 
   if (result && doneId) {
     return (
@@ -59,7 +66,14 @@ export function MovePage() {
         <SubmitOutcome
           result={result}
           successText="Movimentação registrada"
-          restart={{ label: "Movimentar outro animal", onClick: () => { clear(); setResult(null); setDoneId(null); } }}
+          restart={{
+            label: "Movimentar outro animal",
+            onClick: () => {
+              clear();
+              setResult(null);
+              setDoneId(null);
+            },
+          }}
           next={[{ to: `/rebanho/${doneId}`, label: "Abrir passaporte" }]}
         />
       </section>
@@ -76,41 +90,90 @@ export function MovePage() {
             animals={animals}
             filter={(a) => a.status === "active"}
             onSelect={(a) =>
-              setD((p) => ({ ...p, animalId: a.id, groupId: a.groupId ?? "", pastureId: a.pastureId ?? "", expectedVersion: a.version, step: 2 }))
+              setD((p) => ({
+                ...p,
+                animalId: a.id,
+                groupId: a.groupId ?? "",
+                pastureId: a.pastureId ?? "",
+                expectedVersion: a.version,
+                step: 2,
+              }))
             }
           />
         </div>
       ) : null}
       {step === 2 && animal ? (
-        <form onSubmit={(e) => {
-          e.preventDefault();
-          if (!dateError && !unchanged) setD((p) => ({ ...p, step: 3, expectedVersion: p.expectedVersion || animal.version }));
-        }}>
-          <SelectedAnimal animal={animal} onChange={() => setD((p) => ({ ...p, step: 1, animalId: "" }))} />
-          <p className="hint">Atual: {animal.groupName ?? "sem lote"} · {animal.pastureName ?? "sem pasto"}</p>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (!dateError && !unchanged)
+              setD((p) => ({
+                ...p,
+                step: 3,
+                expectedVersion: p.expectedVersion || animal.version,
+              }));
+          }}
+        >
+          <SelectedAnimal
+            animal={animal}
+            onChange={() => setD((p) => ({ ...p, step: 1, animalId: "" }))}
+          />
+          <p className="hint">
+            Atual: {animal.groupName ?? "sem lote"} · {animal.pastureName ?? "sem pasto"}
+          </p>
           <div className="grid two">
             <Field id="dest-group" label="Lote de destino">
-              <select id="dest-group" value={d.groupId} onChange={(e) => set("groupId", e.target.value)}>
+              <select
+                id="dest-group"
+                value={d.groupId}
+                onChange={(e) => set("groupId", e.target.value)}
+              >
                 <option value="">Sem lote</option>
-                {groups.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
+                {groups.map((g) => (
+                  <option key={g.id} value={g.id}>
+                    {g.name}
+                  </option>
+                ))}
               </select>
             </Field>
             <Field id="dest-pasture" label="Pasto de destino">
-              <select id="dest-pasture" value={d.pastureId} onChange={(e) => set("pastureId", e.target.value)}>
+              <select
+                id="dest-pasture"
+                value={d.pastureId}
+                onChange={(e) => set("pastureId", e.target.value)}
+              >
                 <option value="">Sem pasto</option>
-                {pastures.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
+                {pastures.map((g) => (
+                  <option key={g.id} value={g.id}>
+                    {g.name}
+                  </option>
+                ))}
               </select>
             </Field>
           </div>
-          <Field id="effectiveOn" label="Data efetiva" error={dateError} icon={<CalendarDays size={22} aria-hidden="true" />}>
-            <input id="effectiveOn" type="date" max={today} value={d.effectiveOn} onChange={(e) => set("effectiveOn", e.target.value)} />
+          <Field
+            id="effectiveOn"
+            label="Data efetiva"
+            error={dateError}
+            icon={<CalendarDays size={22} aria-hidden="true" />}
+          >
+            <input
+              id="effectiveOn"
+              type="date"
+              max={today}
+              value={d.effectiveOn}
+              onChange={(e) => set("effectiveOn", e.target.value)}
+            />
           </Field>
           <Field id="reason" label="Motivo" hint="opcional">
             <input id="reason" value={d.reason} onChange={(e) => set("reason", e.target.value)} />
           </Field>
           {unchanged ? <Alert kind="info">Escolha um destino diferente do atual.</Alert> : null}
           <div className="actions">
-            <button className="btn btn-primary btn-lg btn-block" disabled={Boolean(dateError || unchanged)}>
+            <button
+              className="btn btn-primary btn-lg btn-block"
+              disabled={Boolean(dateError || unchanged)}
+            >
               Revisar movimentação <ArrowRight size={20} aria-hidden="true" />
             </button>
           </div>
@@ -120,10 +183,19 @@ export function MovePage() {
         <div className="card review">
           <h2>Confirme a movimentação</h2>
           <dl>
-            <dt>Animal</dt><dd>{animal.primaryIdentifier}</dd>
-            <dt>De</dt><dd>{animal.groupName ?? "sem lote"} · {animal.pastureName ?? "sem pasto"}</dd>
-            <dt>Para</dt><dd>{d.groupId ? nameOf(d.groupId) : "sem lote"} · {d.pastureId ? nameOf(d.pastureId) : "sem pasto"}</dd>
-            <dt>Data efetiva</dt><dd>{formatDate(d.effectiveOn)}</dd>
+            <dt>Animal</dt>
+            <dd>{animal.primaryIdentifier}</dd>
+            <dt>De</dt>
+            <dd>
+              {animal.groupName ?? "sem lote"} · {animal.pastureName ?? "sem pasto"}
+            </dd>
+            <dt>Para</dt>
+            <dd>
+              {d.groupId ? nameOf(d.groupId) : "sem lote"} ·{" "}
+              {d.pastureId ? nameOf(d.pastureId) : "sem pasto"}
+            </dd>
+            <dt>Data efetiva</dt>
+            <dd>{formatDate(d.effectiveOn)}</dd>
           </dl>
           <div className="actions">
             <button
@@ -161,7 +233,9 @@ export function MovePage() {
             >
               {busy ? "Registrando…" : "Confirmar movimentação"}
             </button>
-            <button className="btn btn-ghost" onClick={() => set("step", 2)}>Editar</button>
+            <button className="btn btn-ghost" onClick={() => set("step", 2)}>
+              Editar
+            </button>
           </div>
         </div>
       ) : null}

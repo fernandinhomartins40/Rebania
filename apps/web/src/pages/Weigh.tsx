@@ -1,6 +1,14 @@
 import { ArrowRight, CalendarDays, Weight } from "lucide-react";
 import { SelectedAnimal } from "../components/SelectedAnimal.tsx";
-import { assertWeightKg, daysBetween, DomainError, isCivilDate, todayInTimezone, weightConsistencyWarning, CATEGORY_LABEL } from "@rebania/domain";
+import {
+  assertWeightKg,
+  daysBetween,
+  DomainError,
+  isCivilDate,
+  todayInTimezone,
+  weightConsistencyWarning,
+  CATEGORY_LABEL,
+} from "@rebania/domain";
 import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import { IdentifyAnimal } from "../components/IdentifyAnimal.tsx";
@@ -60,7 +68,10 @@ export function WeighPage() {
         : null;
   const warning =
     animal && d.weight && !weightError
-      ? weightConsistencyWarning(animal.lastWeight ?? undefined, { measuredOn: d.measuredOn, weightKg })
+      ? weightConsistencyWarning(animal.lastWeight ?? undefined, {
+          measuredOn: d.measuredOn,
+          weightKg,
+        })
       : null;
 
   if (result && done) {
@@ -99,21 +110,60 @@ export function WeighPage() {
       ) : null}
 
       {d.step >= 2 && !animal ? (
-        <Alert kind="danger">Animal não encontrado nesta fazenda. <button className="btn btn-ghost" onClick={() => set("step", 1)}>Identificar outro</button></Alert>
+        <Alert kind="danger">
+          Animal não encontrado nesta fazenda.{" "}
+          <button className="btn btn-ghost" onClick={() => set("step", 1)}>
+            Identificar outro
+          </button>
+        </Alert>
       ) : null}
 
       {d.step === 2 && animal ? (
-        <form onSubmit={(e) => { e.preventDefault(); if (d.weight && !weightError && !dateError) set("step", 3); }}>
-          <SelectedAnimal animal={animal} onChange={() => setD((p) => ({ ...p, step: 1, animalId: "" }))} />
-          <Field id="weight" label="Peso vivo (kg)" error={weightError} icon={<Weight size={22} aria-hidden="true" />}>
-            <input id="weight" autoFocus inputMode="decimal" value={d.weight} onChange={(e) => set("weight", e.target.value)} aria-invalid={Boolean(weightError)} />
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (d.weight && !weightError && !dateError) set("step", 3);
+          }}
+        >
+          <SelectedAnimal
+            animal={animal}
+            onChange={() => setD((p) => ({ ...p, step: 1, animalId: "" }))}
+          />
+          <Field
+            id="weight"
+            label="Peso vivo (kg)"
+            error={weightError}
+            icon={<Weight size={22} aria-hidden="true" />}
+          >
+            <input
+              id="weight"
+              autoFocus
+              inputMode="decimal"
+              value={d.weight}
+              onChange={(e) => set("weight", e.target.value)}
+              aria-invalid={Boolean(weightError)}
+            />
           </Field>
-          <Field id="measuredOn" label="Data da pesagem" error={dateError} icon={<CalendarDays size={22} aria-hidden="true" />}>
-            <input id="measuredOn" type="date" max={today} value={d.measuredOn} onChange={(e) => set("measuredOn", e.target.value)} />
+          <Field
+            id="measuredOn"
+            label="Data da pesagem"
+            error={dateError}
+            icon={<CalendarDays size={22} aria-hidden="true" />}
+          >
+            <input
+              id="measuredOn"
+              type="date"
+              max={today}
+              value={d.measuredOn}
+              onChange={(e) => set("measuredOn", e.target.value)}
+            />
           </Field>
           {warning ? <Alert kind="warning">{warning}</Alert> : null}
           <div className="actions">
-            <button className="btn btn-primary btn-lg btn-block" disabled={!d.weight || Boolean(weightError || dateError)}>
+            <button
+              className="btn btn-primary btn-lg btn-block"
+              disabled={!d.weight || Boolean(weightError || dateError)}
+            >
               Revisar pesagem <ArrowRight size={20} aria-hidden="true" />
             </button>
           </div>
@@ -124,10 +174,16 @@ export function WeighPage() {
         <div className="card review">
           <h2>Confirme a pesagem</h2>
           <dl>
-            <dt>Animal</dt><dd>{animal.primaryIdentifier} · {CATEGORY_LABEL[animal.category]}</dd>
-            <dt>Peso vivo</dt><dd>{formatKg(weightKg)}</dd>
-            <dt>Data</dt><dd>{formatDate(d.measuredOn)}</dd>
-            <dt>Origem</dt><dd>Digitado</dd>
+            <dt>Animal</dt>
+            <dd>
+              {animal.primaryIdentifier} · {CATEGORY_LABEL[animal.category]}
+            </dd>
+            <dt>Peso vivo</dt>
+            <dd>{formatKg(weightKg)}</dd>
+            <dt>Data</dt>
+            <dd>{formatDate(d.measuredOn)}</dd>
+            <dt>Origem</dt>
+            <dd>Digitado</dd>
           </dl>
           {warning ? <Alert kind="warning">{warning}</Alert> : null}
           <div className="actions">
@@ -137,10 +193,22 @@ export function WeighPage() {
               onClick={async () => {
                 setBusy(true);
                 const r = await engine.submit(
-                  { ...newMutationBase(animal.id), type: "weight.record", payload: { weightKg, measuredOn: d.measuredOn, source: "manual" } },
+                  {
+                    ...newMutationBase(animal.id),
+                    type: "weight.record",
+                    payload: { weightKg, measuredOn: d.measuredOn, source: "manual" },
+                  },
                   async () => {
-                    const newer = !animal.lastWeight || daysBetween(animal.lastWeight.measuredOn, d.measuredOn) >= 0;
-                    await putLocalAnimal({ ...animal, pending: true, lastWeight: newer ? { weightKg, measuredOn: d.measuredOn } : animal.lastWeight });
+                    const newer =
+                      !animal.lastWeight ||
+                      daysBetween(animal.lastWeight.measuredOn, d.measuredOn) >= 0;
+                    await putLocalAnimal({
+                      ...animal,
+                      pending: true,
+                      lastWeight: newer
+                        ? { weightKg, measuredOn: d.measuredOn }
+                        : animal.lastWeight,
+                    });
                   },
                 );
                 setBusy(false);
@@ -151,8 +219,18 @@ export function WeighPage() {
             >
               {busy ? "Registrando…" : "Confirmar pesagem"}
             </button>
-            <button className="btn btn-ghost" onClick={() => set("step", 2)}>Editar</button>
-            <button className="btn btn-ghost" onClick={() => { clear(); navigate("/registrar"); }}>Cancelar</button>
+            <button className="btn btn-ghost" onClick={() => set("step", 2)}>
+              Editar
+            </button>
+            <button
+              className="btn btn-ghost"
+              onClick={() => {
+                clear();
+                navigate("/registrar");
+              }}
+            >
+              Cancelar
+            </button>
           </div>
         </div>
       ) : null}

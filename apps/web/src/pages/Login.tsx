@@ -15,7 +15,9 @@ export function LoginPage() {
   return (
     <div className="center-page">
       <div className="card auth-card">
-        <div className="auth-brand"><FullLogo height={72} /></div>
+        <div className="auth-brand">
+          <FullLogo height={72} />
+        </div>
         <h1 style={{ fontSize: 24, marginBottom: 16 }}>Entrar</h1>
         <form
           onSubmit={async (e) => {
@@ -35,10 +37,24 @@ export function LoginPage() {
         >
           {error ? <Alert kind="danger">{error}</Alert> : null}
           <Field id="email" label="E-mail">
-            <input id="email" type="email" autoComplete="username" required value={email} onChange={(e) => setEmail(e.target.value)} />
+            <input
+              id="email"
+              type="email"
+              autoComplete="username"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
           </Field>
           <Field id="password" label="Senha">
-            <input id="password" type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} />
+            <input
+              id="password"
+              type="password"
+              autoComplete="current-password"
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
           </Field>
           <button className="btn btn-primary btn-block" disabled={busy}>
             {busy ? "Entrando…" : "Entrar"}
@@ -47,7 +63,9 @@ export function LoginPage() {
         <p className="hint" style={{ marginTop: 16 }}>
           Esqueceu a senha? Peça ao proprietário ou gerente da fazenda um novo convite.
         </p>
-        <p className="hint"><Link to="/">Conhecer o Rebania</Link></p>
+        <p className="hint">
+          <Link to="/">Conhecer o Rebania</Link>
+        </p>
       </div>
     </div>
   );

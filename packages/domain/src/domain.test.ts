@@ -67,7 +67,9 @@ describe("identificadores", () => {
   it("preserva zeros à esquerda do brinco e ignora caixa/espaços", () => {
     expect(normalizeIdentifier("visual_tag", " 0512 ")).toBe("0512");
     expect(normalizeIdentifier("visual_tag", "ab 12")).toBe("AB12");
-    expect(normalizeIdentifier("visual_tag", "0512")).not.toBe(normalizeIdentifier("visual_tag", "512"));
+    expect(normalizeIdentifier("visual_tag", "0512")).not.toBe(
+      normalizeIdentifier("visual_tag", "512"),
+    );
   });
   it("normaliza UID NFC", () => {
     expect(normalizeIdentifier("nfc", "04:a2:3b:1c")).toBe("04A23B1C");
@@ -93,10 +95,16 @@ describe("pesagem e GMD", () => {
   });
   it("não calcula GMD com data igual ou invertida (denominador zero impedido)", () => {
     expect(
-      averageDailyGain({ measuredOn: "2026-01-01", weightKg: 200 }, { measuredOn: "2026-01-01", weightKg: 210 }),
+      averageDailyGain(
+        { measuredOn: "2026-01-01", weightKg: 200 },
+        { measuredOn: "2026-01-01", weightKg: 210 },
+      ),
     ).toEqual({ ok: false, reason: "non_positive_interval" });
     expect(
-      averageDailyGain({ measuredOn: "2026-02-01", weightKg: 200 }, { measuredOn: "2026-01-01", weightKg: 210 }),
+      averageDailyGain(
+        { measuredOn: "2026-02-01", weightKg: 200 },
+        { measuredOn: "2026-01-01", weightKg: 210 },
+      ),
     ).toEqual({ ok: false, reason: "non_positive_interval" });
   });
   it("série ordena por data e exige 2 pontos", () => {
@@ -120,10 +128,16 @@ describe("pesagem e GMD", () => {
   });
   it("alerta peso incoerente sem bloquear", () => {
     expect(
-      weightConsistencyWarning({ measuredOn: "2026-01-01", weightKg: 200 }, { measuredOn: "2026-01-02", weightKg: 260 }),
+      weightConsistencyWarning(
+        { measuredOn: "2026-01-01", weightKg: 200 },
+        { measuredOn: "2026-01-02", weightKg: 260 },
+      ),
     ).toMatch(/Confira o peso/);
     expect(
-      weightConsistencyWarning({ measuredOn: "2026-01-01", weightKg: 200 }, { measuredOn: "2026-02-01", weightKg: 220 }),
+      weightConsistencyWarning(
+        { measuredOn: "2026-01-01", weightKg: 200 },
+        { measuredOn: "2026-02-01", weightKg: 220 },
+      ),
     ).toBeNull();
   });
   it("valida faixa e precisão do peso", () => {
@@ -134,7 +148,12 @@ describe("pesagem e GMD", () => {
   });
   it("arroba de carcaça exige rendimento explícito e é estimativa", () => {
     const r = estimateCarcassArrobas(540, 52);
-    expect(r).toEqual({ kind: "estimate", carcassKg: 280.8, arrobas: 18.72, carcassYieldPercent: 52 });
+    expect(r).toEqual({
+      kind: "estimate",
+      carcassKg: 280.8,
+      arrobas: 18.72,
+      carcassYieldPercent: 52,
+    });
     expect(() => estimateCarcassArrobas(540, 0)).toThrow();
   });
 });
@@ -147,7 +166,13 @@ describe("reprodução", () => {
       { animalId: "c", lastResult: null },
       { animalId: "d", lastResult: "inconclusive" },
     ]);
-    expect(r).toMatchObject({ exposed: 4, diagnosed: 3, notDiagnosed: 1, rateAmongDiagnosed: 0.5, coverage: 0.75 });
+    expect(r).toMatchObject({
+      exposed: 4,
+      diagnosed: 3,
+      notDiagnosed: 1,
+      rateAmongDiagnosed: 0.5,
+      coverage: 0.75,
+    });
   });
   it("sem base retorna null", () => {
     expect(pregnancyRate([]).rateAmongDiagnosed).toBeNull();

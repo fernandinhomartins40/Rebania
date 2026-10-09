@@ -2,11 +2,22 @@
   "provider": "Lucide (dependência a instalar/reutilizar no projeto)",
   "brandIcon": "assets/brand/rebania-symbol.png",
   "icons": {
-    "history": "Tag", "group": "Users", "agenda": "CalendarDays",
-    "confirm": "Check", "register": "ClipboardList", "health": "Syringe",
-    "weight": "Activity", "pasture": "MapPin", "stock": "Package",
-    "web": "Monitor", "mobile": "Smartphone", "ai": "Sparkles",
-    "next": "ArrowRight", "expand": "ChevronDown", "menu": "Menu", "close": "X"
+    "history": "Tag",
+    "group": "Users",
+    "agenda": "CalendarDays",
+    "confirm": "Check",
+    "register": "ClipboardList",
+    "health": "Syringe",
+    "weight": "Activity",
+    "pasture": "MapPin",
+    "stock": "Package",
+    "web": "Monitor",
+    "mobile": "Smartphone",
+    "ai": "Sparkles",
+    "next": "ArrowRight",
+    "expand": "ChevronDown",
+    "menu": "Menu",
+    "close": "X"
   },
   "strokeWidth": 1.8,
   "note": "Ícones de função são SVG da biblioteca no DOM; não são logos novas. Conferir exports na versão instalada."

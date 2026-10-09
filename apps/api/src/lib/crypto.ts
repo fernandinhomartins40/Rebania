@@ -14,7 +14,12 @@ function scryptAsync(password: string, salt: Buffer, opts: ScryptOptions): Promi
 /** Hash de senha com scrypt (sem dependência nativa). Formato: scrypt$N$r$p$salt$hash */
 export async function hashPassword(password: string): Promise<string> {
   const salt = randomBytes(16);
-  const key = await scryptAsync(password.normalize("NFKC"), salt, { N, r: R, p: P, maxmem: 128 * N * R * 2 });
+  const key = await scryptAsync(password.normalize("NFKC"), salt, {
+    N,
+    r: R,
+    p: P,
+    maxmem: 128 * N * R * 2,
+  });
   return ["scrypt", N, R, P, salt.toString("base64url"), key.toString("base64url")].join("$");
 }
 

@@ -1,0 +1,97 @@
+# Rebania em VPS compartilhada (ADR-009). Leia docs/runbooks/deploy.md antes de usar.
+# - Somente o Nginx do Rebania publica porta, e apenas em loopback (127.0.0.1),
+#   para o proxy/ingress JÁ EXISTENTE na VPS encaminhar o domínio. Nunca 80/443.
+# - API, worker e PostgreSQL ficam só na rede interna.
+# - Volumes nomeados e separados. NUNCA rode `docker compose down -v` em produção.
+# - Limites de CPU/RAM abaixo são PONTO DE PARTIDA: ajuste após medir (runbook).
+name: rebania
+
+x-common: &common
+  restart: unless-stopped
+  init: true
+  labels:
+    project: rebania
+  logging:
+    driver: json-file
+    options: { max-size: "10m", max-file: "5" }
+
+services:
+  postgres:
+    <<: *common
+    image: ${POSTGRES_IMAGE:-postgres:16.9-alpine}
+    environment:
+      POSTGRES_DB: rebania
+      POSTGRES_USER: rebania
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD}
+    volumes:
+      - rebania_pgdata:/var/lib/postgresql/data
+    networks: [internal]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U rebania -d rebania"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    deploy:
+      resources:
+        limits: { memory: 512m, cpus: "1.0" }
+
+  migrate:
+    <<: *common
+    image: ${REBANIA_REGISTRY:-}rebania-migrate:${REBANIA_TAG:?defina REBANIA_TAG}
+    restart: "no"
+    profiles: [migrate]
+    environment:
+      DATABASE_URL: postgresql://rebania:${POSTGRES_PASSWORD}@postgres:5432/rebania
+    depends_on:
+      postgres: { condition: service_healthy }
+    networks: [internal]
+
+  api:
+    <<: *common
+    image: ${REBANIA_REGISTRY:-}rebania-api:${REBANIA_TAG:?defina REBANIA_TAG}
+    environment:
+      DATABASE_URL: postgresql://rebania:${POSTGRES_PASSWORD}@postgres:5432/rebania
+      WEB_ORIGINS: ${PUBLIC_URL:?defina PUBLIC_URL}
+      WEB_BASE_URL: ${PUBLIC_URL}
+      COOKIE_SECURE: "true"
+      TRUST_PROXY: "true"
+      LOG_LEVEL: info
+      DB_POOL_MAX: "10"
+    depends_on:
+      postgres: { condition: service_healthy }
+    networks: [internal]
+    deploy:
+      resources:
+        limits: { memory: 384m, cpus: "1.0" }
+
+  worker:
+    <<: *common
+    image: ${REBANIA_REGISTRY:-}rebania-worker:${REBANIA_TAG}
+    environment:
+      DATABASE_URL: postgresql://rebania:${POSTGRES_PASSWORD}@postgres:5432/rebania
+      DB_POOL_MAX: "3"
+    depends_on:
+      postgres: { condition: service_healthy }
+    networks: [internal]
+    deploy:
+      resources:
+        limits: { memory: 256m, cpus: "0.5" }
+
+  web:
+    <<: *common
+    image: ${REBANIA_REGISTRY:-}rebania-web:${REBANIA_TAG}
+    depends_on: [api]
+    ports:
+      - "127.0.0.1:${REBANIA_HTTP_PORT:-8088}:8080"
+    networks: [internal]
+    deploy:
+      resources:
+        limits: { memory: 64m, cpus: "0.25" }
+
+networks:
+  internal:
+    name: rebania_internal
+
+volumes:
+  rebania_pgdata:
+    name: rebania_pgdata

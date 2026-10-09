@@ -43,7 +43,11 @@ export function orgRoutes(app: FastifyInstance, ctx: AppContext) {
       }
       await db.$transaction(async (tx) => {
         const r = await tx.membership.updateMany({
-          where: { id: req.params.membershipId, organizationId: org.organizationId, revokedAt: null },
+          where: {
+            id: req.params.membershipId,
+            organizationId: org.organizationId,
+            revokedAt: null,
+          },
           data: { revokedAt: ctx.now() },
         });
         if (r.count !== 1) throw new HttpError(404, "not_found", "Membro não encontrado.");
@@ -142,7 +146,12 @@ export function orgRoutes(app: FastifyInstance, ctx: AppContext) {
       const { userId } = requireAuth(req);
       const org = await requireOrg(db, userId, req.params.orgId, "members.invite");
       const r = await db.invitation.updateMany({
-        where: { id: req.params.invitationId, organizationId: org.organizationId, acceptedAt: null, revokedAt: null },
+        where: {
+          id: req.params.invitationId,
+          organizationId: org.organizationId,
+          acceptedAt: null,
+          revokedAt: null,
+        },
         data: { revokedAt: ctx.now() },
       });
       if (r.count !== 1) throw new HttpError(404, "not_found", "Convite não encontrado.");

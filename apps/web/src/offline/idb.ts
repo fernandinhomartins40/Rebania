@@ -55,7 +55,8 @@ export async function tx<T>(
   });
 }
 
-export const idbGet = <T>(store: StoreName, key: IDBValidKey) => tx<T | undefined>(store, "readonly", (s) => s.get(key));
+export const idbGet = <T>(store: StoreName, key: IDBValidKey) =>
+  tx<T | undefined>(store, "readonly", (s) => s.get(key));
 export const idbPut = (store: StoreName, value: unknown, key?: IDBValidKey): Promise<void> =>
   tx<void>(store, "readwrite", (s) => void s.put(value, key));
 export const idbDelete = (store: StoreName, key: IDBValidKey): Promise<void> =>

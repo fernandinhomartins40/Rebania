@@ -1,5 +1,11 @@
 import { useEffect, useState } from "react";
-import { localAnimal, localAnimals, localPlaces, type LocalAnimal, type Place } from "../offline/engine.ts";
+import {
+  localAnimal,
+  localAnimals,
+  localPlaces,
+  type LocalAnimal,
+  type Place,
+} from "../offline/engine.ts";
 import { useSync } from "./sync.tsx";
 
 /** Rebanho a partir do armazenamento local (funciona offline). */

@@ -82,7 +82,10 @@ export function animalRoutes(app: FastifyInstance, ctx: AppContext) {
     fctx: FarmContext,
     type: string,
     body: unknown,
-    exec: (tx: Prisma.TransactionClient, mutationId: string) => Promise<{ entityId: string; version: number | null }>,
+    exec: (
+      tx: Prisma.TransactionClient,
+      mutationId: string,
+    ) => Promise<{ entityId: string; version: number | null }>,
   ) {
     const mutationId = idempotencyKey(req);
     return runIdempotent({
@@ -161,7 +164,10 @@ export function animalRoutes(app: FastifyInstance, ctx: AppContext) {
     const body = RecordWeightInput.parse(req.body);
     let warning: string | null = null;
     const receipt = await idempotent(req, fctx, "weight.record", body, async (tx, mutationId) => {
-      const r = await recordWeight(tx, fctx, req.params.animalId, body, { now: ctx.now(), mutationId });
+      const r = await recordWeight(tx, fctx, req.params.animalId, body, {
+        now: ctx.now(),
+        mutationId,
+      });
       warning = r.warning;
       return r;
     });
@@ -176,14 +182,20 @@ export function animalRoutes(app: FastifyInstance, ctx: AppContext) {
     const fctx = await farm(req, "animals.write");
     if (body.replaceActiveOfSameType && !roleHas(fctx.role, "animals.retag")) throw forbidden();
     const receipt = await idempotent(req, fctx, "animal.identifier", body, (tx, mutationId) =>
-      addIdentifier(tx, fctx, req.params.animalId, body, { now: ctx.now(), mutationId, ip: req.ip }),
+      addIdentifier(tx, fctx, req.params.animalId, body, {
+        now: ctx.now(),
+        mutationId,
+        ip: req.ip,
+      }),
     );
     return replyReceipt(reply, receipt, () => getAnimalDto(db, fctx.farmId, req.params.animalId));
   });
 
   app.get<AnimalParams>("/v1/farms/:farmId/animals/:animalId/history", async (req) => {
     const fctx = await farm(req, "animals.read");
-    const animal = await db.animal.findFirst({ where: { id: req.params.animalId, farmId: fctx.farmId } });
+    const animal = await db.animal.findFirst({
+      where: { id: req.params.animalId, farmId: fctx.farmId },
+    });
     if (!animal) throw new HttpError(404, "not_found", "Animal não encontrado.");
     const [timeline, weights] = await Promise.all([
       getTimeline(db, fctx, animal.id),
@@ -192,7 +204,10 @@ export function animalRoutes(app: FastifyInstance, ctx: AppContext) {
         orderBy: [{ measuredOn: "asc" }, { createdAt: "asc" }],
       }),
     ]);
-    const points = weights.map((w) => ({ measuredOn: dateToCivil(w.measuredOn), weightKg: Number(w.weightKg) }));
+    const points = weights.map((w) => ({
+      measuredOn: dateToCivil(w.measuredOn),
+      weightKg: Number(w.weightKg),
+    }));
     const overall = adgFromSeries(points);
     const history: AnimalHistory = {
       animalId: animal.id,
@@ -205,7 +220,12 @@ export function animalRoutes(app: FastifyInstance, ctx: AppContext) {
         notes: w.notes,
       })),
       adg: overall.ok
-        ? { adgKgPerDay: overall.adgKgPerDay, days: overall.days, from: overall.from.measuredOn, to: overall.to.measuredOn }
+        ? {
+            adgKgPerDay: overall.adgKgPerDay,
+            days: overall.days,
+            from: overall.from.measuredOn,
+            to: overall.to.measuredOn,
+          }
         : null,
     };
     return history;

@@ -14,7 +14,9 @@ const NAV: { to: string; label: string; icon: IconComponent; end?: boolean }[] =
 ];
 
 /** Atalhos do desktop: só áreas implementadas (Reprodução, Sanidade etc. entram nos próximos goals). */
-const SHORTCUTS: { to: string; label: string; icon: IconComponent }[] = [{ to: "/fazenda/lotes", label: "Lotes e pastos", icon: MapPin }];
+const SHORTCUTS: { to: string; label: string; icon: IconComponent }[] = [
+  { to: "/fazenda/lotes", label: "Lotes e pastos", icon: MapPin },
+];
 
 export function Layout() {
   const { me } = useSession();
@@ -26,7 +28,11 @@ export function Layout() {
           <NavLink key={n.to} to={n.to} end={n.end} className="nav">
             {({ isActive }) => (
               <>
-                <n.icon size={24} className={isActive ? "icon-active" : undefined} aria-hidden="true" />
+                <n.icon
+                  size={24}
+                  className={isActive ? "icon-active" : undefined}
+                  aria-hidden="true"
+                />
                 {n.label}
               </>
             )}
@@ -49,7 +55,11 @@ export function Layout() {
             <Link to="/agenda" className="icon-btn" aria-label="Avisos e tarefas">
               <Bell size={26} />
             </Link>
-            <Link to="/fazenda/conta" className="avatar" aria-label={`Conta de ${me?.user.name ?? ""}`}>
+            <Link
+              to="/fazenda/conta"
+              className="avatar"
+              aria-label={`Conta de ${me?.user.name ?? ""}`}
+            >
               {initials(me?.user.name)}
             </Link>
           </div>
@@ -71,7 +81,11 @@ export function Layout() {
             <NavLink key={n.to} to={n.to} end={n.end}>
               {({ isActive }) => (
                 <>
-                  <n.icon size={26} className={isActive ? "icon-active" : undefined} aria-hidden="true" />
+                  <n.icon
+                    size={26}
+                    className={isActive ? "icon-active" : undefined}
+                    aria-hidden="true"
+                  />
                   <span>{n.label}</span>
                 </>
               )}

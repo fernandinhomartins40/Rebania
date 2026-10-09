@@ -27,11 +27,15 @@ type Row = { doc: string };
 
 export const sqliteOutbox: OutboxStorage = {
   async get(id) {
-    const r = await (await db()).getFirstAsync<Row>("SELECT doc FROM outbox WHERE mutation_id = ?", id);
+    const r = await (
+      await db()
+    ).getFirstAsync<Row>("SELECT doc FROM outbox WHERE mutation_id = ?", id);
     return r ? (JSON.parse(r.doc) as OutboxItem) : undefined;
   },
   async put(item) {
-    await (await db()).runAsync(
+    await (
+      await db()
+    ).runAsync(
       "INSERT OR REPLACE INTO outbox (mutation_id, created_at, doc) VALUES (?, ?, ?)",
       item.mutation.mutationId,
       item.mutation.createdAt,
@@ -56,7 +60,12 @@ export const sqliteCache: LocalCache = {
   putAnimals: (animals) =>
     inTx(async (d) => {
       for (const a of animals) {
-        await d.runAsync("INSERT OR REPLACE INTO animals (id, farm_id, doc) VALUES (?, ?, ?)", a.id, a.farmId, JSON.stringify(a));
+        await d.runAsync(
+          "INSERT OR REPLACE INTO animals (id, farm_id, doc) VALUES (?, ?, ?)",
+          a.id,
+          a.farmId,
+          JSON.stringify(a),
+        );
       }
     }),
   deleteAnimals: (ids) =>
@@ -66,7 +75,12 @@ export const sqliteCache: LocalCache = {
   putPlaces: (places) =>
     inTx(async (d) => {
       for (const p of places) {
-        await d.runAsync("INSERT OR REPLACE INTO places (id, farm_id, doc) VALUES (?, ?, ?)", p.id, p.farmId, JSON.stringify(p));
+        await d.runAsync(
+          "INSERT OR REPLACE INTO places (id, farm_id, doc) VALUES (?, ?, ?)",
+          p.id,
+          p.farmId,
+          JSON.stringify(p),
+        );
       }
     }),
   deletePlaces: (ids) =>
@@ -74,25 +88,35 @@ export const sqliteCache: LocalCache = {
       for (const id of ids) await d.runAsync("DELETE FROM places WHERE id = ?", id);
     }),
   async getMeta(key) {
-    const r = await (await db()).getFirstAsync<{ value: string }>("SELECT value FROM meta WHERE key = ?", key);
+    const r = await (
+      await db()
+    ).getFirstAsync<{ value: string }>("SELECT value FROM meta WHERE key = ?", key);
     return r?.value;
   },
   async setMeta(key, value) {
-    await (await db()).runAsync("INSERT OR REPLACE INTO meta (key, value) VALUES (?, ?)", key, value);
+    await (
+      await db()
+    ).runAsync("INSERT OR REPLACE INTO meta (key, value) VALUES (?, ?)", key, value);
   },
 };
 
 export async function localAnimals(farmId: string): Promise<LocalAnimal[]> {
-  const rows = await (await db()).getAllAsync<Row>("SELECT doc FROM animals WHERE farm_id = ?", farmId);
+  const rows = await (
+    await db()
+  ).getAllAsync<Row>("SELECT doc FROM animals WHERE farm_id = ?", farmId);
   return rows.map((r) => JSON.parse(r.doc) as LocalAnimal);
 }
 
 export async function localPlaces(farmId: string): Promise<Place[]> {
-  const rows = await (await db()).getAllAsync<Row>("SELECT doc FROM places WHERE farm_id = ?", farmId);
+  const rows = await (
+    await db()
+  ).getAllAsync<Row>("SELECT doc FROM places WHERE farm_id = ?", farmId);
   return rows.map((r) => JSON.parse(r.doc) as Place);
 }
 
 /** Logout em aparelho compartilhado: remove todos os dados operacionais locais. */
 export async function wipeLocalData() {
-  await (await db()).execAsync("DELETE FROM outbox; DELETE FROM animals; DELETE FROM places; DELETE FROM meta;");
+  await (
+    await db()
+  ).execAsync("DELETE FROM outbox; DELETE FROM animals; DELETE FROM places; DELETE FROM meta;");
 }

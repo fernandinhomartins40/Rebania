@@ -9,5 +9,8 @@ export default defineConfig({
   outDir: "dist",
   sourcemap: true,
   clean: true,
+  // Pacotes internos (@rebania/*) exportam TS fonte e entram no bundle;
+  // dependências de terceiros ficam em node_modules (pnpm deploy --prod).
+  skipNodeModulesBundle: true,
   noExternal: [/^@rebania\//],
 });

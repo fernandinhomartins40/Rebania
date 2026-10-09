@@ -2,7 +2,9 @@ import { z } from "zod";
 import { isCivilDate } from "@rebania/domain";
 
 export const uuid = z.uuid();
-export const civilDate = z.string().refine(isCivilDate, { message: "Data inválida (use AAAA-MM-DD)." });
+export const civilDate = z
+  .string()
+  .refine(isCivilDate, { message: "Data inválida (use AAAA-MM-DD)." });
 
 export const ErrorBody = z.object({
   error: z.object({

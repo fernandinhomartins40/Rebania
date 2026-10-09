@@ -2,7 +2,7 @@
 
 > **Sua fazenda em dia.**
 > Versão 1.0 • 08/10/2026 • Derivado de `docs/referencia/Rebania_Modelo_de_Negocios_e_Implementacao.md` (doravante **MN**) e `docs/referencia/Rebania_Pranchas_e_Experiencia.pdf` (doravante **PR**).
-> Estado do repositório na data: **vazio** (nenhum commit, nenhum código). Tudo abaixo é plano; nada aqui está implementado.
+> **Atualização 09/10/2026:** G1 concluído e G2 em andamento. O que já existe está em `docs/STATUS.md`. A logo bovina, a direção visual das pranchas e o pacote de marca foram aprovados (`docs/DECISIONS.md` D-07 a D-11); a seção 1.6 abaixo ficou como registro histórico.
 
 ---
 

@@ -17,8 +17,9 @@ export function IdentifyPage() {
       <PageHead title="Identificar animal" back="/rebanho" />
       {reader ? (
         <Alert kind="info">
-          Conecte o leitor RFID em modo teclado (USB/Bluetooth HID) e faça a leitura: o número aparece no campo abaixo.
-          Leitores Bluetooth dedicados e NFC ficam no aplicativo, após homologação do aparelho.
+          Conecte o leitor RFID em modo teclado (USB/Bluetooth HID) e faça a leitura: o número
+          aparece no campo abaixo. Leitores Bluetooth dedicados e NFC ficam no aplicativo, após
+          homologação do aparelho.
         </Alert>
       ) : null}
       <div className="card">

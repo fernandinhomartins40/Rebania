@@ -34,7 +34,11 @@ export function IdentifyAnimal({
         return hit ? { animal: a, hit, exact: Boolean(exact) } : null;
       })
       .filter((x): x is NonNullable<typeof x> => x !== null)
-      .sort((x, y) => Number(y.exact) - Number(x.exact) || Number(y.hit.status === "active") - Number(x.hit.status === "active"))
+      .sort(
+        (x, y) =>
+          Number(y.exact) - Number(x.exact) ||
+          Number(y.hit.status === "active") - Number(x.hit.status === "active"),
+      )
       .slice(0, 20);
   }, [animals, query, submitted, filter]);
 
@@ -54,16 +58,29 @@ export function IdentifyAnimal({
           <div className="searchbar" style={{ margin: 0 }}>
             <div className="input-icon">
               <ScanBarcode size={22} aria-hidden="true" />
-              <input id="identify" autoFocus autoComplete="off" value={query} onChange={(e) => { setQuery(e.target.value); setSubmitted(""); }} />
+              <input
+                id="identify"
+                autoFocus
+                autoComplete="off"
+                value={query}
+                onChange={(e) => {
+                  setQuery(e.target.value);
+                  setSubmitted("");
+                }}
+              />
             </div>
-            <button type="submit" className="btn btn-primary">Buscar</button>
+            <button type="submit" className="btn btn-primary">
+              Buscar
+            </button>
           </div>
         </div>
       </form>
       {submitted && results.length === 0 ? (
         <Alert kind="warning">
           Identificador <strong>{submitted}</strong> não encontrado nesta fazenda.{" "}
-          <Link to={`/registrar/animal?tag=${encodeURIComponent(submitted)}`}>Cadastrar animal com este brinco</Link>
+          <Link to={`/registrar/animal?tag=${encodeURIComponent(submitted)}`}>
+            Cadastrar animal com este brinco
+          </Link>
         </Alert>
       ) : null}
       <div className="animal-list" aria-label="Resultados">
@@ -79,11 +96,18 @@ export function IdentifyAnimal({
             <span className="body">
               <span className="name">
                 {CATEGORY_LABEL[animal.category]} {animal.primaryIdentifier ?? ""}
-                {hit.status === "retired" ? <span className="badge badge-warn">brinco antigo: {hit.display}</span> : null}
+                {hit.status === "retired" ? (
+                  <span className="badge badge-warn">brinco antigo: {hit.display}</span>
+                ) : null}
               </span>
-              <span className="meta">{animal.groupName ?? "Sem lote"}{animal.status !== "active" ? " · inativo" : ""}</span>
+              <span className="meta">
+                {animal.groupName ?? "Sem lote"}
+                {animal.status !== "active" ? " · inativo" : ""}
+              </span>
             </span>
-            <span className="chev"><ChevronRight size={22} aria-hidden="true" /></span>
+            <span className="chev">
+              <ChevronRight size={22} aria-hidden="true" />
+            </span>
           </button>
         ))}
       </div>

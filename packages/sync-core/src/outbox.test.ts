@@ -21,7 +21,9 @@ function weight(): SyncMutation {
   };
 }
 
-function transport(handler: (m: SyncMutation) => SyncReceipt["status"]): SyncTransport & { calls: number } {
+function transport(
+  handler: (m: SyncMutation) => SyncReceipt["status"],
+): SyncTransport & { calls: number } {
   const t = {
     calls: 0,
     async push({ mutations }: { mutations: SyncMutation[] }) {
@@ -30,9 +32,18 @@ function transport(handler: (m: SyncMutation) => SyncReceipt["status"]): SyncTra
         cursor: "1",
         receipts: mutations.map((m): SyncReceipt => {
           const s = handler(m);
-          if (s === "accepted") return { mutationId: m.mutationId, status: s, entityId: m.entityId, version: 1 };
-          if (s === "rejected") return { mutationId: m.mutationId, status: s, code: "x", message: "x" };
-          return { mutationId: m.mutationId, status: s, entityId: m.entityId, serverVersion: 2, code: "c", message: "c" };
+          if (s === "accepted")
+            return { mutationId: m.mutationId, status: s, entityId: m.entityId, version: 1 };
+          if (s === "rejected")
+            return { mutationId: m.mutationId, status: s, code: "x", message: "x" };
+          return {
+            mutationId: m.mutationId,
+            status: s,
+            entityId: m.entityId,
+            serverVersion: 2,
+            code: "c",
+            message: "c",
+          };
         }),
       };
     },
@@ -65,7 +76,11 @@ describe("Outbox", () => {
     let now = 1_000;
     const ob = new Outbox(new MemoryOutboxStorage(), DEVICE, () => now);
     await ob.enqueue(FARM, weight());
-    const failing: SyncTransport = { push: async () => { throw new Error("offline"); } };
+    const failing: SyncTransport = {
+      push: async () => {
+        throw new Error("offline");
+      },
+    };
     const r = await ob.flush(failing);
     expect(r.networkError).toBe(true);
     expect(r.remaining).toBe(1);
@@ -81,7 +96,13 @@ describe("Outbox", () => {
     const b = weight();
     const c = weight();
     for (const m of [a, b, c]) await ob.enqueue(FARM, m);
-    const t = transport((m) => (m.mutationId === a.mutationId ? "accepted" : m.mutationId === b.mutationId ? "rejected" : "conflict"));
+    const t = transport((m) =>
+      m.mutationId === a.mutationId
+        ? "accepted"
+        : m.mutationId === b.mutationId
+          ? "rejected"
+          : "conflict",
+    );
     const r = await ob.flush(t);
     expect(r).toMatchObject({ accepted: 1, rejected: 1, conflicts: 1, remaining: 2 });
     expect(await ob.counts()).toEqual({ pending: 0, rejected: 1, conflict: 1 });

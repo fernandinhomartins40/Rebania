@@ -10,10 +10,36 @@ import { useSession } from "../state/session.tsx";
  */
 export function RegisterPage() {
   const { can } = useSession();
-  const items: { to: string; title: string; desc: string; icon: IconComponent | LucideIcon; ochre?: boolean; perm: "animals.write" | "events.write" }[] = [
-    { to: "/registrar/animal", title: "Cadastrar animal", desc: "Brinco ou ID provisório, sexo, categoria e origem.", icon: BrandCow, perm: "animals.write" },
-    { to: "/registrar/pesagem", title: "Pesagem", desc: "Ler ou digitar o brinco e informar o peso vivo.", icon: Weight, ochre: true, perm: "events.write" },
-    { to: "/registrar/movimentacao", title: "Movimentação", desc: "Trocar de lote ou pasto com data efetiva.", icon: ArrowLeftRight, perm: "events.write" },
+  const items: {
+    to: string;
+    title: string;
+    desc: string;
+    icon: IconComponent | LucideIcon;
+    ochre?: boolean;
+    perm: "animals.write" | "events.write";
+  }[] = [
+    {
+      to: "/registrar/animal",
+      title: "Cadastrar animal",
+      desc: "Brinco ou ID provisório, sexo, categoria e origem.",
+      icon: BrandCow,
+      perm: "animals.write",
+    },
+    {
+      to: "/registrar/pesagem",
+      title: "Pesagem",
+      desc: "Ler ou digitar o brinco e informar o peso vivo.",
+      icon: Weight,
+      ochre: true,
+      perm: "events.write",
+    },
+    {
+      to: "/registrar/movimentacao",
+      title: "Movimentação",
+      desc: "Trocar de lote ou pasto com data efetiva.",
+      icon: ArrowLeftRight,
+      perm: "events.write",
+    },
   ];
   const visible = items.filter((i) => can(i.perm));
   return (
@@ -25,7 +51,9 @@ export function RegisterPage() {
         <div className="grid two">
           {visible.map((i) => (
             <Link key={i.to} to={i.to} className="card menu-card">
-              <span className={`ic ${i.ochre ? "ochre" : ""}`}><i.icon size={30} aria-hidden="true" /></span>
+              <span className={`ic ${i.ochre ? "ochre" : ""}`}>
+                <i.icon size={30} aria-hidden="true" />
+              </span>
               <span style={{ flex: 1 }}>
                 <h2>{i.title}</h2>
                 <p className="hint">{i.desc}</p>

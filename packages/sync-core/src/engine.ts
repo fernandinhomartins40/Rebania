@@ -207,7 +207,9 @@ export class SyncEngine {
       }
       // Não sobrescreve animal com alteração local pendente.
       const pendingIds = new Set(
-        (await this.outbox.items()).filter((i) => i.state === "pending").map((i) => i.mutation.entityId),
+        (await this.outbox.items())
+          .filter((i) => i.state === "pending")
+          .map((i) => i.mutation.entityId),
       );
       await this.cache.putAnimals(upAnimals.filter((a) => !pendingIds.has(a.id)));
       await this.cache.deleteAnimals(delAnimals);
@@ -232,10 +234,15 @@ export class SyncEngine {
       return { status: "saved_locally" };
     }
     await this.syncNow();
-    const item = (await this.outbox.items()).find((i) => i.mutation.mutationId === mutation.mutationId);
+    const item = (await this.outbox.items()).find(
+      (i) => i.mutation.mutationId === mutation.mutationId,
+    );
     if (!item) return { status: "synced", entityId: mutation.entityId };
     if (item.state === "pending") return { status: "saved_locally" };
-    return { status: item.state, message: item.lastError?.message ?? "Não foi possível registrar." };
+    return {
+      status: item.state,
+      message: item.lastError?.message ?? "Não foi possível registrar.",
+    };
   }
 
   async problems(): Promise<OutboxItem[]> {
@@ -257,5 +264,11 @@ export class SyncEngine {
 /** Campos comuns de uma nova mutação gerada no aparelho. */
 export function newMutationBase(entityId: string, uuid: () => string) {
   const now = new Date().toISOString();
-  return { mutationId: uuid(), entityId, occurredAt: now, createdAt: now, schemaVersion: 1 as const };
+  return {
+    mutationId: uuid(),
+    entityId,
+    occurredAt: now,
+    createdAt: now,
+    schemaVersion: 1 as const,
+  };
 }

@@ -4,10 +4,12 @@ import pg from "pg";
 
 /** Recria o banco de teste e aplica as migrations reais. */
 export default async function setup() {
-  const url = process.env.TEST_DATABASE_URL ?? "postgresql://rebania:rebania@localhost:5432/rebania_test";
+  const url =
+    process.env.TEST_DATABASE_URL ?? "postgresql://rebania:rebania@localhost:5432/rebania_test";
   const target = new URL(url);
   const dbName = target.pathname.slice(1);
-  if (!/_test$/.test(dbName)) throw new Error(`Banco de teste precisa terminar em _test (recebido: ${dbName})`);
+  if (!/_test$/.test(dbName))
+    throw new Error(`Banco de teste precisa terminar em _test (recebido: ${dbName})`);
   const admin = new URL(url);
   admin.pathname = "/postgres";
   const client = new pg.Client({ connectionString: admin.toString() });

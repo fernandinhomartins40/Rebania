@@ -34,7 +34,11 @@ export function SubmitOutcome({
           </button>
         ) : null}
         {next.map((n, i) => (
-          <Link key={n.to} to={n.to} className={`btn ${i === 0 && !restart ? "btn-primary" : "btn-secondary"}`}>
+          <Link
+            key={n.to}
+            to={n.to}
+            className={`btn ${i === 0 && !restart ? "btn-primary" : "btn-secondary"}`}
+          >
             {n.label}
           </Link>
         ))}

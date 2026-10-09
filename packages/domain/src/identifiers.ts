@@ -4,7 +4,14 @@ import { DomainError } from "./errors.ts";
  * Identificadores são apelidos (aliases) do animal: o ID interno nunca muda.
  * Leitura de identificador apenas localiza um registro autorizado; não é autenticação.
  */
-export const IDENTIFIER_TYPES = ["visual_tag", "rfid", "nfc", "qr", "provisional", "other"] as const;
+export const IDENTIFIER_TYPES = [
+  "visual_tag",
+  "rfid",
+  "nfc",
+  "qr",
+  "provisional",
+  "other",
+] as const;
 export type IdentifierType = (typeof IDENTIFIER_TYPES)[number];
 
 export const IDENTIFIER_LABEL: Record<IdentifierType, string> = {

@@ -5,7 +5,12 @@ import { errorMessage, get, post } from "../api/client.ts";
 import { Alert, Field, formatDate, Loading, PageHead } from "../components/ui.tsx";
 import { useSession } from "../state/session.tsx";
 
-interface Pending { id: string; email: string; role: Role; expiresAt: string }
+interface Pending {
+  id: string;
+  email: string;
+  role: Role;
+  expiresAt: string;
+}
 
 /** T04 Organização: pessoas e papéis; convite limitado e revogável. */
 export function TeamPage() {
@@ -37,19 +42,34 @@ export function TeamPage() {
       <PageHead title="Equipe" back="/fazenda" />
       {error ? <Alert kind="danger">{error}</Alert> : null}
       <div className="card">
-        {!members ? <Loading /> : (
+        {!members ? (
+          <Loading />
+        ) : (
           <ul className="list">
             {members.map((m) => (
               <li key={m.membershipId} className="list-item">
                 <span>
                   <span className="title">{m.name}</span>
-                  <div className="meta">{m.email} · {ROLE_LABEL[m.role]} · {m.allFarms ? "todas as fazendas" : `${m.farmIds.length} fazenda(s)`}</div>
+                  <div className="meta">
+                    {m.email} · {ROLE_LABEL[m.role]} ·{" "}
+                    {m.allFarms ? "todas as fazendas" : `${m.farmIds.length} fazenda(s)`}
+                  </div>
                 </span>
                 {can("org.manage") && m.role !== "owner" ? (
-                  <button className="btn btn-danger" onClick={async () => {
-                    if (!confirm(`Remover o acesso de ${m.name}?`)) return;
-                    try { await post(`/v1/orgs/${orgId}/members/${m.membershipId}/revoke`); await load(); } catch (e) { setError(errorMessage(e)); }
-                  }}>Remover</button>
+                  <button
+                    className="btn btn-danger"
+                    onClick={async () => {
+                      if (!confirm(`Remover o acesso de ${m.name}?`)) return;
+                      try {
+                        await post(`/v1/orgs/${orgId}/members/${m.membershipId}/revoke`);
+                        await load();
+                      } catch (e) {
+                        setError(errorMessage(e));
+                      }
+                    }}
+                  >
+                    Remover
+                  </button>
                 ) : null}
               </li>
             ))}
@@ -65,40 +85,86 @@ export function TeamPage() {
               <Alert kind="success">
                 Convite criado. Envie este link pessoalmente (válido por 7 dias, uso único):
                 <br />
-                <input readOnly value={link} onFocus={(e) => e.currentTarget.select()} aria-label="Link do convite" />
+                <input
+                  readOnly
+                  value={link}
+                  onFocus={(e) => e.currentTarget.select()}
+                  aria-label="Link do convite"
+                />
               </Alert>
             ) : null}
-            <form onSubmit={async (e) => {
-              e.preventDefault();
-              setError(null);
-              try {
-                const r = await post<{ acceptUrl: string }>(`/v1/orgs/${orgId}/invitations`, { email, role, farmIds });
-                setLink(r.acceptUrl);
-                setEmail("");
-                await load();
-              } catch (err) { setError(errorMessage(err)); }
-            }}>
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                setError(null);
+                try {
+                  const r = await post<{ acceptUrl: string }>(`/v1/orgs/${orgId}/invitations`, {
+                    email,
+                    role,
+                    farmIds,
+                  });
+                  setLink(r.acceptUrl);
+                  setEmail("");
+                  await load();
+                } catch (err) {
+                  setError(errorMessage(err));
+                }
+              }}
+            >
               <div className="grid two">
                 <Field id="inv-email" label="E-mail">
-                  <input id="inv-email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+                  <input
+                    id="inv-email"
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
                 </Field>
                 <Field id="inv-role" label="Papel">
-                  <select id="inv-role" value={role} onChange={(e) => setRole(e.target.value as Role)}>
-                    {assignable.map((r) => <option key={r} value={r}>{ROLE_LABEL[r]}</option>)}
+                  <select
+                    id="inv-role"
+                    value={role}
+                    onChange={(e) => setRole(e.target.value as Role)}
+                  >
+                    {assignable.map((r) => (
+                      <option key={r} value={r}>
+                        {ROLE_LABEL[r]}
+                      </option>
+                    ))}
                   </select>
                 </Field>
               </div>
               <fieldset className="field" style={{ border: 0, padding: 0 }}>
                 <legend style={{ fontWeight: 600, marginBottom: 4 }}>Fazendas com acesso</legend>
                 {orgFarms.map((f) => (
-                  <label key={f.id} style={{ fontWeight: 400, display: "flex", gap: 8, alignItems: "center", minHeight: 40 }}>
-                    <input type="checkbox" style={{ width: "auto", minHeight: 0 }} checked={farmIds.includes(f.id)}
-                      onChange={(e) => setFarmIds((p) => e.target.checked ? [...p, f.id] : p.filter((x) => x !== f.id))} />
+                  <label
+                    key={f.id}
+                    style={{
+                      fontWeight: 400,
+                      display: "flex",
+                      gap: 8,
+                      alignItems: "center",
+                      minHeight: 40,
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      style={{ width: "auto", minHeight: 0 }}
+                      checked={farmIds.includes(f.id)}
+                      onChange={(e) =>
+                        setFarmIds((p) =>
+                          e.target.checked ? [...p, f.id] : p.filter((x) => x !== f.id),
+                        )
+                      }
+                    />
                     {f.name}
                   </label>
                 ))}
               </fieldset>
-              <button className="btn btn-primary" disabled={!farmIds.length}>Gerar convite</button>
+              <button className="btn btn-primary" disabled={!farmIds.length}>
+                Gerar convite
+              </button>
             </form>
           </div>
           {pending.length ? (
@@ -107,8 +173,21 @@ export function TeamPage() {
               <ul className="list">
                 {pending.map((p) => (
                   <li key={p.id} className="list-item">
-                    <span><span className="title">{p.email}</span><div className="meta">{ROLE_LABEL[p.role]} · expira em {formatDate(p.expiresAt.slice(0, 10))}</div></span>
-                    <button className="btn btn-danger" onClick={async () => { await post(`/v1/orgs/${orgId}/invitations/${p.id}/revoke`); await load(); }}>Revogar</button>
+                    <span>
+                      <span className="title">{p.email}</span>
+                      <div className="meta">
+                        {ROLE_LABEL[p.role]} · expira em {formatDate(p.expiresAt.slice(0, 10))}
+                      </div>
+                    </span>
+                    <button
+                      className="btn btn-danger"
+                      onClick={async () => {
+                        await post(`/v1/orgs/${orgId}/invitations/${p.id}/revoke`);
+                        await load();
+                      }}
+                    >
+                      Revogar
+                    </button>
                   </li>
                 ))}
               </ul>

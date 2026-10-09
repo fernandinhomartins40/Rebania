@@ -45,7 +45,13 @@ export class KeyboardWedgeReader implements IdentifierReader {
     const rfid = parseRfidLine(line);
     const read: IdentifierRead = rfid
       ? { type: "rfid", value: rfid, raw: line, transport: this.transport, readAt: this.now() }
-      : { type: "visual_tag", value: line.trim().toUpperCase(), raw: line, transport: this.transport, readAt: this.now() };
+      : {
+          type: "visual_tag",
+          value: line.trim().toUpperCase(),
+          raw: line,
+          transport: this.transport,
+          readAt: this.now(),
+        };
     if (!read.value) return null;
     for (const fn of this.readListeners) fn(read);
     return read;
