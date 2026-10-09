@@ -23,7 +23,7 @@ Estados: **Aprovado** (decidido pelo usuário) · **Adotado** (decisão técnica
 | T-06 | Rotas de API aninhadas por fazenda (`/v1/farms/:farmId/...`) em vez de `/v1/animals` | Adotado | ADR-002 (tenant explícito na URL, validado no servidor) |
 | T-07 | Identificador Android/iOS `com.rebania.app` | **Provisório** | Depende do domínio/conta de loja (pendente) |
 | P-01 | Preços, tamanhos de pacote, expiração/recarga de créditos | Pendente | Não implementar expiração/recarga automática |
-| P-02 | Provedor de IA e de pagamento | Pendente | Estrutura pronta e desligada: `AI_PROVIDER=none`, `BILLING_PROVIDER=none` (ou `hmac` para conciliação assinada); adapter entra quando decidido |
+| P-02 | Provedor de IA e de pagamento | Parcial | IA: **DeepSeek** (decidido 09/10/2026), adapter implementado; liga com `AI_PROVIDER=deepseek` + `DEEPSEEK_API_KEY` no `.env` da VPS. Pagamento: pendente (`BILLING_PROVIDER=none`, ou `hmac` para conciliação assinada) |
 | P-03 | Leitores RFID, bastões, balanças a homologar | Pendente | Adapters prontos; homologação exige aparelho físico |
 | P-04 | Inventário e dimensionamento da VPS; caminho de ingress | Parcial | VPS definida: 72.60.10.112 (não a 108). Ingress: Nginx do host → `127.0.0.1:8088`. Deploy por GHCR + runner self-hosted (`deploy.yml`). Falta a auditoria somente leitura (`docs/runbooks/deploy.md` §0) |
 | P-05 | Domínio, marca no INPI, contas das lojas | Parcial | Domínio: www.rebania.com.br (canônico; apex redireciona). Marca no INPI e contas das lojas pendentes; nada enviado às lojas |

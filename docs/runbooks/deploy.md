@@ -74,7 +74,11 @@ docker compose exec api node dist/cli/platform-admin.js --email pessoa@rebania.c
 1. `curl -fsS https://www.rebania.com.br/v1/health` responde `ok` (e `http://rebania.com.br` redireciona para `https://www.rebania.com.br`).
 2. Login web; numa fazenda de homologação: cadastro de animal, pesagem, aplicação sanitária, um animal no Modo Curral e encerramento.
 3. `/fazenda/sincronizacao` sem pendências; Relatórios → Inventário abre e baixa CSV.
-4. Assistente mostra "indisponível" enquanto `AI_PROVIDER=none` (esperado).
+4. Assistente: com `AI_PROVIDER=none` mostra "indisponível" (esperado). Para ligar o DeepSeek:
+   - no `.env`, defina `AI_PROVIDER=deepseek` e `DEEPSEEK_API_KEY=<chave>`;
+   - rode `docker compose up -d api`;
+   - publique a tabela de créditos no console;
+   - faça uma pergunta de teste numa fazenda de homologação.
 5. Com `METRICS_TOKEN`: `curl -H "Authorization: Bearer $METRICS_TOKEN" .../v1/metrics` retorna métricas.
 
 ## Rollback
