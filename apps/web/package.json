@@ -15,6 +15,7 @@
     "@rebania/contracts": "workspace:*",
     "@rebania/design-tokens": "workspace:*",
     "@rebania/domain": "workspace:*",
+    "@rebania/hardware": "workspace:*",
     "@rebania/sync-core": "workspace:*",
     "lucide-react": "1.53.0",
     "react": "19.3.0",

@@ -43,6 +43,9 @@ export const BreedingInput = z
     femaleIds: z.array(uuid).min(1).max(1000),
     sireId: uuid.nullable().optional(),
     semen: z.string().trim().max(120).optional(),
+    /** Baixa de 1 dose por fêmea no estoque de sêmen (IA). */
+    semenProductId: uuid.nullable().optional(),
+    semenBatchId: uuid.nullable().optional(),
     technician: z.string().trim().max(120).optional(),
     seasonId: uuid.nullable().optional(),
     executionId: uuid.nullable().optional(),

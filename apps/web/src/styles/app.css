@@ -1409,3 +1409,140 @@ img.photo {
   border: 3px solid var(--color-brand-ochre);
   border-radius: var(--radius-md);
 }
+
+/* ---- G4: sanidade, estoque e Modo Curral ---------------------------------- */
+.page-head button.back {
+  background: none;
+  border: 0;
+  padding: 0;
+  color: inherit;
+  cursor: pointer;
+  display: inline-flex;
+}
+.link-btn {
+  background: none;
+  border: 0;
+  padding: 0;
+  color: var(--color-brand-primary);
+  font: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.dose-row {
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  padding: 12px 14px 4px;
+  margin: 0 0 12px;
+}
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--color-surface-muted);
+  color: var(--color-brand-primary);
+  font-weight: 600;
+  font-size: 15px;
+}
+.curral-progress .bar {
+  height: 12px;
+  border-radius: 999px;
+  background: var(--color-border);
+  overflow: hidden;
+}
+.curral-progress .bar span {
+  display: block;
+  height: 100%;
+  background: var(--color-brand-primary);
+  transition: width 0.2s ease;
+}
+.curral-progress p {
+  margin: 8px 0 12px;
+}
+.curral-config {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.curral-reader {
+  background: var(--color-surface);
+  border: 2px solid var(--color-brand-primary);
+  border-radius: 18px;
+  padding: 14px 16px;
+  margin-bottom: 14px;
+}
+.curral-reader label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.curral-reader .row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.curral-reader input {
+  flex: 1;
+  font-size: 22px;
+  min-height: 56px;
+}
+.curral-current .head {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+.curral-current .head > div {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.curral-current .head strong {
+  font-size: 22px;
+}
+.curral-todo {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 12px;
+  display: grid;
+  gap: 6px;
+}
+.curral-todo li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+}
+.curral-actions .btn-lg {
+  flex: 1 1 240px;
+  min-height: 60px;
+  font-size: 20px;
+}
+.hero-photo .pill.pill-right {
+  left: auto;
+  right: 16px;
+  top: 16px;
+  bottom: auto;
+}
+button.list-item {
+  background: none;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  font: inherit;
+  cursor: pointer;
+}
+.list li:last-child > button.list-item {
+  border-bottom: 0;
+}
+.list-item .title {
+  font-weight: 700;
+}

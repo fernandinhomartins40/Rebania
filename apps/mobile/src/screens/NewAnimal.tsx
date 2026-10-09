@@ -290,6 +290,7 @@ export function NewAnimalScreen({ back }: { back: () => void }) {
                       })),
                       primaryIdentifier: normalizeIdentifier("visual_tag", tag),
                       lastWeight: null,
+                      withdrawal: null,
                       photo: null,
                       repro:
                         category === "heifer" || category === "cow"

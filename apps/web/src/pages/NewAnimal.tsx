@@ -421,6 +421,7 @@ export function NewAnimalPage() {
                   })),
                   primaryIdentifier: normalizeIdentifier(d.idType, d.idValue),
                   lastWeight: null,
+                  withdrawal: null,
                   photo: null,
                   repro:
                     d.category === "heifer" || d.category === "cow"

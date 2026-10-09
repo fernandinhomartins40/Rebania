@@ -65,6 +65,15 @@ type AnimalWithRelations = Prisma.AnimalGetPayload<{ include: typeof ANIMAL_INCL
 
 const PRIMARY_ORDER: IdentifierType[] = ["visual_tag", "provisional", "rfid", "nfc", "qr", "other"];
 
+/** Identificador exibido como "nome" do animal (mesma ordem do DTO). */
+export function primaryTag(
+  identifiers: { type: IdentifierType; normalizedValue: string; status: string }[],
+): string | null {
+  const active = identifiers.filter((i) => i.status === "active");
+  const p = PRIMARY_ORDER.map((t) => active.find((i) => i.type === t)).find(Boolean);
+  return p ? formatIdentifier(p.type, p.normalizedValue) : null;
+}
+
 export function toAnimalDto(a: AnimalWithRelations): AnimalDto {
   const active = a.identifiers.filter((i) => i.status === "active");
   const primary = PRIMARY_ORDER.map((t) => active.find((i) => i.type === t)).find(Boolean);
@@ -108,6 +117,13 @@ export function toAnimalDto(a: AnimalWithRelations): AnimalDto {
             status: a.reproStatus ?? "unknown",
             since: dateToCivil(a.reproStatusSince),
             expectedCalvingOn: dateToCivil(a.expectedCalvingOn),
+          }
+        : null,
+    withdrawal:
+      a.withdrawalMeatUntil || a.withdrawalMilkUntil
+        ? {
+            meatUntil: dateToCivil(a.withdrawalMeatUntil),
+            milkUntil: dateToCivil(a.withdrawalMilkUntil),
           }
         : null,
     photo: photo
@@ -205,7 +221,7 @@ async function assertIdentifierAvailable(
   }
 }
 
-async function addEvent(
+export async function addEvent(
   tx: Tx,
   fctx: FarmContext,
   animalId: string,
@@ -584,6 +600,16 @@ export function summarizeEvent(
       return `Desmama${data.weightKg ? ` · ${Number(data.weightKg).toLocaleString("pt-BR")} kg` : ""}`;
     case "correction":
       return `Correção: ${String(data.label)} anulado(a) · ${String(data.reason)}`;
+    case "health_applied":
+      return `${String(data.productName)}${data.dose ? ` · ${Number(data.dose).toLocaleString("pt-BR")} ${String(data.unit ?? "")}` : ""}${data.withdrawalMeatUntil ? ` · carência até ${String(data.withdrawalMeatUntil).split("-").reverse().join("/")}` : ""}${data.applicator ? ` · ${String(data.applicator)}` : ""}`;
+    case "treatment_started":
+      return `Tratamento iniciado: ${String(data.condition)}`;
+    case "treatment_closed":
+      return `Tratamento encerrado: ${String(data.statusLabel)}${data.outcome ? ` · ${String(data.outcome)}` : ""}`;
+    case "exam_collected":
+      return `Exame coletado: ${String(data.kindLabel)}`;
+    case "exam_result":
+      return `Resultado de exame (${String(data.kindLabel)}): ${String(data.result)}`;
     case "updated":
       return `Dados atualizados: ${Object.keys((data.after as object) ?? {}).join(", ")}`;
     default:

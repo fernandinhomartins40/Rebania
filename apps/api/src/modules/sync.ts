@@ -26,6 +26,13 @@ import {
   recordPregnancyChecks,
   recordWeaning,
 } from "./repro/service.ts";
+import {
+  addSessionException,
+  applyHealth,
+  closeSession,
+  markItem,
+  openSession,
+} from "./health/service.ts";
 
 const PERMISSION: Record<SyncMutation["type"], Permission> = {
   "animal.create": "animals.write",
@@ -36,6 +43,11 @@ const PERMISSION: Record<SyncMutation["type"], Permission> = {
   "pregnancy.record": "events.write",
   "birth.record": "events.write",
   "weaning.record": "events.write",
+  "health.apply": "events.write",
+  "handling.open": "events.write",
+  "handling.mark": "events.write",
+  "handling.exception": "events.write",
+  "handling.close": "events.write",
 };
 
 export function syncRoutes(app: FastifyInstance, ctx: AppContext) {
@@ -113,6 +125,16 @@ export function syncRoutes(app: FastifyInstance, ctx: AppContext) {
             return recordBirth(tx, fctx, { ...m.payload, id: m.entityId }, meta);
           case "weaning.record":
             return recordWeaning(tx, fctx, { ...m.payload, operationId: m.entityId }, meta);
+          case "health.apply":
+            return applyHealth(tx, fctx, { ...m.payload, operationId: m.entityId }, meta);
+          case "handling.open":
+            return openSession(tx, fctx, m.entityId, m.payload, meta);
+          case "handling.mark":
+            return markItem(tx, fctx, m.entityId, m.payload, meta);
+          case "handling.exception":
+            return addSessionException(tx, fctx, m.entityId, m.payload);
+          case "handling.close":
+            return closeSession(tx, fctx, m.entityId, m.payload, meta);
         }
       },
     });

@@ -19,6 +19,14 @@ export const MERGE_POLICY: Record<SyncMutationType, MergePolicy> = {
   "pregnancy.record": "append",
   "birth.record": "idempotent_create",
   "weaning.record": "append",
+  // Aplicações e marcações do Curral são fatos de campo: nunca bloqueadas por saldo
+  // de estoque (o servidor marca para reconciliação). Marcação é idempotente por
+  // sessão+animal; abrir/encerrar sessão é criação/transição idempotente.
+  "health.apply": "append",
+  "handling.open": "idempotent_create",
+  "handling.mark": "append",
+  "handling.exception": "append",
+  "handling.close": "idempotent_create",
 };
 
 /** Backoff exponencial com teto e jitter determinístico opcional (para testes). */

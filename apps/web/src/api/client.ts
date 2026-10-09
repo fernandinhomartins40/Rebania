@@ -17,7 +17,7 @@ export class NetworkError extends Error {
   }
 }
 
-type Method = "GET" | "POST" | "PATCH";
+type Method = "GET" | "POST" | "PATCH" | "DELETE";
 
 export async function api<T>(
   method: Method,
@@ -59,6 +59,7 @@ export const post = <T>(path: string, body?: unknown, opts?: { idempotencyKey?: 
   api<T>("POST", path, body ?? {}, opts);
 export const patch = <T>(path: string, body?: unknown, opts?: { idempotencyKey?: string }) =>
   api<T>("PATCH", path, body ?? {}, opts);
+export const del = <T = void>(path: string) => api<T>("DELETE", path);
 
 /** Mensagem amigável para qualquer erro. */
 export function errorMessage(err: unknown): string {

@@ -123,6 +123,10 @@ export const Animal = z.object({
       expectedCalvingOn: z.string().nullable(),
     })
     .nullable(),
+  /** Carência projetada (datas finais configuradas por produto); null = sem registro. */
+  withdrawal: z
+    .object({ meatUntil: z.string().nullable(), milkUntil: z.string().nullable() })
+    .nullable(),
   /** Foto mais recente pronta (rotas autenticadas). */
   photo: z.object({ id: uuid, thumbUrl: z.string(), displayUrl: z.string() }).nullable(),
   createdAt: z.string(),

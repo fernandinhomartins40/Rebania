@@ -7,6 +7,13 @@ import {
   UpdateAnimalInput,
 } from "./animal.ts";
 import { BirthInput, BreedingInput, PregnancyCheckInput, WeaningInput } from "./repro.ts";
+import {
+  HandlingCloseInput,
+  HandlingExceptionInput,
+  HandlingMarkInput,
+  HandlingOpenInput,
+  HealthApplyInput,
+} from "./health.ts";
 
 /**
  * Envelope de mutação offline. `organizationId`/tenant NÃO vem do cliente:
@@ -32,6 +39,13 @@ export const SyncMutation = z.discriminatedUnion("type", [
   /** entityId = id do parto */
   Base.extend({ type: z.literal("birth.record"), payload: BirthInput }),
   Base.extend({ type: z.literal("weaning.record"), payload: WeaningInput }),
+  /** Sanidade: entityId = id da operação de aplicação. */
+  Base.extend({ type: z.literal("health.apply"), payload: HealthApplyInput }),
+  /** Modo Curral: entityId = id da sessão (gerado no aparelho). */
+  Base.extend({ type: z.literal("handling.open"), payload: HandlingOpenInput }),
+  Base.extend({ type: z.literal("handling.mark"), payload: HandlingMarkInput }),
+  Base.extend({ type: z.literal("handling.exception"), payload: HandlingExceptionInput }),
+  Base.extend({ type: z.literal("handling.close"), payload: HandlingCloseInput }),
 ]);
 export type SyncMutation = z.input<typeof SyncMutation>;
 export type SyncMutationType = SyncMutation["type"];

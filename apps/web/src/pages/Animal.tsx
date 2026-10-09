@@ -6,7 +6,9 @@ import {
   ChevronRight,
   MapPin,
   Pencil,
+  FlaskConical,
   Stethoscope,
+  Syringe,
   Undo2,
   Venus,
   Tag,
@@ -40,6 +42,7 @@ import { useSession } from "../state/session.tsx";
 import { useSync } from "../state/sync.tsx";
 import { PhotoGallery } from "../components/PhotoGallery.tsx";
 import { ReproSection } from "../components/ReproSection.tsx";
+import { HealthSection } from "../components/HealthSection.tsx";
 import { RetagPanel } from "./Retag.tsx";
 
 const ORIGIN_LABEL: Record<string, string> = {
@@ -58,6 +61,11 @@ const EVENT_ICON: Record<string, IconComponent> = {
   updated: Pencil,
   bred: Venus,
   pregnancy_check: Stethoscope,
+  health_applied: Syringe,
+  treatment_started: Stethoscope,
+  treatment_closed: Stethoscope,
+  exam_collected: FlaskConical,
+  exam_result: FlaskConical,
   calved: Baby,
   weaned: Baby,
   correction: Undo2,
@@ -71,6 +79,11 @@ const EVENT_TITLE: Record<string, string> = {
   retagged: "Troca de identificação",
   updated: "Dados atualizados",
   bred: "Cobertura",
+  health_applied: "Aplicação",
+  treatment_started: "Tratamento",
+  treatment_closed: "Tratamento encerrado",
+  exam_collected: "Exame",
+  exam_result: "Resultado de exame",
   pregnancy_check: "Diagnóstico de prenhez",
   calved: "Parto",
   weaned: "Desmama",
@@ -130,6 +143,13 @@ export function AnimalPage() {
         <span className="pill">
           <StatusBadge animal={animal} />
         </span>
+        {animal.withdrawal?.meatUntil && animal.withdrawal.meatUntil >= today ? (
+          <span className="pill pill-right">
+            <span className="badge badge-warn">
+              Carência até {formatDate(animal.withdrawal.meatUntil)}
+            </span>
+          </span>
+        ) : null}
         {animal.photo ? null : <span className="note">Sem foto</span>}
       </div>
 
@@ -323,6 +343,7 @@ export function AnimalPage() {
               </>
             ) : null}
             {animal.repro ? <ReproSection animalId={animal.id} /> : null}
+            <HealthSection animalId={animal.id} active={active} />
             <h2 style={{ marginTop: 24 }}>Identificadores</h2>
             <ul className="list">
               {animal.identifiers.map((i) => (

@@ -30,6 +30,7 @@ import { notFound } from "../../lib/errors.ts";
 import { autoCompleteTasks, createTask } from "../../lib/tasks.ts";
 import type { FarmContext } from "../../lib/tenant.ts";
 import { createAnimal, recordWeight, type MutationMeta } from "../animals/service.ts";
+import { consumeStock } from "../health/service.ts";
 
 const fmt = (d: string) => d.split("-").reverse().join("/");
 
@@ -160,6 +161,21 @@ export async function recordBreeding(
     if (!ex) throw new DomainError("execution_not_found", "Execução de protocolo não encontrada.");
   }
 
+  let semenProduct: { id: string; name: string } | null = null;
+  if (input.semenProductId) {
+    const p = await tx.product.findFirst({
+      where: { id: input.semenProductId, farmId: fctx.farmId, kind: "semen", archivedAt: null },
+    });
+    if (!p) throw new DomainError("semen_not_found", "Sêmen não encontrado no estoque.");
+    if (input.semenBatchId) {
+      const b = await tx.productBatch.findFirst({
+        where: { id: input.semenBatchId, productId: p.id, farmId: fctx.farmId },
+      });
+      if (!b) throw new DomainError("batch_not_found", "Partida não pertence a este sêmen.");
+    }
+    semenProduct = p;
+  }
+
   const result: GroupOperationResult = { operationId, done: [], exceptions: [] };
   for (const id of input.femaleIds) {
     const f = await loadFemale(tx, fctx, id);
@@ -195,7 +211,7 @@ export async function recordBreeding(
         date: civilToDate(input.date),
         endDate: input.endDate ? civilToDate(input.endDate) : null,
         sireId: input.sireId ?? null,
-        semen: input.semen ?? null,
+        semen: input.semen ?? semenProduct?.name ?? null,
         technician: input.technician ?? null,
         seasonId: input.seasonId ?? null,
         executionId: input.executionId ?? null,
@@ -219,6 +235,17 @@ export async function recordBreeding(
       },
       meta,
     );
+    if (semenProduct) {
+      // Uma dose por fêmea inseminada; saldo negativo vira pendência de conferência.
+      await consumeStock(tx, fctx, {
+        productId: semenProduct.id,
+        batchId: input.semenBatchId ?? null,
+        quantityMilli: 1000,
+        occurredOn: input.date,
+        sourceType: "breeding",
+        sourceId: b.id,
+      });
+    }
     await recomputeRepro(tx, fctx, id, s);
     result.done.push(id);
   }
@@ -581,6 +608,11 @@ export async function voidRecord(
     if (!r) throw notFound("Registro");
     await tx.breedingEvent.update({
       where: { id },
+      data: { voidedAt: meta.now, voidReason: reason },
+    });
+    // Estorna a dose de sêmen baixada por esta cobertura.
+    await tx.stockMovement.updateMany({
+      where: { farmId: fctx.farmId, sourceType: "breeding", sourceId: id, voidedAt: null },
       data: { voidedAt: meta.now, voidReason: reason },
     });
     animalId = r.femaleId;

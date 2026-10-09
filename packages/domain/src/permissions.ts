@@ -25,6 +25,8 @@ export const PERMISSIONS = [
   "groups.manage",
   "settings.manage",
   "tasks.manage",
+  "health.manage",
+  "stock.manage",
   "finance.read",
   "finance.write",
   "reports.read",
@@ -45,12 +47,14 @@ export const ROLE_PERMISSIONS: Record<Role, readonly Permission[]> = {
     "groups.manage",
     "settings.manage",
     "tasks.manage",
+    "health.manage",
+    "stock.manage",
     "finance.read",
     "reports.read",
   ],
   field: ["animals.read", "animals.write", "events.write"],
-  veterinarian: ["animals.read", "events.write", "reports.read", "tasks.manage"],
-  finance: ["animals.read", "finance.read", "finance.write", "reports.read"],
+  veterinarian: ["animals.read", "events.write", "reports.read", "tasks.manage", "health.manage"],
+  finance: ["animals.read", "finance.read", "finance.write", "reports.read", "stock.manage"],
 };
 
 export function roleHas(role: Role, permission: Permission): boolean {

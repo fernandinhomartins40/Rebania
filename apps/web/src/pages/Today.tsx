@@ -6,6 +6,8 @@ import {
   ChevronRight,
   CircleAlert,
   ClipboardList,
+  Package,
+  ShieldAlert,
   MapPin,
   Moon,
   Play,
@@ -28,6 +30,9 @@ import { useLocalHerd } from "../state/local-data.ts";
 import { useSession } from "../state/session.tsx";
 import { useSync } from "../state/sync.tsx";
 import { useOpenTasks } from "../state/tasks.ts";
+import { useProducts } from "../state/health.ts";
+import { listLocalSessions, summaryOf, type LocalSession } from "../offline/curral.ts";
+import { useEffect, useState } from "react";
 
 function greeting(): { text: string; night: boolean } {
   const h = new Date().getHours();
@@ -53,6 +58,11 @@ export function TodayPage() {
   const { state } = useSync();
   const { animals, places } = useLocalHerd(farm!.id);
   const { tasks } = useOpenTasks(farm!.id);
+  const { products } = useProducts(farm!.id);
+  const [sessions, setSessions] = useState<LocalSession[]>([]);
+  useEffect(() => {
+    void listLocalSessions(farm!.id).then((l) => setSessions(l.filter((x) => x.status === "open")));
+  }, [farm]);
   const navigate = useNavigate();
   if (!animals) return <Loading />;
 
@@ -74,7 +84,22 @@ export function TodayPage() {
   const calving30 = active.filter(
     (a) => a.repro?.expectedCalvingOn && daysBetween(today, a.repro.expectedCalvingOn) <= 30,
   );
+  const inWithdrawal = active.filter(
+    (a) => a.withdrawal?.meatUntil && a.withdrawal.meatUntil >= today,
+  ).length;
+  const lowStock = (products ?? []).filter((p) => p.belowMin);
+  const stockReview = (products ?? []).reduce((n, p) => n + p.pendingReview, 0);
   const priorities: Priority[] = [];
+  for (const sess of sessions.slice(0, 2)) {
+    const sm = summaryOf(sess);
+    priorities.push({
+      icon: ClipboardList,
+      title: `Sessão de curral em andamento: ${sess.name}`,
+      why: `${sm.done} de ${sm.total} realizados; ${sm.pending} pendente(s). Retome de onde parou.`,
+      to: `/curral/${sess.id}`,
+      action: "Retomar manejo",
+    });
+  }
   if (dueTasks.length) {
     priorities.push({
       icon: CalendarDays,
@@ -94,6 +119,31 @@ export function TodayPage() {
       why: "Nos próximos 30 dias (estimativa a partir das coberturas e diagnósticos).",
       to: "/reproducao",
       action: "Ver matrizes",
+    });
+  }
+  if (inWithdrawal) {
+    priorities.push({
+      icon: ShieldAlert,
+      title: `${inWithdrawal} animal(is) em carência`,
+      why: "Pelos prazos configurados nos produtos aplicados; a venda verifica esta lista.",
+      to: "/sanidade?aba=carencias",
+      action: "Ver carências",
+    });
+  }
+  if (lowStock.length || stockReview) {
+    priorities.push({
+      icon: Package,
+      title: stockReview
+        ? `${stockReview} consumo(s) de estoque para conferir`
+        : `${lowStock.length} produto(s) abaixo do mínimo`,
+      why: stockReview
+        ? "Aplicações registradas deixaram saldo negativo."
+        : lowStock
+            .slice(0, 3)
+            .map((p) => p.name)
+            .join(", "),
+      to: "/fazenda/estoque",
+      action: "Abrir estoque",
     });
   }
   if (problems) {
@@ -259,7 +309,7 @@ export function TodayPage() {
       <button
         type="button"
         className="btn btn-primary btn-lg btn-block mobile-only"
-        onClick={() => navigate("/registrar")}
+        onClick={() => navigate(sessions[0] ? `/curral/${sessions[0].id}` : "/registrar")}
       >
         <Play size={22} aria-hidden="true" /> Iniciar manejo
       </button>

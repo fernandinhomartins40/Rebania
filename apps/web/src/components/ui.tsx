@@ -41,15 +41,22 @@ export function Steps({
 export function PageHead({
   title,
   back,
+  onBack,
   aside,
 }: {
   title: string;
   back?: string;
+  /** Voltar dentro da mesma página (sub-telas controladas por estado/URL). */
+  onBack?: () => void;
   aside?: ReactNode;
 }) {
   return (
     <div className="page-head">
-      {back ? (
+      {onBack ? (
+        <button type="button" className="back" aria-label="Voltar" onClick={onBack}>
+          <ArrowLeft size={26} />
+        </button>
+      ) : back ? (
         <Link to={back} className="back" aria-label="Voltar">
           <ArrowLeft size={26} />
         </Link>

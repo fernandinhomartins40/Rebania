@@ -15,6 +15,14 @@ import { PregnancyPage } from "./pages/repro/Pregnancy.tsx";
 import { ReproductionPage } from "./pages/repro/Reproduction.tsx";
 import { WeaningPage } from "./pages/repro/Weaning.tsx";
 import { SettingsPage } from "./pages/Settings.tsx";
+import { ApplyPage } from "./pages/health/Apply.tsx";
+import { ExamPage } from "./pages/health/Exam.tsx";
+import { HealthPage } from "./pages/health/Health.tsx";
+import { StockPage } from "./pages/health/Stock.tsx";
+import { TreatmentPage } from "./pages/health/Treatment.tsx";
+import { CurralRunPage } from "./pages/curral/Run.tsx";
+import { CurralSessionsPage } from "./pages/curral/Sessions.tsx";
+import { CurralSetupPage } from "./pages/curral/Setup.tsx";
 import { LandingPage } from "./pages/landing/Landing.tsx";
 import { LoginPage } from "./pages/Login.tsx";
 import { MovePage } from "./pages/Move.tsx";
@@ -77,6 +85,14 @@ function Routed() {
           <Route path="registrar/diagnostico" element={<PregnancyPage />} />
           <Route path="registrar/desmama" element={<WeaningPage />} />
           <Route path="reproducao" element={<ReproductionPage />} />
+          <Route path="registrar/aplicacao" element={<ApplyPage />} />
+          <Route path="registrar/tratamento" element={<TreatmentPage />} />
+          <Route path="registrar/exame" element={<ExamPage />} />
+          <Route path="sanidade" element={<HealthPage />} />
+          <Route path="curral" element={<CurralSessionsPage />} />
+          <Route path="curral/nova" element={<CurralSetupPage />} />
+          <Route path="curral/:id" element={<CurralRunPage />} />
+          <Route path="fazenda/estoque" element={<StockPage />} />
           <Route path="fazenda/configuracoes" element={<SettingsPage />} />
           <Route path="agenda" element={<AgendaPage />} />
           <Route path="fazenda" element={<FarmPage />} />

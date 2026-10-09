@@ -169,6 +169,9 @@ importers:
       '@rebania/domain':
         specifier: workspace:*
         version: link:../../packages/domain
+      '@rebania/hardware':
+        specifier: workspace:*
+        version: link:../../packages/hardware
       '@rebania/sync-core':
         specifier: workspace:*
         version: link:../../packages/sync-core

@@ -159,6 +159,15 @@ model Farm {
   checks       PregnancyCheck[]
   births       Birth[]
   tasks        Task[]
+  products     Product[]
+  batches      ProductBatch[]
+  locations    StockLocation[]
+  movements    StockMovement[]
+  planItems    HealthPlanItem[]
+  applications HealthApplication[]
+  treatments   Treatment[]
+  exams        Exam[]
+  sessions     HandlingSession[]
 
   @@unique([organizationId, id])
   @@map("farms")
@@ -301,47 +310,55 @@ model Pasture {
 }
 
 model Animal {
-  id                 String         @id @default(uuid()) @db.Uuid
-  organizationId     String         @map("organization_id") @db.Uuid
-  farmId             String         @map("farm_id") @db.Uuid
-  sex                AnimalSex
-  category           AnimalCategory
-  status             AnimalStatus   @default(active)
-  breed              String?
-  birthDate          DateTime?      @map("birth_date") @db.Date
-  birthDateEstimated Boolean        @default(false) @map("birth_date_estimated")
-  origin             AnimalOrigin
-  entryDate          DateTime?      @map("entry_date") @db.Date
-  groupId            String?        @map("group_id") @db.Uuid
-  pastureId          String?        @map("pasture_id") @db.Uuid
-  damId              String?        @map("dam_id") @db.Uuid
-  sireId             String?        @map("sire_id") @db.Uuid
-  notes              String?
+  id                  String         @id @default(uuid()) @db.Uuid
+  organizationId      String         @map("organization_id") @db.Uuid
+  farmId              String         @map("farm_id") @db.Uuid
+  sex                 AnimalSex
+  category            AnimalCategory
+  status              AnimalStatus   @default(active)
+  breed               String?
+  birthDate           DateTime?      @map("birth_date") @db.Date
+  birthDateEstimated  Boolean        @default(false) @map("birth_date_estimated")
+  origin              AnimalOrigin
+  entryDate           DateTime?      @map("entry_date") @db.Date
+  groupId             String?        @map("group_id") @db.Uuid
+  pastureId           String?        @map("pasture_id") @db.Uuid
+  damId               String?        @map("dam_id") @db.Uuid
+  sireId              String?        @map("sire_id") @db.Uuid
+  notes               String?
   /// Projeção da situação reprodutiva (recalculada a cada evento reprodutivo).
-  reproStatus        ReproStatus?   @map("repro_status")
-  reproStatusSince   DateTime?      @map("repro_status_since") @db.Date
-  expectedCalvingOn  DateTime?      @map("expected_calving_on") @db.Date
-  version            Int            @default(1)
-  createdById        String?        @map("created_by_id") @db.Uuid
-  createdAt          DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt          DateTime       @updatedAt @map("updated_at") @db.Timestamptz(3)
+  reproStatus         ReproStatus?   @map("repro_status")
+  reproStatusSince    DateTime?      @map("repro_status_since") @db.Date
+  expectedCalvingOn   DateTime?      @map("expected_calving_on") @db.Date
+  /// Projeção de carência (maior data entre aplicações não anuladas).
+  withdrawalMeatUntil DateTime?      @map("withdrawal_meat_until") @db.Date
+  withdrawalMilkUntil DateTime?      @map("withdrawal_milk_until") @db.Date
+  version             Int            @default(1)
+  createdById         String?        @map("created_by_id") @db.Uuid
+  createdAt           DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt           DateTime       @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  farm              Farm                @relation(fields: [organizationId, farmId], references: [organizationId, id])
-  group             Group?              @relation(fields: [farmId, groupId], references: [farmId, id], onUpdate: Cascade)
-  pasture           Pasture?            @relation(fields: [farmId, pastureId], references: [farmId, id], onUpdate: Cascade)
-  dam               Animal?             @relation("Dam", fields: [organizationId, damId], references: [organizationId, id], onDelete: NoAction, onUpdate: NoAction)
-  sire              Animal?             @relation("Sire", fields: [organizationId, sireId], references: [organizationId, id], onDelete: NoAction, onUpdate: NoAction)
-  offspringAsDam    Animal[]            @relation("Dam")
-  offspringAsSire   Animal[]            @relation("Sire")
+  farm              Farm                  @relation(fields: [organizationId, farmId], references: [organizationId, id])
+  group             Group?                @relation(fields: [farmId, groupId], references: [farmId, id], onUpdate: Cascade)
+  pasture           Pasture?              @relation(fields: [farmId, pastureId], references: [farmId, id], onUpdate: Cascade)
+  dam               Animal?               @relation("Dam", fields: [organizationId, damId], references: [organizationId, id], onDelete: NoAction, onUpdate: NoAction)
+  sire              Animal?               @relation("Sire", fields: [organizationId, sireId], references: [organizationId, id], onDelete: NoAction, onUpdate: NoAction)
+  offspringAsDam    Animal[]              @relation("Dam")
+  offspringAsSire   Animal[]              @relation("Sire")
   identifiers       AnimalIdentifier[]
   weights           WeightMeasurement[]
   events            AnimalEvent[]
   attachments       Attachment[]
-  breedingsAsFemale BreedingEvent[]     @relation("BreedingFemale")
-  breedingsAsSire   BreedingEvent[]     @relation("BreedingSire")
+  breedingsAsFemale BreedingEvent[]       @relation("BreedingFemale")
+  breedingsAsSire   BreedingEvent[]       @relation("BreedingSire")
   checks            PregnancyCheck[]
-  birthsAsDam       Birth[]             @relation("BirthDam")
+  birthsAsDam       Birth[]               @relation("BirthDam")
   calfOf            BirthCalf[]
+  semenProducts     Product[]             @relation("ProductSire")
+  applications      HealthApplication[]
+  treatments        Treatment[]
+  exams             Exam[]
+  sessionItems      HandlingSessionItem[]
 
   @@unique([organizationId, id])
   @@unique([farmId, id])
@@ -704,4 +721,354 @@ model Task {
   @@unique([farmId, dedupeKey])
   @@index([farmId, status, dueOn])
   @@map("tasks")
+}
+
+// ---- G4: sanidade, estoque e Modo Curral ---------------------------------------------
+
+enum ProductKind {
+  vaccine
+  antiparasitic
+  medicine
+  hormone
+  semen
+  feed
+  supplement
+  other
+}
+
+enum StockMovementKind {
+  entry
+  consumption
+  loss
+  adjustment
+}
+
+enum HealthKind {
+  vaccination
+  deworming
+  treatment
+  other
+}
+
+enum AdminRoute {
+  subcutaneous
+  intramuscular
+  intravenous
+  oral
+  pour_on
+  intramammary
+  intrauterine
+  other
+}
+
+enum TreatmentStatus {
+  open
+  resolved
+  failed
+}
+
+enum ExamStatus {
+  pending
+  done
+}
+
+enum HandlingSessionStatus {
+  open
+  closed
+}
+
+enum HandlingItemStatus {
+  pending
+  done
+  skipped
+}
+
+/// Insumo da fazenda. Carência e fonte técnica são configuradas pela fazenda.
+model Product {
+  id                 String      @id @default(uuid()) @db.Uuid
+  organizationId     String      @map("organization_id") @db.Uuid
+  farmId             String      @map("farm_id") @db.Uuid
+  name               String
+  kind               ProductKind
+  unit               String
+  minStock           Decimal?    @map("min_stock") @db.Decimal(14, 3)
+  withdrawalMeatDays Int?        @map("withdrawal_meat_days")
+  withdrawalMilkDays Int?        @map("withdrawal_milk_days")
+  withdrawalSource   String?     @map("withdrawal_source")
+  /// Sêmen: touro cadastrado (opcional) ou nome livre.
+  sireId             String?     @map("sire_id") @db.Uuid
+  sireName           String?     @map("sire_name")
+  notes              String?
+  version            Int         @default(1)
+  createdById        String?     @map("created_by_id") @db.Uuid
+  createdAt          DateTime    @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt          DateTime    @updatedAt @map("updated_at") @db.Timestamptz(3)
+  archivedAt         DateTime?   @map("archived_at") @db.Timestamptz(3)
+
+  farm         Farm                @relation(fields: [organizationId, farmId], references: [organizationId, id])
+  sire         Animal?             @relation("ProductSire", fields: [organizationId, sireId], references: [organizationId, id], onDelete: NoAction, onUpdate: NoAction)
+  batches      ProductBatch[]
+  movements    StockMovement[]
+  applications HealthApplication[]
+  planItems    HealthPlanItem[]
+
+  @@unique([farmId, id])
+  @@index([farmId, kind])
+  @@map("products")
+}
+
+/// Lote/partida do fabricante (ou partida de sêmen) com validade.
+model ProductBatch {
+  id             String    @id @default(uuid()) @db.Uuid
+  organizationId String    @map("organization_id") @db.Uuid
+  farmId         String    @map("farm_id") @db.Uuid
+  productId      String    @map("product_id") @db.Uuid
+  code           String
+  expiresOn      DateTime? @map("expires_on") @db.Date
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  farm         Farm                @relation(fields: [organizationId, farmId], references: [organizationId, id])
+  product      Product             @relation(fields: [farmId, productId], references: [farmId, id])
+  movements    StockMovement[]
+  applications HealthApplication[]
+
+  @@unique([farmId, id])
+  @@unique([productId, code])
+  @@map("product_batches")
+}
+
+model StockLocation {
+  id             String    @id @default(uuid()) @db.Uuid
+  organizationId String    @map("organization_id") @db.Uuid
+  farmId         String    @map("farm_id") @db.Uuid
+  name           String
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  archivedAt     DateTime? @map("archived_at") @db.Timestamptz(3)
+
+  farm      Farm            @relation(fields: [organizationId, farmId], references: [organizationId, id])
+  movements StockMovement[]
+
+  @@unique([farmId, id])
+  @@map("stock_locations")
+}
+
+/// Movimento de estoque com quantidade assinalada (+ entrada, − consumo/perda).
+/// Saldo = soma dos movimentos não anulados. Consumo de campo nunca é bloqueado:
+/// quando deixa o saldo negativo, fica marcado para reconciliação administrativa.
+model StockMovement {
+  id             String            @id @default(uuid()) @db.Uuid
+  organizationId String            @map("organization_id") @db.Uuid
+  farmId         String            @map("farm_id") @db.Uuid
+  productId      String            @map("product_id") @db.Uuid
+  batchId        String?           @map("batch_id") @db.Uuid
+  locationId     String?           @map("location_id") @db.Uuid
+  kind           StockMovementKind
+  quantity       Decimal           @db.Decimal(14, 3)
+  unitCost       Decimal?          @map("unit_cost") @db.Decimal(14, 4)
+  occurredOn     DateTime          @map("occurred_on") @db.Date
+  sourceType     String?           @map("source_type")
+  sourceId       String?           @map("source_id") @db.Uuid
+  note           String?
+  needsReview    Boolean           @default(false) @map("needs_review")
+  reviewedAt     DateTime?         @map("reviewed_at") @db.Timestamptz(3)
+  reviewedById   String?           @map("reviewed_by_id") @db.Uuid
+  createdById    String?           @map("created_by_id") @db.Uuid
+  createdAt      DateTime          @default(now()) @map("created_at") @db.Timestamptz(3)
+  voidedAt       DateTime?         @map("voided_at") @db.Timestamptz(3)
+  voidReason     String?           @map("void_reason")
+
+  farm     Farm           @relation(fields: [organizationId, farmId], references: [organizationId, id])
+  product  Product        @relation(fields: [farmId, productId], references: [farmId, id])
+  batch    ProductBatch?  @relation(fields: [farmId, batchId], references: [farmId, id], onDelete: NoAction, onUpdate: NoAction)
+  location StockLocation? @relation(fields: [farmId, locationId], references: [farmId, id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([farmId, productId])
+  @@index([farmId, needsReview])
+  @@index([sourceType, sourceId])
+  @@map("stock_movements")
+}
+
+/// Item do calendário sanitário configurado pela fazenda (não há plano padrão).
+model HealthPlanItem {
+  id             String           @id @default(uuid()) @db.Uuid
+  organizationId String           @map("organization_id") @db.Uuid
+  farmId         String           @map("farm_id") @db.Uuid
+  name           String
+  kind           HealthKind
+  productId      String?          @map("product_id") @db.Uuid
+  categories     AnimalCategory[]
+  everyDays      Int?             @map("every_days")
+  firstAtAgeDays Int?             @map("first_at_age_days")
+  /// Responsável técnico / origem do plano.
+  source         String
+  createdById    String?          @map("created_by_id") @db.Uuid
+  createdAt      DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
+  archivedAt     DateTime?        @map("archived_at") @db.Timestamptz(3)
+
+  farm         Farm                @relation(fields: [organizationId, farmId], references: [organizationId, id])
+  product      Product?            @relation(fields: [farmId, productId], references: [farmId, id], onDelete: NoAction, onUpdate: NoAction)
+  applications HealthApplication[]
+
+  @@unique([farmId, id])
+  @@map("health_plan_items")
+}
+
+model HealthApplication {
+  id                  String      @id @default(uuid()) @db.Uuid
+  organizationId      String      @map("organization_id") @db.Uuid
+  farmId              String      @map("farm_id") @db.Uuid
+  animalId            String      @map("animal_id") @db.Uuid
+  operationId         String      @map("operation_id") @db.Uuid
+  kind                HealthKind
+  productId           String?     @map("product_id") @db.Uuid
+  /// Nome do produto no momento da aplicação (histórico não muda se o cadastro mudar).
+  productName         String      @map("product_name")
+  batchId             String?     @map("batch_id") @db.Uuid
+  dose                Decimal?    @db.Decimal(12, 3)
+  unit                String?
+  route               AdminRoute?
+  appliedOn           DateTime    @map("applied_on") @db.Date
+  applicator          String?
+  reason              String?
+  planItemId          String?     @map("plan_item_id") @db.Uuid
+  sessionId           String?     @map("session_id") @db.Uuid
+  treatmentId         String?     @map("treatment_id") @db.Uuid
+  withdrawalMeatUntil DateTime?   @map("withdrawal_meat_until") @db.Date
+  withdrawalMilkUntil DateTime?   @map("withdrawal_milk_until") @db.Date
+  stockMovementId     String?     @map("stock_movement_id") @db.Uuid
+  createdById         String?     @map("created_by_id") @db.Uuid
+  createdAt           DateTime    @default(now()) @map("created_at") @db.Timestamptz(3)
+  voidedAt            DateTime?   @map("voided_at") @db.Timestamptz(3)
+  voidReason          String?     @map("void_reason")
+
+  farm      Farm             @relation(fields: [organizationId, farmId], references: [organizationId, id])
+  animal    Animal           @relation(fields: [organizationId, animalId], references: [organizationId, id])
+  product   Product?         @relation(fields: [farmId, productId], references: [farmId, id], onDelete: NoAction, onUpdate: NoAction)
+  batch     ProductBatch?    @relation(fields: [farmId, batchId], references: [farmId, id], onDelete: NoAction, onUpdate: NoAction)
+  planItem  HealthPlanItem?  @relation(fields: [farmId, planItemId], references: [farmId, id], onDelete: NoAction, onUpdate: NoAction)
+  session   HandlingSession? @relation(fields: [farmId, sessionId], references: [farmId, id], onDelete: NoAction, onUpdate: NoAction)
+  treatment Treatment?       @relation(fields: [farmId, treatmentId], references: [farmId, id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([animalId, appliedOn])
+  @@index([farmId, appliedOn])
+  @@index([farmId, operationId])
+  @@map("health_applications")
+}
+
+model Treatment {
+  id             String          @id @default(uuid()) @db.Uuid
+  organizationId String          @map("organization_id") @db.Uuid
+  farmId         String          @map("farm_id") @db.Uuid
+  animalId       String          @map("animal_id") @db.Uuid
+  startedOn      DateTime        @map("started_on") @db.Date
+  condition      String
+  /// Plano informado pelo responsável técnico (texto livre; o Rebania não prescreve).
+  plan           String?
+  responsible    String?
+  status         TreatmentStatus @default(open)
+  outcome        String?
+  endedOn        DateTime?       @map("ended_on") @db.Date
+  createdById    String?         @map("created_by_id") @db.Uuid
+  createdAt      DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime        @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  farm         Farm                @relation(fields: [organizationId, farmId], references: [organizationId, id])
+  animal       Animal              @relation(fields: [organizationId, animalId], references: [organizationId, id])
+  applications HealthApplication[]
+
+  @@unique([farmId, id])
+  @@index([farmId, status])
+  @@map("treatments")
+}
+
+model Exam {
+  id             String     @id @default(uuid()) @db.Uuid
+  organizationId String     @map("organization_id") @db.Uuid
+  farmId         String     @map("farm_id") @db.Uuid
+  animalId       String     @map("animal_id") @db.Uuid
+  operationId    String     @map("operation_id") @db.Uuid
+  kind           String
+  collectedOn    DateTime   @map("collected_on") @db.Date
+  responsible    String?
+  status         ExamStatus @default(pending)
+  result         String?
+  resultOn       DateTime?  @map("result_on") @db.Date
+  notes          String?
+  createdById    String?    @map("created_by_id") @db.Uuid
+  createdAt      DateTime   @default(now()) @map("created_at") @db.Timestamptz(3)
+  voidedAt       DateTime?  @map("voided_at") @db.Timestamptz(3)
+  voidReason     String?    @map("void_reason")
+
+  farm   Farm   @relation(fields: [organizationId, farmId], references: [organizationId, id])
+  animal Animal @relation(fields: [organizationId, animalId], references: [organizationId, id])
+
+  @@index([farmId, status])
+  @@index([animalId, collectedOn])
+  @@map("exams")
+}
+
+/// Sessão de manejo (Modo Curral): configuração única + snapshot dos animais.
+model HandlingSession {
+  id             String                @id @default(uuid()) @db.Uuid
+  organizationId String                @map("organization_id") @db.Uuid
+  farmId         String                @map("farm_id") @db.Uuid
+  name           String
+  date           DateTime              @db.Date
+  status         HandlingSessionStatus @default(open)
+  /// Configuração validada por @rebania/contracts HandlingConfig.
+  config         Json
+  summary        Json?
+  createdById    String?               @map("created_by_id") @db.Uuid
+  createdAt      DateTime              @default(now()) @map("created_at") @db.Timestamptz(3)
+  closedAt       DateTime?             @map("closed_at") @db.Timestamptz(3)
+  closedById     String?               @map("closed_by_id") @db.Uuid
+  version        Int                   @default(1)
+
+  farm         Farm                       @relation(fields: [organizationId, farmId], references: [organizationId, id])
+  items        HandlingSessionItem[]
+  exceptions   HandlingSessionException[]
+  applications HealthApplication[]
+
+  @@unique([farmId, id])
+  @@index([farmId, status])
+  @@map("handling_sessions")
+}
+
+model HandlingSessionItem {
+  sessionId String             @map("session_id") @db.Uuid
+  animalId  String             @map("animal_id") @db.Uuid
+  farmId    String             @map("farm_id") @db.Uuid
+  position  Int
+  status    HandlingItemStatus @default(pending)
+  /// Animal lido durante a sessão, fora da seleção inicial.
+  added     Boolean            @default(false)
+  weightId  String?            @map("weight_id") @db.Uuid
+  note      String?
+  doneAt    DateTime?          @map("done_at") @db.Timestamptz(3)
+  doneById  String?            @map("done_by_id") @db.Uuid
+
+  session HandlingSession @relation(fields: [farmId, sessionId], references: [farmId, id])
+  animal  Animal          @relation(fields: [farmId, animalId], references: [farmId, id])
+
+  @@id([sessionId, animalId])
+  @@map("handling_session_items")
+}
+
+/// Exceções registradas durante a sessão (ID desconhecido, leitor, observação).
+model HandlingSessionException {
+  id               String    @id @default(uuid()) @db.Uuid
+  sessionId        String    @map("session_id") @db.Uuid
+  farmId           String    @map("farm_id") @db.Uuid
+  kind             String
+  value            String?
+  note             String?
+  resolvedAnimalId String?   @map("resolved_animal_id") @db.Uuid
+  resolvedAt       DateTime? @map("resolved_at") @db.Timestamptz(3)
+  createdById      String?   @map("created_by_id") @db.Uuid
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  session HandlingSession @relation(fields: [farmId, sessionId], references: [farmId, id])
+
+  @@index([sessionId])
+  @@map("handling_session_exceptions")
 }

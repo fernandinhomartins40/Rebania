@@ -13,7 +13,6 @@ import {
   VoidInput,
   WeaningInput,
   type ExpectedCalvingDto,
-  type SyncReceipt,
   type TaskDto,
 } from "@rebania/contracts";
 import {
@@ -26,7 +25,7 @@ import {
   type PregnancyResultValue,
 } from "@rebania/domain";
 import type { Prisma } from "@rebania/db";
-import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
+import type { FastifyInstance, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { audit } from "../../lib/audit.ts";
 import type { AppContext } from "../../lib/context.ts";
@@ -34,6 +33,7 @@ import { stableHash } from "../../lib/crypto.ts";
 import { civilToDate, dateToCivil } from "../../lib/dates.ts";
 import { HttpError, notFound } from "../../lib/errors.ts";
 import { runIdempotent } from "../../lib/idempotency.ts";
+import { idempotencyKey, replyReceipt } from "../../lib/ops.ts";
 import { createTask } from "../../lib/tasks.ts";
 import { requireFarm, type FarmContext } from "../../lib/tenant.ts";
 import { requireAuth } from "../../plugins/auth.ts";
@@ -48,26 +48,6 @@ import {
 
 type FarmParams = { Params: { farmId: string } };
 type IdParams = { Params: { farmId: string; id: string } };
-
-function idempotencyKey(req: FastifyRequest): string {
-  const h = req.headers["idempotency-key"];
-  if (h === undefined) return randomUUID();
-  const p = z.uuid().safeParse(h);
-  if (!p.success)
-    throw new HttpError(400, "invalid_idempotency_key", "Idempotency-Key deve ser um UUID.");
-  return p.data;
-}
-
-function replyReceipt(reply: FastifyReply, receipt: SyncReceipt) {
-  if (receipt.status === "accepted")
-    return reply.status(201).send(receipt.detail ?? { id: receipt.entityId });
-  if (receipt.status === "conflict") {
-    return reply.status(409).send({ error: { code: receipt.code, message: receipt.message } });
-  }
-  return reply
-    .status(receipt.code === "not_found" ? 404 : 422)
-    .send({ error: { code: receipt.code, message: receipt.message } });
-}
 
 export function reproRoutes(app: FastifyInstance, ctx: AppContext) {
   const { db } = ctx;
