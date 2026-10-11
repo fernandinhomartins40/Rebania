@@ -37,6 +37,11 @@ const Env = z
     BILLING_WEBHOOK_SECRET: optionalSecret(32),
     // Token do coletor de métricas (Prometheus). Sem token, /v1/metrics responde 404.
     METRICS_TOKEN: optionalSecret(24),
+    // Cofre do console (chave do VeloMail, verificação em duas etapas da equipe): 32 bytes
+    // em base64 ou hex. Sem ela, o console funciona e avisa o que fica indisponível.
+    PLATFORM_SECRETS_KEY: optionalSecret(32),
+    // Versão publicada (tag/commit da imagem), exibida em Operação no console.
+    APP_VERSION: z.string().default("dev"),
   })
   .refine((e) => e.AI_PROVIDER !== "deepseek" || e.DEEPSEEK_API_KEY, {
     message: "AI_PROVIDER=deepseek exige DEEPSEEK_API_KEY",
@@ -59,6 +64,8 @@ export type Config = {
   billingProvider: "none" | "hmac";
   billingWebhookSecret: string | null;
   metricsToken: string | null;
+  platformSecretsKey: string | null;
+  appVersion: string;
   /** Durações de sessão (ms). */
   webSessionTtlMs: number;
   mobileAccessTtlMs: number;
@@ -89,6 +96,8 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     billingProvider: e.BILLING_PROVIDER,
     billingWebhookSecret: e.BILLING_WEBHOOK_SECRET ?? null,
     metricsToken: e.METRICS_TOKEN ?? null,
+    platformSecretsKey: e.PLATFORM_SECRETS_KEY ?? null,
+    appVersion: e.APP_VERSION,
     webSessionTtlMs: 12 * 3600_000,
     mobileAccessTtlMs: 15 * 60_000,
     mobileRefreshTtlMs: 30 * 24 * 3600_000,

@@ -48,14 +48,29 @@ export const FarmSummary = z.object({
 });
 export type FarmSummary = z.infer<typeof FarmSummary>;
 
+export const PlatformRole = z.enum(["admin", "finance", "support", "onboarding"]);
+
 export const MeResponse = z.object({
   user: SessionUser,
-  /** Equipe Rebania com acesso ao console da plataforma (pode não ter fazendas). */
+  /** Equipe Rebania com acesso ao console da plataforma (nunca tem fazendas, D-12). */
   platformAdmin: z.boolean(),
+  /** Situação da conta da plataforma; null para clientes. */
+  platform: z
+    .object({
+      role: PlatformRole,
+      /** Verificação em duas etapas exigida (cofre configurado no servidor). */
+      mfaRequired: z.boolean(),
+      mfaEnrolled: z.boolean(),
+      mfaVerified: z.boolean(),
+    })
+    .nullable(),
   memberships: z.array(
     z.object({
       organizationId: uuid,
       organizationName: z.string(),
+      /** Somente leitura: suspensão, encerramento ou fatura vencida há mais de 15 dias (D-13). */
+      accessMode: z.enum(["full", "read_only"]),
+      accessReason: z.string().nullable(),
       role: Role,
       permissions: z.array(Permission),
       allFarms: z.boolean(),
@@ -77,6 +92,12 @@ export const ChangePasswordRequest = z
     path: ["newPassword"],
   });
 export type ChangePasswordRequest = z.infer<typeof ChangePasswordRequest>;
+
+export const PasswordResetRequest = z.object({ email: z.email().max(254) });
+export const PasswordResetConfirm = z.object({
+  token: z.string().min(20).max(200),
+  newPassword: PasswordPolicy,
+});
 
 export const CreateInvitationRequest = z
   .object({

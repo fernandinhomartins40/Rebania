@@ -81,6 +81,13 @@ for v in POSTGRES_PASSWORD PUBLIC_URL; do
 done
 chmod 600 "$ENV_FILE"
 
+# Cofre do console (chave do VeloMail, duas etapas da equipe): gerado no próprio servidor
+# uma única vez; nunca sai da VPS e nunca é sobrescrito (trocar exige cadastrar as chaves de novo).
+if [ -z "$(env_get PLATFORM_SECRETS_KEY)" ]; then
+  echo "Gerando PLATFORM_SECRETS_KEY (primeira vez)"
+  env_set PLATFORM_SECRETS_KEY "$(openssl rand -base64 32)"
+fi
+
 PREVIOUS="$(env_get REBANIA_TAG)"
 echo "Release anterior: ${PREVIOUS:-<nenhuma>} -> nova: $RELEASE"
 env_set REBANIA_REGISTRY "$REGISTRY"

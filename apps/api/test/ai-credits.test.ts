@@ -70,14 +70,14 @@ const ask = (c: Client, farmId: string, question: string, requestId = randomUUID
 
 describe("plataforma", () => {
   it("console invisível para clientes (404) e acessível à equipe", async () => {
-    expect((await ownerA.get("/v1/platform/orgs")).statusCode).toBe(404);
+    expect((await ownerA.get("/v1/platform/customers")).statusCode).toBe(404);
     expect((await ownerA.get("/v1/platform/me")).json()).toEqual({ isPlatformAdmin: false });
-    const list = (await staff.get("/v1/platform/orgs")).json().items;
+    const list = (await staff.get("/v1/platform/customers")).json().items;
     expect(list.some((o: { id: string }) => o.id === A.orgId)).toBe(true);
   });
 
   it("implantação cria organização, fazenda e convite do proprietário", async () => {
-    const r = await staff.post("/v1/platform/orgs", {
+    const r = await staff.post("/v1/platform/customers", {
       orgName: "Agropecuária Nova",
       farmName: "Fazenda Nova",
       ownerEmail: "dono.novo@exemplo.dev",
@@ -87,14 +87,14 @@ describe("plataforma", () => {
   });
 
   it("contrato e fatura com baixa manual auditada", async () => {
-    const c = await staff.post(`/v1/platform/orgs/${A.orgId}/contracts`, {
+    const c = await staff.post(`/v1/platform/customers/${A.orgId}/contracts`, {
       plan: "Piloto",
       monthly: 1500,
       startsOn: "2026-10-01",
       status: "active",
     });
     expect(c.statusCode).toBe(201);
-    const i = await staff.post(`/v1/platform/orgs/${A.orgId}/invoices`, {
+    const i = await staff.post(`/v1/platform/customers/${A.orgId}/invoices`, {
       description: "Mensalidade outubro",
       amount: 1500,
       dueOn: "2026-10-10",
@@ -141,7 +141,7 @@ describe("teste obrigatório 9 — créditos", () => {
   it("consumo concorrente nunca deixa saldo negativo; retry não cobra duas vezes", async () => {
     const org = await createTenant(env.db, "Org concorrência");
     const owner = await login(env.app, (await createUser(env.db, org.orgId, "owner")).email);
-    await staff.post(`/v1/platform/orgs/${org.orgId}/credits`, {
+    await staff.post(`/v1/platform/customers/${org.orgId}/credits`, {
       amount: 10,
       reason: "Créditos de teste",
     });
@@ -158,7 +158,7 @@ describe("teste obrigatório 9 — créditos", () => {
     });
     expect(acc.balance).toBe(0);
     // Retry com o mesmo request_id devolve a mesma resposta sem cobrar.
-    await staff.post(`/v1/platform/orgs/${org.orgId}/credits`, {
+    await staff.post(`/v1/platform/customers/${org.orgId}/credits`, {
       amount: 4,
       reason: "Mais créditos",
     });
@@ -173,7 +173,10 @@ describe("teste obrigatório 9 — créditos", () => {
   });
 
   it("falha do provedor libera a reserva (créditos devolvidos)", async () => {
-    await staff.post(`/v1/platform/orgs/${A.orgId}/credits`, { amount: 20, reason: "Créditos A" });
+    await staff.post(`/v1/platform/customers/${A.orgId}/credits`, {
+      amount: 20,
+      reason: "Créditos A",
+    });
     const before = (await ownerA.get(`${baseA()}/ai/status`)).json().balance;
     script.push(new ProviderError("fora do ar", false));
     const r = await ask(ownerA, A.farmId, "teste");
@@ -194,7 +197,7 @@ describe("teste obrigatório 9 — créditos", () => {
       credits: 50,
       price: 99.9,
     });
-    const order = await staff.post(`/v1/platform/orgs/${A.orgId}/credit-orders`, {
+    const order = await staff.post(`/v1/platform/customers/${A.orgId}/credit-orders`, {
       packageId: pkg.json().id,
     });
     expect(order.statusCode).toBe(201);

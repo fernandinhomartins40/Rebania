@@ -1,4 +1,5 @@
 import { claimJob, completeJob, enqueueJob, failJob, releaseStaleJobs, type Db } from "@rebania/db";
+import { createSecretBox, type SecretBox } from "@rebania/saas";
 import type { JobHandler } from "./handlers.ts";
 
 export interface RunnerOptions {
@@ -7,11 +8,21 @@ export interface RunnerOptions {
   workerId: string;
   handlers: Record<string, JobHandler>;
   log?: (msg: string, extra?: Record<string, unknown>) => void;
+  secrets?: SecretBox;
+  webBaseUrl?: string;
 }
 
 /** Processa até esvaziar a fila disponível. Retorna quantos jobs executou. */
 export async function drain(
-  { db, workerId, handlers, mediaDir = "./var/media", log = () => {} }: RunnerOptions,
+  {
+    db,
+    workerId,
+    handlers,
+    mediaDir = "./var/media",
+    log = () => {},
+    secrets = createSecretBox(null),
+    webBaseUrl = "http://localhost:5173",
+  }: RunnerOptions,
   max = 100,
 ): Promise<number> {
   let processed = 0;
@@ -21,7 +32,10 @@ export async function drain(
     processed++;
     const handler = handlers[job.queue]!;
     try {
-      await handler({ db, mediaDir }, job.payload);
+      await handler(
+        { db, mediaDir, attempt: job.attempts, maxAttempts: job.max_attempts, secrets, webBaseUrl },
+        job.payload,
+      );
       await completeJob(db, job.id);
       log("job concluído", { id: job.id, queue: job.queue });
     } catch (err) {

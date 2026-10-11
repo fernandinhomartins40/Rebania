@@ -7,7 +7,7 @@ import type { FastifyInstance } from "fastify";
 import { buildApp } from "../src/app.ts";
 import type { AppContext } from "../src/lib/context.ts";
 import { loadConfig } from "../src/config.ts";
-import { hashPassword } from "../src/lib/crypto.ts";
+import { hashPassword, randomToken, sha256 } from "../src/lib/crypto.ts";
 
 export const PASSWORD = "senha-de-teste-123";
 let cachedHash: string | undefined;
@@ -120,9 +120,27 @@ export async function login(app: FastifyInstance, email: string) {
   return client(app, { authorization: `Bearer ${token}` });
 }
 
+/**
+ * Sessão mobile criada direto no banco (sem passar pelo login): para testes com muitos
+ * usuários, sem esbarrar no limite de tentativas de login por minuto.
+ */
+export async function sessionClient(env: TestEnv, userId: string) {
+  const token = randomToken();
+  await env.db.authSession.create({
+    data: {
+      userId,
+      channel: "mobile",
+      accessHash: sha256(token),
+      accessExpiresAt: new Date(env.clock.now.getTime() + 24 * 3600_000),
+      lastUsedAt: env.clock.now,
+    },
+  });
+  return client(env.app, { authorization: `Bearer ${token}` });
+}
+
 export function client(app: FastifyInstance, headers: Record<string, string>) {
   const call = (
-    method: "GET" | "POST" | "PATCH",
+    method: "GET" | "POST" | "PATCH" | "PUT",
     url: string,
     payload?: unknown,
     extra: Record<string, string> = {},
@@ -140,6 +158,8 @@ export function client(app: FastifyInstance, headers: Record<string, string>) {
       call("POST", url, payload ?? {}, extra),
     patch: (url: string, payload?: unknown, extra?: Record<string, string>) =>
       call("PATCH", url, payload ?? {}, extra),
+    put: (url: string, payload?: unknown, extra?: Record<string, string>) =>
+      call("PUT", url, payload ?? {}, extra),
   };
 }
 

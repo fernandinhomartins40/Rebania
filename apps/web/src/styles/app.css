@@ -1655,3 +1655,56 @@ button.list-item {
     display: none !important;
   }
 }
+
+/* ================= Suporte ================= */
+/* Conversa do chamado */
+.thread {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 var(--space-lg);
+  display: grid;
+  gap: var(--space-md);
+}
+.thread li {
+  background: var(--color-surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  padding: var(--space-md) var(--space-lg);
+  max-width: 760px;
+}
+.thread li.staff {
+  margin-left: auto;
+  background: color-mix(in srgb, var(--color-brand-primary) 7%, var(--color-surface));
+}
+.thread li.internal {
+  border-style: dashed;
+  background: color-mix(in srgb, var(--color-brand-ochre) 10%, var(--color-surface));
+}
+.thread li.system {
+  max-width: none;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  text-align: center;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+}
+.thread .who {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  margin-bottom: 4px;
+}
+.thread .body {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* Faixas de aviso da conta (somente leitura, comunicados) */
+.account-banners {
+  display: grid;
+  gap: var(--space-sm);
+  margin: var(--space-sm) 0 var(--space-md);
+}
+.account-banners .alert {
+  margin: 0;
+}

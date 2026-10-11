@@ -65,6 +65,9 @@ services:
       BILLING_PROVIDER: ${BILLING_PROVIDER:-none}
       BILLING_WEBHOOK_SECRET: ${BILLING_WEBHOOK_SECRET:-}
       METRICS_TOKEN: ${METRICS_TOKEN:-}
+      # Cofre do console (chave do VeloMail, verificação em duas etapas da equipe).
+      PLATFORM_SECRETS_KEY: ${PLATFORM_SECRETS_KEY:-}
+      APP_VERSION: ${REBANIA_TAG}
     volumes:
       - rebania_media:/data/media
     depends_on:
@@ -81,6 +84,9 @@ services:
       DATABASE_URL: postgresql://rebania:${POSTGRES_PASSWORD}@postgres:5432/rebania
       DB_POOL_MAX: "3"
       MEDIA_DIR: /data/media
+      # E-mail transacional e régua de cobrança: mesmo cofre da API e links do site.
+      PLATFORM_SECRETS_KEY: ${PLATFORM_SECRETS_KEY:-}
+      WEB_BASE_URL: ${PUBLIC_URL}
     volumes:
       - rebania_media:/data/media
     depends_on:

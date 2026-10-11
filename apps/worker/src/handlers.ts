@@ -1,9 +1,21 @@
 import type { Db } from "@rebania/db";
 import { deriveVariants } from "@rebania/media";
+import {
+  deliverEmail,
+  markEmailFailed,
+  MAIL_QUEUE,
+  runBillingCycle,
+  type SecretBox,
+} from "@rebania/saas";
 
 export interface JobContext {
   db: Db;
   mediaDir: string;
+  /** Tentativa atual e limite do job (para tratar a última falha). */
+  attempt: number;
+  maxAttempts: number;
+  secrets: SecretBox;
+  webBaseUrl: string;
 }
 
 export type JobHandler = (ctx: JobContext, payload: unknown) => Promise<void>;
@@ -73,10 +85,27 @@ export const handlers: Record<string, JobHandler> = {
     const cutoff = new Date(Date.now() - 180 * 24 * 3600_000);
     await db.syncMutation.deleteMany({ where: { createdAt: { lt: cutoff } } });
   },
+  /** E-mail transacional pelo VeloMail; na última tentativa o e-mail fica como falho. */
+  [MAIL_QUEUE]: async ({ db, secrets, attempt, maxAttempts }, payload) => {
+    const { emailId } = payload as { emailId: string };
+    try {
+      await deliverEmail(db, secrets, emailId);
+    } catch (err) {
+      if (attempt >= maxAttempts)
+        await markEmailFailed(db, emailId, err instanceof Error ? err.message : String(err));
+      throw err;
+    }
+  },
+  /** Ciclo de cobrança: emite mensalidades, régua de lembretes e modo de acesso (idempotente). */
+  "billing.daily": async ({ db, webBaseUrl }) => {
+    await runBillingCycle(db, new Date(), webBaseUrl);
+  },
 };
 
 /** Agendamentos periódicos: um job por janela, deduplicado por chave. */
 export const schedules: { queue: string; everyMs: number }[] = [
   { queue: "maintenance.sessions", everyMs: 24 * 3600_000 },
   { queue: "maintenance.sync-receipts", everyMs: 24 * 3600_000 },
+  // A cada 6 h: um dia sem execução (deploy, queda) não atrasa a régua.
+  { queue: "billing.daily", everyMs: 6 * 3600_000 },
 ];

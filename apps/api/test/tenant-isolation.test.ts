@@ -79,7 +79,11 @@ describe("isolamento entre organizações", () => {
       `/v1/farms/${B.farmId}/ai/drafts`,
       `/v1/orgs/${B.orgId}/credits`,
       `/v1/orgs/${B.orgId}/support-grants`,
-      `/v1/platform/orgs`,
+      `/v1/platform/customers`,
+      // Console completo: plano, chamados e pedidos de acesso do cliente B
+      `/v1/orgs/${B.orgId}/plan`,
+      `/v1/orgs/${B.orgId}/support/tickets`,
+      `/v1/orgs/${B.orgId}/support-access-requests`,
       // G8
       `/v1/farms/${B.farmId}/occurrences`,
       `/v1/farms/${B.farmId}/confinement`,
@@ -107,6 +111,10 @@ describe("isolamento entre organizações", () => {
         allFarms: true,
       }),
       clientA.post(`/v1/orgs/${B.orgId}/farms`, { name: "invasora" }),
+      clientA.post(`/v1/orgs/${B.orgId}/support/tickets`, {
+        subject: "invasor",
+        body: "chamado em outra organização",
+      }),
       clientA.post(`/v1/farms/${B.farmId}/products`, {
         name: "Produto invasor",
         kind: "vaccine",

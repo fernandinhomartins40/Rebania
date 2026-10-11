@@ -16,6 +16,7 @@ Estados: **Aprovado** (decidido pelo usuário) · **Adotado** (decisão técnica
 | D-10 | Tipografia: stack do sistema (sem fonte baixada); wordmark só pelo PNG oficial | Aprovado | `pacote-landing/design/tokens.css` e guia |
 | D-11 | Landing pública com copy de `copy.json`, fotos do pacote e prévias HTML rotuladas "Tela ilustrativa" | Aprovado | Pacote de landing enviado pelo usuário |
 | D-12 | Superadmin (equipe da plataforma) é conta própria e **nunca** tem organização ou fazenda; entra direto no console (área separada do app da fazenda). Dados de cliente só por concessão de suporte. Conta criada pelo operador nasce com senha provisória de troca obrigatória | Aprovado | Pedido do usuário (11/10/2026); regra em `packages/domain/src/platform.ts`; ADR-004 |
+| D-13 | Cobrança do SaaS: mensalidade emitida automaticamente; régua de lembretes; conta em **somente leitura** após 15 dias de atraso (consulta tudo, não registra; suporte continua); cobrança manual até haver provedor (P-02); e-mail transacional pelo **VeloMail**; suporte por chamados no app + registro de outros canais | Aprovado | Respostas do usuário em 11/10/2026; ADR-011 |
 | T-01 | Stack: React 19 + Vite 8 (web), Expo SDK 57 / RN 0.86 (mobile), Fastify 5, Prisma 7 + PostgreSQL 16, fila em PostgreSQL | Adotado | ADR-001 |
 | T-02 | Tenancy por FKs compostas + `requireFarm`/`requireOrg` + teste A×B | Adotado | ADR-002 |
 | T-03 | Sync: outbox + recibos idempotentes + políticas por tipo (sem LWW universal) | Adotado | ADR-003 |

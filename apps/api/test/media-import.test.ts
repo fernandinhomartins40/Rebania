@@ -1,6 +1,7 @@
 import { createHash, randomUUID } from "node:crypto";
 import sharp from "sharp";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { createSecretBox } from "@rebania/saas";
 import { handlers } from "../../worker/src/handlers.ts";
 import {
   createTenant,
@@ -57,7 +58,17 @@ function patch(id: string, offset: number, chunk: Buffer) {
 async function runWorker() {
   const jobs = await env.db.job.findMany({ where: { queue: "media.derive", status: "queued" } });
   for (const j of jobs) {
-    await handlers["media.derive"]!({ db: env.db, mediaDir: env.mediaDir }, j.payload);
+    await handlers["media.derive"]!(
+      {
+        db: env.db,
+        mediaDir: env.mediaDir,
+        attempt: 1,
+        maxAttempts: 5,
+        secrets: createSecretBox(null),
+        webBaseUrl: "http://web.test",
+      },
+      j.payload,
+    );
     await env.db.job.update({ where: { id: j.id }, data: { status: "done" } });
   }
 }

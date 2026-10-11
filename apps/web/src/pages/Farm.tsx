@@ -18,6 +18,7 @@ import {
   ShieldPlus,
   UserRound,
   Users,
+  LifeBuoy,
   type LucideIcon,
 } from "lucide-react";
 import { ROLE_LABEL } from "@rebania/domain";
@@ -171,6 +172,14 @@ export function FarmPage() {
       title: "Sincronização",
       desc: "Registros no aparelho, rejeitados ou em conflito.",
       icon: CloudUpload,
+      show: true,
+    },
+    {
+      to: "/fazenda/suporte",
+      section: "Organização e conta",
+      title: "Suporte",
+      desc: "Chamados para a equipe Rebania.",
+      icon: LifeBuoy,
       show: true,
     },
     {

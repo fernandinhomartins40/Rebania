@@ -2,11 +2,14 @@ import {
   AcceptInvitationRequest,
   ChangePasswordRequest,
   LoginRequest,
+  PasswordResetConfirm,
+  PasswordResetRequest,
   RefreshRequest,
   type LoginResponse,
   type MeResponse,
 } from "@rebania/contracts";
 import { ROLE_PERMISSIONS } from "@rebania/domain";
+import { getMailSettings, queueEmail } from "@rebania/saas";
 import type { FastifyInstance } from "fastify";
 import { audit } from "../lib/audit.ts";
 import type { AppContext } from "../lib/context.ts";
@@ -18,6 +21,7 @@ import {
   verifyPassword,
 } from "../lib/crypto.ts";
 import { HttpError, isUniqueViolation, unauthorized } from "../lib/errors.ts";
+import { issuePasswordLink } from "../lib/password-reset.ts";
 import { assertCanJoinOrganization } from "../lib/platform-account.ts";
 import { accessibleFarms } from "../lib/tenant.ts";
 import { clearSessionCookie, requireAuth, setSessionCookie } from "../plugins/auth.ts";
@@ -152,16 +156,32 @@ export function authRoutes(app: FastifyInstance, ctx: AppContext) {
   });
 
   app.get("/v1/auth/me", async (req) => {
-    const { userId } = requireAuth(req);
+    const { userId, sessionId } = requireAuth(req);
     const user = await db.user.findUniqueOrThrow({ where: { id: userId } });
     const access = await accessibleFarms(db, userId);
     const admin = await db.platformAdmin.findUnique({ where: { userId } });
+    const session = admin
+      ? await db.authSession.findUnique({
+          where: { id: sessionId },
+          select: { mfaVerifiedAt: true },
+        })
+      : null;
     const me: MeResponse = {
       user: sessionUser(user),
       platformAdmin: Boolean(admin),
+      platform: admin
+        ? {
+            role: admin.role,
+            mfaRequired: Boolean(ctx.secrets?.available),
+            mfaEnrolled: Boolean(admin.mfaEnabledAt),
+            mfaVerified: Boolean(session?.mfaVerifiedAt),
+          }
+        : null,
       memberships: access.map(({ membership: m, farms }) => ({
         organizationId: m.organizationId,
         organizationName: m.organization.name,
+        accessMode: m.organization.accessMode,
+        accessReason: m.organization.accessReason,
         role: m.role,
         permissions: [...ROLE_PERMISSIONS[m.role]],
         allFarms: m.allFarms,
@@ -209,6 +229,87 @@ export function authRoutes(app: FastifyInstance, ctx: AppContext) {
     });
     return reply.status(204).send();
   });
+
+  /**
+   * Esqueci minha senha: resposta igual exista ou não a conta (não revela e-mails).
+   * `emailEnabled` diz se a recuperação por e-mail está ligada na plataforma.
+   */
+  app.post(
+    "/v1/auth/password-reset/request",
+    { config: { rateLimit: { max: 5, timeWindow: "1 minute" } } },
+    async (req) => {
+      const { email } = PasswordResetRequest.parse(req.body);
+      const mail = await getMailSettings(db);
+      const emailEnabled = mail.enabled && Boolean(mail.fromEmail);
+      const user = await db.user.findUnique({ where: { email: email.trim().toLowerCase() } });
+      if (user && !user.disabledAt && emailEnabled) {
+        const recent = await db.passwordResetToken.count({
+          where: {
+            userId: user.id,
+            createdAt: { gt: new Date(ctx.now().getTime() - 15 * 60_000) },
+          },
+        });
+        if (recent < 3) {
+          const url = await issuePasswordLink(ctx, user.id, null);
+          await queueEmail(db, {
+            to: user.email,
+            template: "password_reset",
+            baseUrl: config.webBaseUrl,
+            data: { name: user.name, url, requestedByStaff: false },
+          });
+          await audit(db, {
+            actorUserId: user.id,
+            action: "auth.password_reset_requested",
+            entityType: "user",
+            entityId: user.id,
+            ip: req.ip,
+          });
+        }
+      }
+      return { ok: true, emailEnabled };
+    },
+  );
+
+  /** Define a nova senha pelo link (uso único); encerra todas as sessões da conta. */
+  app.post(
+    "/v1/auth/password-reset/confirm",
+    { config: { rateLimit: LOGIN_RATE } },
+    async (req) => {
+      const body = PasswordResetConfirm.parse(req.body);
+      const now = ctx.now();
+      const token = await db.passwordResetToken.findUnique({
+        where: { tokenHash: sha256(body.token) },
+        include: { user: true },
+      });
+      if (!token || token.usedAt || token.expiresAt <= now || token.user.disabledAt)
+        throw new HttpError(410, "reset_invalid", "Link inválido, expirado ou já utilizado.");
+      const passwordHash = await hashPassword(body.newPassword);
+      await db.$transaction(async (tx) => {
+        const used = await tx.passwordResetToken.updateMany({
+          where: { id: token.id, usedAt: null },
+          data: { usedAt: now },
+        });
+        if (used.count !== 1) throw new HttpError(410, "reset_invalid", "Link já utilizado.");
+        await tx.user.update({
+          where: { id: token.userId },
+          data: { passwordHash, mustChangePassword: false },
+        });
+        await tx.authSession.updateMany({
+          where: { userId: token.userId, revokedAt: null },
+          data: { revokedAt: now, revokedReason: "password_reset" },
+        });
+        await audit(tx, {
+          actorUserId: token.userId,
+          action: "auth.password_reset",
+          entityType: "user",
+          entityId: token.userId,
+          data: { byStaff: Boolean(token.requestedById) },
+          ip: req.ip,
+        });
+      });
+      return { ok: true };
+    },
+  );
 
   /** Sessões ativas do próprio usuário (para revogar aparelhos). */
   app.get("/v1/auth/sessions", async (req) => {

@@ -14,6 +14,14 @@ import {
 import { useSession } from "../../state/session.tsx";
 
 interface PlanDto {
+  access: { mode: "full" | "read_only"; reason: string | null };
+  capacity: {
+    key: string;
+    limit: number | null;
+    used: number;
+    status: "ok" | "near" | "over" | "unlimited";
+  }[];
+  paymentInstructions: string | null;
   contract: {
     plan: string;
     status: string;
@@ -21,6 +29,7 @@ interface PlanDto {
     monthlyCents: number | null;
     startsOn: string;
     endsOn: string | null;
+    billingDay: number | null;
   } | null;
   invoices: {
     id: string;
@@ -28,8 +37,24 @@ interface PlanDto {
     amountCents: number;
     dueOn: string;
     status: string;
+    displayStatus: string;
+    paymentUrl: string | null;
   }[];
 }
+interface AccessRequest {
+  id: string;
+  staffName: string;
+  reason: string;
+  hours: number;
+  status: "pending" | "approved" | "denied" | "cancelled";
+  createdAt: string;
+}
+const CAPACITY_LABEL: Record<string, string> = {
+  farms: "Fazendas",
+  activeAnimals: "Animais ativos",
+  users: "Usuários",
+  mediaGb: "Fotos e anexos (GB)",
+};
 interface CreditsDto {
   balance: number;
   purchaseAvailable: boolean;
@@ -62,7 +87,8 @@ const KIND_LABEL: Record<string, string> = {
   adjustment: "Ajuste",
 };
 const INVOICE_LABEL: Record<string, string> = {
-  pending: "Pendente",
+  pending: "A vencer",
+  overdue: "Vencida",
   paid: "Paga",
   failed: "Falhou",
   cancelled: "Cancelada",
@@ -75,6 +101,7 @@ export function PlanPage() {
   const [plan, setPlan] = useState<PlanDto | null>(null);
   const [credits, setCredits] = useState<CreditsDto | null>(null);
   const [grants, setGrants] = useState<Grant[]>([]);
+  const [requests, setRequests] = useState<AccessRequest[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [tick, setTick] = useState(0);
   useEffect(() => {
@@ -83,11 +110,13 @@ export function PlanPage() {
       get<PlanDto>(`/v1/orgs/${orgId}/plan`),
       get<CreditsDto>(`/v1/orgs/${orgId}/credits`),
       get<{ items: Grant[] }>(`/v1/orgs/${orgId}/support-grants`),
+      get<{ items: AccessRequest[] }>(`/v1/orgs/${orgId}/support-access-requests`),
     ]).then(
-      ([p, c, g]) => {
+      ([p, c, g, q]) => {
         setPlan(p);
         setCredits(c);
         setGrants(g.items);
+        setRequests(q.items);
       },
       (e) => setError(errorMessage(e)),
     );
@@ -126,6 +155,7 @@ export function PlanPage() {
                   {plan.contract.monthlyCents !== null
                     ? formatBRL(plan.contract.monthlyCents)
                     : "—"}
+                  {plan.contract.billingDay ? ` · vence todo dia ${plan.contract.billingDay}` : ""}
                 </dd>
                 <dt>Assistente</dt>
                 <dd>Cobrado à parte, por créditos</dd>
@@ -142,7 +172,40 @@ export function PlanPage() {
           <p className="hint">
             Não há cobrança por cabeça nem reajuste automático pelo tamanho do rebanho.
           </p>
+          {plan.capacity.some((l) => l.limit !== null) ? (
+            <>
+              <h3>Capacidade contratada</h3>
+              <ul className="list">
+                {plan.capacity
+                  .filter((l) => l.limit !== null)
+                  .map((l) => (
+                    <li key={l.key} className="list-item">
+                      <span>
+                        <span className="title">{CAPACITY_LABEL[l.key] ?? l.key}</span>
+                        <div className="meta">
+                          {l.used} de {l.limit}
+                        </div>
+                      </span>
+                      {l.status === "over" ? (
+                        <span className="badge badge-warn">acima do contratado</span>
+                      ) : l.status === "near" ? (
+                        <span className="badge badge-muted">perto do limite</span>
+                      ) : null}
+                    </li>
+                  ))}
+              </ul>
+              <p className="hint">
+                Passar do contratado não bloqueia nada; a equipe Rebania entra em contato.
+              </p>
+            </>
+          ) : null}
           <h3>Faturas</h3>
+          {plan.paymentInstructions ? (
+            <Alert kind="info">
+              <strong>Como pagar:</strong>{" "}
+              <span style={{ whiteSpace: "pre-wrap" }}>{plan.paymentInstructions}</span>
+            </Alert>
+          ) : null}
           {plan.invoices.length === 0 ? (
             <p className="hint">Nenhuma fatura.</p>
           ) : (
@@ -153,12 +216,20 @@ export function PlanPage() {
                     <span className="title">{i.description}</span>
                     <div className="meta">
                       Vence {formatDate(i.dueOn)} · {formatBRL(i.amountCents)}
+                      {i.paymentUrl && i.status !== "paid" ? (
+                        <>
+                          {" · "}
+                          <a href={i.paymentUrl} target="_blank" rel="noreferrer">
+                            Pagar
+                          </a>
+                        </>
+                      ) : null}
                     </div>
                   </span>
                   <span
-                    className={`badge ${i.status === "paid" ? "badge-ok" : i.status === "failed" ? "badge-danger" : "badge-muted"}`}
+                    className={`badge ${i.displayStatus === "paid" ? "badge-ok" : i.displayStatus === "failed" || i.displayStatus === "overdue" ? "badge-danger" : "badge-muted"}`}
                   >
-                    {INVOICE_LABEL[i.status]}
+                    {INVOICE_LABEL[i.displayStatus] ?? i.displayStatus}
                   </span>
                 </li>
               ))}
@@ -214,7 +285,12 @@ export function PlanPage() {
           )}
         </div>
       </div>
-      <SupportGrants orgId={orgId} grants={grants} onChange={() => setTick((n) => n + 1)} />
+      <SupportGrants
+        orgId={orgId}
+        grants={grants}
+        requests={requests}
+        onChange={() => setTick((n) => n + 1)}
+      />
     </section>
   );
 }
@@ -222,12 +298,19 @@ export function PlanPage() {
 function SupportGrants({
   orgId,
   grants,
+  requests,
   onChange,
 }: {
   orgId: string;
   grants: Grant[];
+  requests: AccessRequest[];
   onChange: () => void;
 }) {
+  const pending = requests.filter((q) => q.status === "pending");
+  const decide = async (id: string, approve: boolean) => {
+    await post(`/v1/orgs/${orgId}/support-access-requests/${id}/decide`, { approve });
+    onChange();
+  };
   const [email, setEmail] = useState("");
   const [hours, setHours] = useState("4");
   const [reason, setReason] = useState("");
@@ -257,6 +340,22 @@ function SupportGrants({
         A equipe Rebania não vê os dados da sua fazenda. Se precisar de ajuda, conceda acesso de
         leitura com prazo; cada consulta fica registrada e você pode revogar quando quiser.
       </p>
+      {pending.map((q) => (
+        <Alert key={q.id} kind="warning">
+          <strong>{q.staffName}</strong>, da equipe Rebania, pede acesso de leitura por {q.hours}{" "}
+          hora(s).
+          <br />
+          Motivo: {q.reason}
+          <div className="actions">
+            <button className="btn btn-secondary" onClick={() => void decide(q.id, true)}>
+              Liberar por {q.hours} h
+            </button>
+            <button className="btn btn-ghost" onClick={() => void decide(q.id, false)}>
+              Recusar
+            </button>
+          </div>
+        </Alert>
+      ))}
       {grants.length ? (
         <ul className="list">
           {grants.map((g) => (

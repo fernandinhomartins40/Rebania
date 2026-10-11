@@ -14,6 +14,9 @@ import { clearAll } from "../offline/idb.ts";
 
 export interface CurrentFarm extends FarmSummary {
   organizationName: string;
+  /** Somente leitura: o servidor recusa novos registros (D-13). */
+  accessMode: "full" | "read_only";
+  accessReason: string | null;
   role: Role;
   permissions: Permission[];
 }
@@ -69,6 +72,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         m.farms.map((f) => ({
           ...f,
           organizationName: m.organizationName,
+          accessMode: m.accessMode,
+          accessReason: m.accessReason,
           role: m.role,
           permissions: m.permissions,
         })),

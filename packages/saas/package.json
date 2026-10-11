@@ -1,0 +1,21 @@
+{
+  "name": "@rebania/saas",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "lint": "eslint src",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@rebania/db": "workspace:*",
+    "@rebania/domain": "workspace:*"
+  },
+  "devDependencies": {
+    "@rebania/config": "workspace:*"
+  }
+}

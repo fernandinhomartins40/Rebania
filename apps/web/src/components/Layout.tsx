@@ -13,6 +13,7 @@ import { BrandCow, type IconComponent } from "./brand.tsx";
 import { NavLink, Outlet, Link } from "react-router";
 import { useSession } from "../state/session.tsx";
 import { initials, Logo } from "./brand.tsx";
+import { AccountBanners } from "./AccountBanners.tsx";
 import { SyncBadge } from "./SyncBadge.tsx";
 
 const NAV: { to: string; label: string; icon: IconComponent; end?: boolean }[] = [
@@ -79,6 +80,7 @@ export function Layout() {
           </div>
         </header>
         <main className="content">
+          <AccountBanners />
           <Outlet />
         </main>
       </div>

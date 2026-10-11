@@ -32,6 +32,8 @@ export const PERMISSIONS = [
   "finance.read",
   "finance.write",
   "reports.read",
+  /** Abrir e acompanhar chamados de suporte (vale para todos os papéis). */
+  "support.use",
 ] as const;
 export type Permission = (typeof PERMISSIONS)[number];
 
@@ -54,9 +56,17 @@ export const ROLE_PERMISSIONS: Record<Role, readonly Permission[]> = {
     "sales.manage",
     "finance.read",
     "reports.read",
+    "support.use",
   ],
-  field: ["animals.read", "animals.write", "events.write"],
-  veterinarian: ["animals.read", "events.write", "reports.read", "tasks.manage", "health.manage"],
+  field: ["animals.read", "animals.write", "events.write", "support.use"],
+  veterinarian: [
+    "animals.read",
+    "events.write",
+    "reports.read",
+    "tasks.manage",
+    "health.manage",
+    "support.use",
+  ],
   finance: [
     "animals.read",
     "finance.read",
@@ -64,6 +74,7 @@ export const ROLE_PERMISSIONS: Record<Role, readonly Permission[]> = {
     "reports.read",
     "stock.manage",
     "sales.manage",
+    "support.use",
   ],
 };
 

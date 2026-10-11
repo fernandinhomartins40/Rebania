@@ -1,0 +1,231 @@
+/* Console da plataforma: mesma base visual do app (tokens e componentes), densidade de escritório. */
+.console-shell .sidebar {
+  overflow-y: auto;
+  gap: 2px;
+}
+.console-shell .sidebar a.nav {
+  min-height: 44px;
+  font-size: 15px;
+}
+.console-tag {
+  color: rgba(247, 244, 237, 0.7);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 0 var(--space-md) var(--space-md);
+  margin-top: calc(-1 * var(--space-lg));
+}
+.console-content {
+  padding-bottom: var(--space-xxl);
+}
+.console-menu-btn {
+  display: grid;
+}
+.console-who {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  line-height: 1.2;
+  font-size: 14px;
+}
+@media (min-width: 1024px) {
+  .console-menu-btn,
+  .console-mobile-logo {
+    display: none !important;
+  }
+}
+
+.console-drawer {
+  position: fixed;
+  inset: 0 auto 0 0;
+  width: min(300px, 86vw);
+  z-index: 60;
+  background: var(--color-brand-primary);
+  color: var(--color-text-on-brand);
+  padding: var(--space-lg) var(--space-md);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow-y: auto;
+}
+.console-drawer-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-md);
+}
+.console-drawer-head .icon-btn {
+  color: var(--color-text-on-brand);
+}
+.console-drawer a.nav {
+  color: rgba(247, 244, 237, 0.92);
+  text-decoration: none;
+  padding: 0 var(--space-md);
+  border-radius: var(--radius-md);
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+.console-drawer a.nav[aria-current="page"] {
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+  font-weight: 600;
+}
+
+/* Indicadores */
+.console-kpis {
+  display: grid;
+  gap: var(--space-md);
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  margin-bottom: var(--space-lg);
+}
+.console-kpis .stat {
+  background: var(--color-surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  padding: var(--space-md) var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border-left-width: 1px;
+}
+.console-kpis .stat + .stat {
+  border-left: 1px solid var(--line);
+}
+.console-kpis .stat strong {
+  font-size: 24px;
+}
+.console-kpis .stat .hint {
+  font-size: 12px;
+}
+
+/* Filtros e tabelas */
+.console-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm) var(--space-md);
+  align-items: flex-end;
+  margin-bottom: var(--space-md);
+}
+.console-filters .field {
+  margin: 0;
+  min-width: 160px;
+  flex: 1 1 160px;
+  max-width: 280px;
+}
+.console-table-wrap {
+  overflow-x: auto;
+  background: var(--color-surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+}
+.console-table-wrap table.data {
+  margin: 0;
+  min-width: 640px;
+}
+.console-table-wrap td .meta {
+  color: var(--color-text-secondary);
+  font-size: 13px;
+}
+.console-tabs {
+  overflow-x: auto;
+  margin-bottom: var(--space-lg);
+}
+.console-tabs button {
+  white-space: nowrap;
+}
+
+/* Alertas operacionais */
+.console-alerts {
+  list-style: none;
+  margin: 0 0 var(--space-lg);
+  padding: 0;
+  display: grid;
+  gap: var(--space-sm);
+}
+.console-alerts li {
+  display: flex;
+  gap: var(--space-md);
+  align-items: flex-start;
+  background: var(--color-surface);
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--color-text-secondary);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+}
+.console-alerts li.critical {
+  border-left-color: var(--color-danger);
+}
+.console-alerts li.warning {
+  border-left-color: var(--color-brand-ochre);
+}
+.console-alerts li a {
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+/* Checklist de implantação */
+.checklist {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.checklist li {
+  display: flex;
+  gap: var(--space-md);
+  align-items: center;
+  padding: var(--space-sm) 0;
+  border-bottom: 1px solid var(--line);
+  flex-wrap: wrap;
+}
+.checklist li:last-child {
+  border-bottom: 0;
+}
+.checklist .grow {
+  flex: 1 1 220px;
+  min-width: 0;
+}
+.checklist li.done .title {
+  text-decoration: line-through;
+  color: var(--color-text-secondary);
+}
+.progress-bar {
+  height: 8px;
+  background: var(--color-surface-muted);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.progress-bar > span {
+  display: block;
+  height: 100%;
+  background: var(--color-brand-primary);
+}
+.secret-box {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  background: var(--color-surface-muted);
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-md);
+  word-break: break-all;
+  user-select: all;
+}
+
+/* Ações dentro de tabelas: compactas, lado a lado (o app de campo mantém o alvo de toque grande). */
+.console-table-wrap td .btn {
+  min-height: 34px;
+  padding: 0 10px;
+  font-size: 14px;
+  margin: 2px 4px 2px 0;
+}
+.console-table-wrap td select {
+  min-height: 36px;
+}
+
+/* Título não quebra no meio da palavra: o botão ao lado desce de linha no celular. */
+.console-content .page-head h1 {
+  overflow-wrap: normal;
+  min-width: min(100%, 11ch);
+}
+.review + .field {
+  margin-top: var(--space-lg);
+}

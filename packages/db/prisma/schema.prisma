@@ -117,11 +117,39 @@ enum JobStatus {
   failed
 }
 
+enum OrgStage {
+  lead
+  onboarding
+  active
+  suspended
+  churned
+}
+
+enum OrgAccess {
+  full
+  read_only
+}
+
 model Organization {
   id        String   @id @default(uuid()) @db.Uuid
   name      String
   slug      String   @unique
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  /// Ciclo de vida comercial (console). Ver `assertStageTransition`.
+  stage           OrgStage  @default(onboarding)
+  /// Somente leitura: suspensão, encerramento ou fatura vencida há mais de 15 dias (`accessModeFor`).
+  accessMode      OrgAccess @default(full) @map("access_mode")
+  accessReason    String?   @map("access_reason")
+  accessChangedAt DateTime? @map("access_changed_at") @db.Timestamptz(3)
+  /// CPF ou CNPJ, só dígitos.
+  document        String?
+  phone           String?
+  city            String?
+  state           String?
+  /// Pessoa da equipe Rebania responsável pela conta.
+  accountManagerId String?  @map("account_manager_id") @db.Uuid
+  /// Organização de demonstração: fica fora dos indicadores comerciais.
+  isDemo          Boolean   @default(false) @map("is_demo")
 
   farms         Farm[]
   memberships   Membership[]
@@ -133,6 +161,14 @@ model Organization {
   reservations  CreditReservation[]
   creditOrders  CreditOrder[]
   supportGrants SupportGrant[]
+  contacts        OrgContact[]
+  notes           OrgNote[]
+  onboardingSteps OnboardingStep[]
+  amendments      ContractAmendment[]
+  reminders       InvoiceReminder[]
+  tickets         SupportTicket[]
+  ticketMessages  SupportMessage[]
+  accessRequests  SupportAccessRequest[]
 
   @@map("organizations")
 }
@@ -202,6 +238,8 @@ model User {
 
   memberships Membership[]
   sessions    AuthSession[]
+  platformAdmin PlatformAdmin?
+  resetTokens   PasswordResetToken[]
 
   @@map("users")
 }
@@ -270,6 +308,8 @@ model AuthSession {
   lastUsedAt       DateTime       @default(now()) @map("last_used_at") @db.Timestamptz(3)
   revokedAt        DateTime?      @map("revoked_at") @db.Timestamptz(3)
   revokedReason    String?        @map("revoked_reason")
+  /// Conta da plataforma: quando o código de verificação em duas etapas foi confirmado nesta sessão.
+  mfaVerifiedAt    DateTime?      @map("mfa_verified_at") @db.Timestamptz(3)
 
   user User @relation(fields: [userId], references: [id])
 
@@ -1245,10 +1285,23 @@ model FeedingEvent {
 // ---- G6: plataforma, cobrança, créditos e assistente ----------------------------------
 
 /// Equipe da plataforma (console separado). Concedido apenas por CLI/bootstrap.
+enum PlatformRole {
+  admin
+  finance
+  support
+  onboarding
+}
+
 model PlatformAdmin {
-  userId    String   @id @map("user_id") @db.Uuid
-  grantedAt DateTime @default(now()) @map("granted_at") @db.Timestamptz(3)
+  userId    String       @id @map("user_id") @db.Uuid
+  grantedAt DateTime     @default(now()) @map("granted_at") @db.Timestamptz(3)
   note      String?
+  role      PlatformRole @default(admin)
+  /// Segredo TOTP cifrado (PLATFORM_SECRETS_KEY). Verificação em duas etapas obrigatória.
+  mfaSecretEnc String?   @map("mfa_secret_enc")
+  mfaEnabledAt DateTime? @map("mfa_enabled_at") @db.Timestamptz(3)
+
+  user User @relation(fields: [userId], references: [id])
 
   @@map("platform_admins")
 }
@@ -1274,10 +1327,19 @@ model Contract {
   createdById         String?        @map("created_by_id") @db.Uuid
   createdAt           DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt           DateTime       @updatedAt @map("updated_at") @db.Timestamptz(3)
+  /// Plano do catálogo de onde o contrato partiu (valores podem ter sido negociados).
+  planId              String?        @map("plan_id") @db.Uuid
+  /// Capacidade contratada (fazendas, animais ativos, usuários, mídia). Não é cobrança por cabeça.
+  limits              Json?
+  /// Dia de vencimento da mensalidade (1–28).
+  billingDay          Int?           @map("billing_day")
 
   organization Organization @relation(fields: [organizationId], references: [id])
   invoices     Invoice[]
+  catalogPlan  Plan?               @relation(fields: [planId], references: [id])
+  amendments   ContractAmendment[]
 
+  @@unique([organizationId, id])
   @@index([organizationId])
   @@map("contracts")
 }
@@ -1287,6 +1349,13 @@ enum InvoiceStatus {
   paid
   failed
   cancelled
+}
+
+enum InvoiceKind {
+  implementation
+  monthly
+  credits
+  other
 }
 
 model Invoice {
@@ -1301,10 +1370,19 @@ model Invoice {
   providerRef    String?       @map("provider_ref")
   paidAt         DateTime?     @map("paid_at") @db.Timestamptz(3)
   createdAt      DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+  kind           InvoiceKind   @default(other)
+  /// Competência: "2026-10" na mensalidade, "implantacao" na implantação. Com o contrato, impede fatura duplicada.
+  reference      String?
+  /// Link de pagamento (Pix/boleto) informado pela equipe enquanto não há provedor integrado (P-02).
+  paymentUrl     String?       @map("payment_url")
+  notes          String?
 
-  organization Organization @relation(fields: [organizationId], references: [id])
-  contract     Contract?    @relation(fields: [contractId], references: [id])
+  organization Organization      @relation(fields: [organizationId], references: [id])
+  contract     Contract?         @relation(fields: [contractId], references: [id])
+  reminders    InvoiceReminder[]
 
+  @@unique([organizationId, id])
+  @@unique([contractId, kind, reference])
   @@index([organizationId, status])
   @@map("invoices")
 }
@@ -1626,4 +1704,329 @@ model AssetMaintenance {
 
   @@index([assetId, date])
   @@map("asset_maintenances")
+}
+
+// ============================================================================
+// Console da plataforma: clientes, implantação, planos, cobrança, e-mail e suporte
+// ============================================================================
+
+/// Contato do cliente (financeiro, operação). E-mail do contato financeiro recebe a régua.
+model OrgContact {
+  id             String    @id @default(uuid()) @db.Uuid
+  organizationId String    @map("organization_id") @db.Uuid
+  name           String
+  email          String?
+  phone          String?
+  role           String?
+  billing        Boolean   @default(false)
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  archivedAt     DateTime? @map("archived_at") @db.Timestamptz(3)
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+
+  @@index([organizationId])
+  @@map("org_contacts")
+}
+
+/// Nota interna da equipe sobre o cliente. Append-only (sem edição nem exclusão).
+model OrgNote {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  authorUserId   String   @map("author_user_id") @db.Uuid
+  body           String
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+
+  @@index([organizationId, createdAt])
+  @@map("org_notes")
+}
+
+enum OnboardingStatus {
+  todo
+  doing
+  done
+  skipped
+}
+
+/// Modelo de checklist de implantação: steps = [{ title, description? }].
+model OnboardingTemplate {
+  id         String    @id @default(uuid()) @db.Uuid
+  name       String
+  steps      Json
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  archivedAt DateTime? @map("archived_at") @db.Timestamptz(3)
+
+  @@map("onboarding_templates")
+}
+
+/// Etapa da implantação de um cliente (T03): responsável, prazo e situação.
+model OnboardingStep {
+  id             String           @id @default(uuid()) @db.Uuid
+  organizationId String           @map("organization_id") @db.Uuid
+  title          String
+  description    String?
+  position       Int
+  status         OnboardingStatus @default(todo)
+  assigneeUserId String?          @map("assignee_user_id") @db.Uuid
+  dueOn          DateTime?        @map("due_on") @db.Date
+  doneAt         DateTime?        @map("done_at") @db.Timestamptz(3)
+  createdAt      DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime         @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+
+  @@index([organizationId, position])
+  @@map("onboarding_steps")
+}
+
+/// Plano do catálogo, versionado por código. Valores só os aprovados (P-01); catálogo nasce vazio.
+model Plan {
+  id                  String    @id @default(uuid()) @db.Uuid
+  code                String
+  version             Int
+  name                String
+  description         String?
+  implementationCents BigInt?   @map("implementation_cents")
+  monthlyCents        BigInt?   @map("monthly_cents")
+  limits              Json
+  createdById         String?   @map("created_by_id") @db.Uuid
+  createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  archivedAt          DateTime? @map("archived_at") @db.Timestamptz(3)
+
+  contracts Contract[]
+
+  @@unique([code, version])
+  @@map("plans")
+}
+
+/// Aditivo de contrato: muda mensalidade e/ou capacidade a partir de uma data. Histórico preservado.
+model ContractAmendment {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  contractId     String   @map("contract_id") @db.Uuid
+  description    String
+  monthlyCents   BigInt?  @map("monthly_cents")
+  limits         Json?
+  effectiveOn    DateTime @map("effective_on") @db.Date
+  createdById    String?  @map("created_by_id") @db.Uuid
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  contract     Contract     @relation(fields: [organizationId, contractId], references: [organizationId, id])
+
+  @@index([contractId])
+  @@map("contract_amendments")
+}
+
+/// Etapa da régua de cobrança já executada para a fatura (no máximo uma vez por etapa).
+model InvoiceReminder {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  invoiceId      String   @map("invoice_id") @db.Uuid
+  stage          String
+  emailId        String?  @map("email_id") @db.Uuid
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  invoice      Invoice      @relation(fields: [organizationId, invoiceId], references: [organizationId, id])
+
+  @@unique([invoiceId, stage])
+  @@map("invoice_reminders")
+}
+
+enum EmailStatus {
+  queued
+  sent
+  delivered
+  failed
+  bounced
+  skipped
+}
+
+/// E-mail transacional (VeloMail), entregue pela fila do worker; "skipped" quando o envio está desligado.
+model EmailMessage {
+  id                String      @id @default(uuid()) @db.Uuid
+  organizationId    String?     @map("organization_id") @db.Uuid
+  toEmail           String      @map("to_email")
+  subject           String
+  template          String
+  html              String
+  text              String
+  status            EmailStatus @default(queued)
+  providerMessageId String?     @map("provider_message_id")
+  error             String?
+  attempts          Int         @default(0)
+  createdAt         DateTime    @default(now()) @map("created_at") @db.Timestamptz(3)
+  sentAt            DateTime?   @map("sent_at") @db.Timestamptz(3)
+  deliveredAt       DateTime?   @map("delivered_at") @db.Timestamptz(3)
+
+  @@index([status, createdAt])
+  @@index([organizationId, createdAt])
+  @@index([providerMessageId])
+  @@map("email_messages")
+}
+
+/// Configuração da plataforma editável no console (e-mail, instruções de pagamento).
+model PlatformSetting {
+  key         String   @id
+  value       Json
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+  updatedById String?  @map("updated_by_id") @db.Uuid
+
+  @@map("platform_settings")
+}
+
+/// Segredo da plataforma cifrado com PLATFORM_SECRETS_KEY (AES-256-GCM). Nunca volta em claro ao console.
+model PlatformSecret {
+  key       String   @id
+  valueEnc  String   @map("value_enc")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  rotatedAt DateTime @default(now()) @map("rotated_at") @db.Timestamptz(3)
+
+  @@map("platform_secrets")
+}
+
+/// Link de redefinição de senha: só o hash do token; uso único; expira em 1 hora.
+model PasswordResetToken {
+  id            String    @id @default(uuid()) @db.Uuid
+  userId        String    @map("user_id") @db.Uuid
+  tokenHash     String    @unique @map("token_hash")
+  expiresAt     DateTime  @map("expires_at") @db.Timestamptz(3)
+  usedAt        DateTime? @map("used_at") @db.Timestamptz(3)
+  requestedById String?   @map("requested_by_id") @db.Uuid
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@map("password_reset_tokens")
+}
+
+enum TicketStatus {
+  open
+  waiting_customer
+  resolved
+  closed
+}
+
+enum TicketPriority {
+  low
+  normal
+  high
+  urgent
+}
+
+enum TicketChannel {
+  app
+  whatsapp
+  email
+  phone
+  other
+}
+
+enum MessageAuthor {
+  customer
+  staff
+  system
+}
+
+/// Chamado de suporte: aberto pelo cliente no app ou registrado pela equipe (WhatsApp, e-mail, telefone).
+model SupportTicket {
+  id                 String         @id @default(uuid()) @db.Uuid
+  organizationId     String         @map("organization_id") @db.Uuid
+  number             Int            @unique @default(autoincrement())
+  subject            String
+  status             TicketStatus   @default(open)
+  priority           TicketPriority @default(normal)
+  channel            TicketChannel  @default(app)
+  farmId             String?        @map("farm_id") @db.Uuid
+  openedByUserId     String?        @map("opened_by_user_id") @db.Uuid
+  assigneeUserId     String?        @map("assignee_user_id") @db.Uuid
+  firstResponseDueAt DateTime       @map("first_response_due_at") @db.Timestamptz(3)
+  resolutionDueAt    DateTime       @map("resolution_due_at") @db.Timestamptz(3)
+  firstRespondedAt   DateTime?      @map("first_responded_at") @db.Timestamptz(3)
+  resolvedAt         DateTime?      @map("resolved_at") @db.Timestamptz(3)
+  closedAt           DateTime?      @map("closed_at") @db.Timestamptz(3)
+  createdAt          DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt          DateTime       @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  organization Organization           @relation(fields: [organizationId], references: [id])
+  messages     SupportMessage[]
+  requests     SupportAccessRequest[]
+
+  @@unique([organizationId, id])
+  @@index([status, priority])
+  @@index([organizationId, createdAt])
+  @@map("support_tickets")
+}
+
+/// Mensagem do chamado. Append-only. Nota interna (internal) nunca aparece para o cliente.
+model SupportMessage {
+  id             String         @id @default(uuid()) @db.Uuid
+  organizationId String         @map("organization_id") @db.Uuid
+  ticketId       String         @map("ticket_id") @db.Uuid
+  authorUserId   String?        @map("author_user_id") @db.Uuid
+  authorKind     MessageAuthor  @map("author_kind")
+  body           String
+  internal       Boolean        @default(false)
+  channel        TicketChannel?
+  createdAt      DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  organization Organization  @relation(fields: [organizationId], references: [id])
+  ticket       SupportTicket @relation(fields: [organizationId, ticketId], references: [organizationId, id])
+
+  @@index([ticketId, createdAt])
+  @@map("support_messages")
+}
+
+enum AccessRequestStatus {
+  pending
+  approved
+  denied
+  cancelled
+}
+
+/// Pedido de acesso de suporte feito pela equipe; o proprietário aprova (gera SupportGrant) ou recusa no app.
+model SupportAccessRequest {
+  id             String              @id @default(uuid()) @db.Uuid
+  organizationId String              @map("organization_id") @db.Uuid
+  platformUserId String              @map("platform_user_id") @db.Uuid
+  ticketId       String?             @map("ticket_id") @db.Uuid
+  reason         String
+  hours          Int
+  status         AccessRequestStatus @default(pending)
+  decidedById    String?             @map("decided_by_id") @db.Uuid
+  decidedAt      DateTime?           @map("decided_at") @db.Timestamptz(3)
+  grantId        String?             @map("grant_id") @db.Uuid
+  createdAt      DateTime            @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  organization Organization   @relation(fields: [organizationId], references: [id])
+  ticket       SupportTicket? @relation(fields: [organizationId, ticketId], references: [organizationId, id])
+
+  @@index([organizationId, status])
+  @@map("support_access_requests")
+}
+
+enum AnnouncementLevel {
+  info
+  warning
+  maintenance
+}
+
+/// Comunicado aos clientes (faixa no app). organizationIds vazio = todos.
+model Announcement {
+  id              String            @id @default(uuid()) @db.Uuid
+  title           String
+  body            String
+  level           AnnouncementLevel @default(info)
+  organizationIds String[]          @default([]) @map("organization_ids") @db.Uuid
+  startsAt        DateTime          @map("starts_at") @db.Timestamptz(3)
+  endsAt          DateTime?         @map("ends_at") @db.Timestamptz(3)
+  createdById     String?           @map("created_by_id") @db.Uuid
+  createdAt       DateTime          @default(now()) @map("created_at") @db.Timestamptz(3)
+  archivedAt      DateTime?         @map("archived_at") @db.Timestamptz(3)
+
+  @@index([startsAt])
+  @@map("announcements")
 }

@@ -56,6 +56,10 @@ Entregue o link do convite pessoalmente (uso único, 7 dias).
 
 Também é possível implantar pelo console da plataforma (`/console`, ou o link "Console" no rodapé da landing).
 
+### Cofre e e-mail do console
+- `PLATFORM_SECRETS_KEY` fica no `.env` da VPS. O deploy gera uma na primeira vez (`openssl rand -base64 32`) e nunca a sobrescreve. Trocar a chave invalida a chave do VeloMail salva e as verificações em duas etapas da equipe (é preciso cadastrar de novo e zerar as verificações).
+- E-mail transacional: Console → Configurações → *E-mail transacional (VeloMail)*: remetente de domínio verificado no VeloMail, chave `re_…`, segredo do webhook e caixa da equipe. Cadastre no VeloMail o webhook mostrado na tela (`https://www.rebania.com.br/v1/mail/webhooks/velomail`). Use *Enviar teste* e acompanhe em Operação → E-mails.
+
 ### Conta da equipe (superadmin)
 A conta da equipe é separada e **nunca** tem organização ou fazenda (D-12). Ela entra direto no console. O comando recusa conceder o console a uma conta que já é de cliente.
 ```bash

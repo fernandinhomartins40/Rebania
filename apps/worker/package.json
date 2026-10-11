@@ -17,6 +17,7 @@
     "@rebania/db": "workspace:*",
     "@rebania/domain": "workspace:*",
     "@rebania/media": "workspace:*",
+    "@rebania/saas": "workspace:*",
     "pg": "8.23.1",
     "sharp": "0.35.5"
   },

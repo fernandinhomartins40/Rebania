@@ -27,7 +27,7 @@ Origem: inventário do MN §5 e telas T01–T44 das pranchas. Situação: ✅ im
 | Relatórios e indicadores | P1/P2 | T39 | G5 | ✅ Web (CSV/PDF) | `commerce/reports.ts` |
 | Patrimônio | P3 | T43 | G8 | ✅ (módulo opcional) | `Assets.tsx` |
 | Assistente/IA, créditos | P1 | T06, T40 | G6 | 🟡 assistente com DeepSeek (liga com a chave no servidor); provedor de pagamento pendente (P-02) | `packages/ai-gateway`, `ai-credits.test.ts` |
-| Operação SaaS (console, plano, contrato, suporte) | P1 | T03, T05, T07 | G6 | ✅ Web | `modules/platform.ts` |
+| Operação SaaS (console, plano, contrato, cobrança, suporte) | P1 | T03, T05, T07 | G6 | ✅ Web (provedor de pagamento ⬜, P-02) | `modules/platform/*`, `packages/saas`, `console.test.ts`, ADR-011 |
 | Observabilidade | — | — | G7 | ✅ (`/v1/metrics`) | `metrics.test.ts` |
 | Acessibilidade | — | todas | G7 | ✅ axe WCAG A/AA + 360/768/1280 sem rolagem lateral (aparelhos físicos ⬜) | `apps/web/e2e/a11y.mjs` |
 | Landing | — | T01 | G6 | ✅ (formulário ⬜, P-06) | `pages/landing` |

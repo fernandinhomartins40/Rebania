@@ -24,7 +24,7 @@ describe("conta da plataforma × cliente", () => {
     const me = (await c.get("/v1/auth/me")).json();
     expect(me.platformAdmin).toBe(true);
     expect(me.memberships).toEqual([]);
-    expect((await c.get("/v1/platform/orgs")).statusCode).toBe(200);
+    expect((await c.get("/v1/platform/customers")).statusCode).toBe(200);
   });
 
   it("superadmin não pode ser convidado para uma organização", async () => {
@@ -72,7 +72,7 @@ describe("conta da plataforma × cliente", () => {
     const staff = await createStaff(env.db);
     const other = await createStaff(env.db);
     const c = await login(env.app, staff.email);
-    const res = await c.post("/v1/platform/orgs", {
+    const res = await c.post("/v1/platform/customers", {
       orgName: `Org ${randomUUID().slice(0, 6)}`,
       farmName: "Fazenda",
       ownerEmail: other.email,

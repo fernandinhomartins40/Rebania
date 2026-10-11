@@ -61,7 +61,7 @@ export function LoginPage() {
           </button>
         </form>
         <p className="hint" style={{ marginTop: 16 }}>
-          Esqueceu a senha? Peça ao proprietário ou gerente da fazenda um novo convite.
+          <Link to="/recuperar-senha">Esqueci minha senha</Link>
         </p>
         <p className="hint">
           <Link to="/">Conhecer o Rebania</Link>

@@ -46,3 +46,14 @@ export class HmacWebhookAdapter implements PaymentAdapter {
     return { eventId: String(body.eventId), type: body.type, ref: String(body.ref) };
   }
 }
+
+/** Adapter em uso: o injetado (testes) ou o configurado (BILLING_PROVIDER). */
+export function resolveBilling(ctx: {
+  billing?: PaymentAdapter | null;
+  config: { billingProvider: "none" | "hmac"; billingWebhookSecret: string | null };
+}): PaymentAdapter | null {
+  if (ctx.billing !== undefined) return ctx.billing;
+  return ctx.config.billingProvider === "hmac" && ctx.config.billingWebhookSecret
+    ? new HmacWebhookAdapter(ctx.config.billingWebhookSecret)
+    : null;
+}

@@ -23,6 +23,10 @@ describe("seed de demonstração", () => {
   it("cria um usuário por perfil com acesso à fazenda e dados de exemplo", async () => {
     const r = await seedDemo(env.db, { password: "demo-senha-123", now: env.clock.now });
     expect(r.animalsCreated).toBe(12);
+    // Fora dos indicadores e da cobrança do console
+    const org = await env.db.organization.findUniqueOrThrow({ where: { id: r.organizationId } });
+    expect(org.isDemo).toBe(true);
+    expect(org.stage).toBe("active");
     expect(r.users.map((u) => u.role)).toEqual([
       "owner",
       "manager",

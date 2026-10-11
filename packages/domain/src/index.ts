@@ -11,3 +11,5 @@ export * from "./health.ts";
 export * from "./commerce.ts";
 export * from "./depth.ts";
 export * from "./platform.ts";
+export * from "./saas-billing.ts";
+export * from "./support.ts";

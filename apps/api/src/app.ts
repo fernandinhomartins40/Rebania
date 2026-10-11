@@ -2,9 +2,11 @@ import cookie from "@fastify/cookie";
 import cors from "@fastify/cors";
 import helmet from "@fastify/helmet";
 import rateLimit from "@fastify/rate-limit";
+import { createSecretBox } from "@rebania/saas";
 import Fastify from "fastify";
 import type { AppContext } from "./lib/context.ts";
 import { errorHandler } from "./lib/errors.ts";
+import { registerRequestContext } from "./lib/request-context.ts";
 import { animalRoutes } from "./modules/animals/routes.ts";
 import { authRoutes } from "./modules/auth.ts";
 import { farmRoutes } from "./modules/farms.ts";
@@ -14,14 +16,20 @@ import { reproRoutes } from "./modules/repro/routes.ts";
 import { healthRoutes } from "./modules/health/routes.ts";
 import { commerceRoutes } from "./modules/commerce/routes.ts";
 import { aiRoutes } from "./modules/ai/routes.ts";
-import { platformRoutes } from "./modules/platform.ts";
+import { customerRoutes } from "./modules/customer.ts";
+import { platformRoutes } from "./modules/platform/index.ts";
+import { webhookRoutes } from "./modules/webhooks.ts";
 import { depthRoutes } from "./modules/depth.ts";
 import { metricsRoutes } from "./modules/metrics.ts";
 import { orgRoutes } from "./modules/org.ts";
 import { syncRoutes } from "./modules/sync.ts";
 import { CSRF_HEADER, registerAuth } from "./plugins/auth.ts";
 
-export async function buildApp(ctx: AppContext) {
+export async function buildApp(input: AppContext) {
+  const ctx: AppContext = {
+    ...input,
+    secrets: input.secrets ?? createSecretBox(input.config.platformSecretsKey),
+  };
   const app = Fastify({
     logger: {
       level: ctx.config.logLevel,
@@ -42,6 +50,7 @@ export async function buildApp(ctx: AppContext) {
   });
 
   app.setErrorHandler(errorHandler);
+  registerRequestContext(app);
   await app.register(helmet, { contentSecurityPolicy: false });
   await app.register(cors, {
     origin: ctx.config.webOrigins,
@@ -69,6 +78,8 @@ export async function buildApp(ctx: AppContext) {
   commerceRoutes(app, ctx);
   aiRoutes(app, ctx);
   platformRoutes(app, ctx);
+  customerRoutes(app, ctx);
+  webhookRoutes(app, ctx);
   depthRoutes(app, ctx);
   metricsRoutes(app, ctx);
 

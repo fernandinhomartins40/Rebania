@@ -148,11 +148,17 @@ export async function seedDemo(
   const passwordHash = await hashPassword(password);
 
   const base = await db.$transaction(async (tx) => {
-    const org =
-      (await tx.organization.findUnique({ where: { slug: DEMO_ORG_SLUG } })) ??
-      (await tx.organization.create({
-        data: { name: "Rebania Demonstração (dados fictícios)", slug: DEMO_ORG_SLUG },
-      }));
+    // Demonstração fica fora dos indicadores comerciais e da cobrança (isDemo).
+    const org = await tx.organization.upsert({
+      where: { slug: DEMO_ORG_SLUG },
+      create: {
+        name: "Rebania Demonstração (dados fictícios)",
+        slug: DEMO_ORG_SLUG,
+        stage: "active",
+        isDemo: true,
+      },
+      update: { isDemo: true },
+    });
     const farm =
       (await tx.farm.findFirst({
         where: { organizationId: org.id, archivedAt: null },

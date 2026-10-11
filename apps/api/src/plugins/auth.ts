@@ -43,8 +43,9 @@ export function registerAuth(app: FastifyInstance, ctx: AppContext) {
       ? req.headers.authorization.slice(7).trim()
       : undefined;
 
-    // Webhooks de pagamento não usam cookie: são autenticados pela assinatura HMAC.
-    const isWebhook = req.url.startsWith("/v1/billing/webhooks/");
+    // Webhooks (pagamento, e-mail) não usam cookie: são autenticados pela assinatura HMAC.
+    const isWebhook =
+      req.url.startsWith("/v1/billing/webhooks/") || req.url.startsWith("/v1/mail/webhooks/");
     if (
       !bearer &&
       !isWebhook &&
