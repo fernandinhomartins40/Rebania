@@ -4,7 +4,6 @@ import {
   Settings,
   Venus,
   FileSpreadsheet,
-  Building2,
   ChartColumn,
   CircleAlert,
   Tractor,
@@ -22,9 +21,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { ROLE_LABEL } from "@rebania/domain";
-import { useEffect, useState } from "react";
 import { Link } from "react-router";
-import { get } from "../api/client.ts";
 import { useFeatures } from "../state/features.ts";
 import { PageHead } from "../components/ui.tsx";
 import { useSession } from "../state/session.tsx";
@@ -32,13 +29,6 @@ import { useSession } from "../state/session.tsx";
 export function FarmPage() {
   const { farm, can, me } = useSession();
   const features = useFeatures(farm!.id);
-  const [staff, setStaff] = useState(false);
-  useEffect(() => {
-    get<{ isPlatformAdmin: boolean }>("/v1/platform/me").then(
-      (r) => setStaff(r.isPlatformAdmin),
-      () => setStaff(false),
-    );
-  }, []);
   const items: {
     to: string;
     section: string;
@@ -182,14 +172,6 @@ export function FarmPage() {
       desc: "Registros no aparelho, rejeitados ou em conflito.",
       icon: CloudUpload,
       show: true,
-    },
-    {
-      to: "/console",
-      section: "Organização e conta",
-      title: "Console da plataforma",
-      desc: "Equipe Rebania: implantação, contratos, faturas e créditos.",
-      icon: Building2,
-      show: staff,
     },
     {
       to: "/fazenda/conta",

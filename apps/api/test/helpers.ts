@@ -96,6 +96,17 @@ export async function createUser(
   return { id: user.id, email, membershipId: m.id };
 }
 
+/** Conta da equipe da plataforma: acesso ao console e nenhum vínculo com cliente. */
+export async function createStaff(db: Db) {
+  cachedHash ??= await hashPassword(PASSWORD);
+  const email = `staff-${randomUUID()}@rebania.dev`;
+  const user = await db.user.create({
+    data: { email, name: "Equipe Rebania", passwordHash: cachedHash },
+  });
+  await db.platformAdmin.create({ data: { userId: user.id, note: "teste" } });
+  return { id: user.id, email };
+}
+
 /** Cliente HTTP autenticado via Bearer (canal mobile). */
 export async function login(app: FastifyInstance, email: string) {
   const res = await app.inject({

@@ -3,6 +3,8 @@ import { Layout } from "./components/Layout.tsx";
 import { Loading } from "./components/ui.tsx";
 import { AcceptInvitePage } from "./pages/AcceptInvite.tsx";
 import { AccountPage } from "./pages/Account.tsx";
+import { ConsoleShell } from "./components/ConsoleShell.tsx";
+import { ChangePasswordPage, ProvisionalPasswordPage } from "./pages/ChangePassword.tsx";
 import { AgendaPage } from "./pages/Agenda.tsx";
 import { AnimalPage } from "./pages/Animal.tsx";
 import { FarmPage } from "./pages/Farm.tsx";
@@ -56,7 +58,7 @@ import { SessionProvider, useSession } from "./state/session.tsx";
 import { SyncProvider } from "./state/sync.tsx";
 
 function Routed() {
-  const { status, farm } = useSession();
+  const { status, farm, me } = useSession();
   if (status === "loading")
     return (
       <div className="center-page">
@@ -70,6 +72,29 @@ function Routed() {
         <Route path="/entrar" element={<LoginPage />} />
         <Route path="/convite" element={<AcceptInvitePage />} />
         <Route path="*" element={<Navigate to="/entrar" replace />} />
+      </Routes>
+    );
+  }
+  if (me?.user.mustChangePassword) {
+    return (
+      <Routes>
+        <Route path="/trocar-senha" element={<ProvisionalPasswordPage />} />
+        <Route path="*" element={<Navigate to="/trocar-senha" replace />} />
+      </Routes>
+    );
+  }
+  // Equipe da plataforma: conta separada, sem fazendas; só o console (área própria).
+  if (me?.platformAdmin) {
+    return (
+      <Routes>
+        <Route element={<ConsoleShell />}>
+          <Route path="console" element={<ConsolePage />} />
+          <Route path="console/configuracao" element={<ConsoleSettingsPage />} />
+          <Route path="console/org/:id" element={<ConsoleOrgPage />} />
+          <Route path="console/org/:id/suporte/:farmId" element={<ConsoleSupportPage />} />
+          <Route path="conta/senha" element={<ChangePasswordPage back="/console" />} />
+          <Route path="*" element={<Navigate to="/console" replace />} />
+        </Route>
       </Routes>
     );
   }
@@ -126,10 +151,6 @@ function Routed() {
           <Route path="fazenda/pastagem" element={<PasturesPage />} />
           <Route path="fazenda/patrimonio" element={<AssetsPage />} />
           <Route path="fazenda/plano" element={<PlanPage />} />
-          <Route path="console" element={<ConsolePage />} />
-          <Route path="console/configuracao" element={<ConsoleSettingsPage />} />
-          <Route path="console/org/:id" element={<ConsoleOrgPage />} />
-          <Route path="console/org/:id/suporte/:farmId" element={<ConsoleSupportPage />} />
           <Route path="fazenda/configuracoes" element={<SettingsPage />} />
           <Route path="agenda" element={<AgendaPage />} />
           <Route path="fazenda" element={<FarmPage />} />
@@ -138,6 +159,10 @@ function Routed() {
           <Route path="fazenda/lotes" element={<PlacesPage />} />
           <Route path="fazenda/sincronizacao" element={<SyncCenterPage />} />
           <Route path="fazenda/conta" element={<AccountPage />} />
+          <Route
+            path="fazenda/conta/senha"
+            element={<ChangePasswordPage back="/fazenda/conta" />}
+          />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Routes>

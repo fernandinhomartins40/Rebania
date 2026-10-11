@@ -48,6 +48,12 @@ function Shell() {
 
   if (status === "loading") return <Loading />;
   if (status === "anonymous") return <LoginScreen />;
+  if (me?.user.mustChangePassword)
+    return (
+      <Text style={{ padding: 24 }}>
+        Sua senha é provisória. Troque-a em www.rebania.com.br/entrar e depois entre de novo aqui.
+      </Text>
+    );
   if (!farm) return <Text style={{ padding: 24 }}>Seu acesso ainda não inclui fazendas.</Text>;
 
   let content;

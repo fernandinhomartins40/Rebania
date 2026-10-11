@@ -39,7 +39,7 @@ const routes = [
   "/fazenda/configuracoes",
   "/fazenda/equipe",
   "/fazenda/sincronizacao",
-  "/console",
+  "/fazenda/conta/senha",
 ];
 const b = await chromium.launch();
 const results = {};

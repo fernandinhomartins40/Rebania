@@ -20,6 +20,14 @@ declare module "fastify" {
 
 const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
 
+/** Únicas rotas liberadas para quem ainda está com senha provisória. */
+const PROVISIONAL_PASSWORD_ROUTES = new Set([
+  "/v1/auth/me",
+  "/v1/auth/password",
+  "/v1/auth/logout",
+  "/v1/auth/login",
+]);
+
 /**
  * Autenticação:
  * - web: cookie httpOnly `rebania_session` (SameSite=Strict). Requisições que alteram
@@ -53,7 +61,7 @@ export function registerAuth(app: FastifyInstance, ctx: AppContext) {
     const now = ctx.now();
     const session = await ctx.db.authSession.findUnique({
       where: { accessHash: sha256(token) },
-      include: { user: { select: { disabledAt: true } } },
+      include: { user: { select: { disabledAt: true, mustChangePassword: true } } },
     });
     if (
       !session ||
@@ -66,6 +74,18 @@ export function registerAuth(app: FastifyInstance, ctx: AppContext) {
       return; // segue como anônimo; rotas protegidas respondem 401
     }
     req.auth = { userId: session.userId, sessionId: session.id, channel: session.channel };
+
+    // Senha provisória: nada além de trocá-la (o bloqueio é do servidor, não só da tela).
+    if (
+      session.user.mustChangePassword &&
+      !PROVISIONAL_PASSWORD_ROUTES.has(req.url.split("?")[0]!)
+    ) {
+      throw new HttpError(
+        403,
+        "password_change_required",
+        "Troque a senha provisória para continuar.",
+      );
+    }
 
     // Sessão web deslizante: renova no uso (no máximo a cada 5 minutos).
     if (now.getTime() - session.lastUsedAt.getTime() > 5 * 60_000) {

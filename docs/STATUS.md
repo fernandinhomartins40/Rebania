@@ -1,15 +1,15 @@
 # Status da implementação
 
-Atualizado em 09/10/2026. "Testado" significa coberto por teste automatizado que roda no CI, salvo indicação.
+Atualizado em 11/10/2026. "Testado" significa coberto por teste automatizado que roda no CI, salvo indicação.
 
 ## Implementado e testado
 
 | Área | O que existe | Evidência |
 |---|---|---|
-| Monorepo | pnpm 10 + Turborepo + TS strict; lint, typecheck, Prettier | `pnpm turbo run typecheck lint test` (31 tarefas verdes) + `pnpm test:integration` (97 testes) |
-| Domínio (`packages/domain`) | Datas civis por timezone; categorias × sexo; identificadores; GMD com intervalo positivo; arroba só com rendimento explícito; projeção reprodutiva; carência configurada com fonte; quantidades em milésimos e dinheiro em centavos; preço por cabeça/kg/@; rateio sem perda de centavo; relatórios com cobertura; CSV pt-BR; papéis/permissões | 57 testes unitários |
-| Banco (`packages/db`) | Prisma 7 + PostgreSQL 16; FKs compostas de tenant; unicidade parcial de identificadores ativos (fazenda: brinco; organização: RFID/NFC/QR); auditoria append-only por trigger; fila de jobs | migração `init`; `migrate diff` sem divergência |
-| Auth | Login web (cookie httpOnly, SameSite=Strict, anti-CSRF por header); mobile (access 15 min + refresh rotativo, uso único); logout; sessões e revogação; convites com hash, expiração, uso único, papel limitado ao do convidante | `apps/api/test/auth.test.ts` (7) |
+| Monorepo | pnpm 10 + Turborepo + TS strict; lint, typecheck, Prettier | `pnpm turbo run typecheck lint test` (34 tarefas verdes) + `pnpm test:integration` (108 testes: API 104, worker 4) |
+| Domínio (`packages/domain`) | Datas civis por timezone; categorias × sexo; identificadores; GMD com intervalo positivo; arroba só com rendimento explícito; projeção reprodutiva; carência configurada com fonte; quantidades em milésimos e dinheiro em centavos; preço por cabeça/kg/@; rateio sem perda de centavo; relatórios com cobertura; CSV pt-BR; papéis/permissões | 64 testes unitários |
+| Banco (`packages/db`) | Prisma 7 + PostgreSQL 16; FKs compostas de tenant; unicidade parcial de identificadores ativos (fazenda: brinco; organização: RFID/NFC/QR); auditoria append-only por trigger; fila de jobs | migração `init`; `migrate diff` sem divergência; sessão do banco sempre em UTC (o adapter troca datas sem fuso; servidor em outro fuso deslocava instantes), coberto em `queue.test.ts` |
+| Auth | Login web (cookie httpOnly, SameSite=Strict, anti-CSRF por header); mobile (access 15 min + refresh rotativo, uso único); logout; sessões e revogação; convites com hash, expiração, uso único, papel limitado ao do convidante; troca de senha (encerra as outras sessões); senha provisória com troca obrigatória imposta pelo servidor; conta da plataforma separada de cliente (D-12: superadmin sem organização, entra direto no console; recusado em convite, aceite, implantação e concessão) | `auth.test.ts` (7) + `password.test.ts` (1) + `platform-account.test.ts` (4) + `platform.test.ts` do domínio (3) |
 | Isolamento A×B (teste obrigatório 1) | Leituras/escritas cruzadas → 404 sem gravar (rebanho, reprodução, sanidade, estoque, curral, venda, financeiro, relatórios); FKs impedem referência cruzada; mutationId de outro tenant não vaza recibo | `tenant-isolation.test.ts` (7) |
 | Fotos e importação (G2) | Upload retomável com sha256, derivados WebP/JPEG sem EXIF no worker, galeria; importação CSV com prévia e confirmação; leitura de QR/código pela câmera (BarcodeDetector) | `media-import.test.ts` + Playwright |
 | Reprodução e agenda (G3, teste obrigatório 2) | IA/monta/repasse em grupo, diagnóstico, previsão de parto com origem e janela, nascimento com gêmeos/natimorto, desmama, estações, protocolos versionados, agenda derivada, correção por anulação | `repro.test.ts` + Playwright |
@@ -45,6 +45,7 @@ Atualizado em 09/10/2026. "Testado" significa coberto por teste automatizado que
 - **Homologação de hardware:** nenhum aparelho foi testado fisicamente (P-03).
 - **Testes em aparelhos (teste 12):** o app nativo só foi empacotado; não rodou em Android/iOS físico nem em emulador. Builds EAS dependem de contas (P-05).
 - **Testes obrigatórios 6 (físico), 11 e 12** dependem de aparelhos físicos e do ambiente de produção (G7).
-- **Demonstração:** `seed-demo` (CLI e workflow manual "Seed de demonstração") cria uma organização fictícia isolada com um usuário por perfil e 12 animais; senha só pelo secret `DEMO_PASSWORD` (repositório público). Coberto por `demo-seed.test.ts` (3).
+- **Demonstração:** `seed-demo` (CLI e workflow manual "Seed de demonstração") cria uma organização fictícia isolada com um usuário por perfil e 12 animais; senha só pelo secret `DEMO_PASSWORD` (repositório público). Coberto por `demo-seed.test.ts` (3). Executado em produção (VPS 112) em 2026-10-11, via SSH no contêiner da API, com senha gerada e entregue só ao responsável; login dos 5 perfis conferido em www.rebania.com.br. Os usuários da demo são clientes: a opção que dava o console ao `dono@` foi removida (D-12).
+- **Console da plataforma:** acesso pelo link discreto "Console" no rodapé da landing ou por `/console`; a conta da equipe é criada com `platform-admin --create` (senha provisória).
 - **Deploy (G7):** pipeline pronto para a VPS 72.60.10.112 e www.rebania.com.br, mas nada foi publicado. Faltam: o secret `VPS_PASSWORD` no GitHub e o DNS apontando para a 112. A auditoria da VPS (P-04), os limites de CPU/RAM medidos e o restore no ambiente real dependem disso.
 - **Piloto (G7):** QA com o cliente e metas (tempo de registro, ajuda) dependem da entrevista e dados reais (P-07).

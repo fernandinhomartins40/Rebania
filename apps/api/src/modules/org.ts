@@ -5,6 +5,7 @@ import { audit } from "../lib/audit.ts";
 import type { AppContext } from "../lib/context.ts";
 import { randomToken, sha256 } from "../lib/crypto.ts";
 import { forbidden, HttpError } from "../lib/errors.ts";
+import { assertCanJoinOrganization } from "../lib/platform-account.ts";
 import { requireOrg } from "../lib/tenant.ts";
 import { requireAuth } from "../plugins/auth.ts";
 
@@ -101,6 +102,7 @@ export function orgRoutes(app: FastifyInstance, ctx: AppContext) {
     }
     const token = randomToken();
     const email = body.email.trim().toLowerCase();
+    await assertCanJoinOrganization(db, email);
     const inv = await db.$transaction(async (tx) => {
       // Um convite pendente por e-mail: o anterior é revogado.
       await tx.invitation.updateMany({

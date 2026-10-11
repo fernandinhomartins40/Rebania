@@ -11,7 +11,9 @@ export interface CreateDbOptions {
 }
 
 export function createDb({ url, max = 10 }: CreateDbOptions): PrismaClient {
-  const adapter = new PrismaPg({ connectionString: url, max });
+  // O adapter troca datas com o banco como horário UTC sem fuso explícito; a sessão precisa
+  // estar em UTC, senão um servidor em outro fuso grava e compara instantes deslocados.
+  const adapter = new PrismaPg({ connectionString: url, max, options: "-c TimeZone=UTC" });
   return new PrismaClient({ adapter });
 }
 

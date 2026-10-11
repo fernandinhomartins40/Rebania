@@ -195,6 +195,8 @@ model User {
   email        String    @unique
   name         String
   passwordHash String    @map("password_hash")
+  /// Senha provisória (criada pelo operador): até trocá-la, a conta só acessa a troca de senha.
+  mustChangePassword Boolean @default(false) @map("must_change_password")
   createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
   disabledAt   DateTime? @map("disabled_at") @db.Timestamptz(3)
 

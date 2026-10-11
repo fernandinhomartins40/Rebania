@@ -13,8 +13,17 @@ export const LoginRequest = z.object({
 export type LoginRequest = z.infer<typeof LoginRequest>;
 
 /** Mobile recebe tokens no corpo; web recebe cookie httpOnly e corpo sem tokens. */
+export const SessionUser = z.object({
+  id: uuid,
+  name: z.string(),
+  email: z.string(),
+  /** Senha provisória: até trocá-la, a API só aceita `/v1/auth/me`, troca de senha e logout. */
+  mustChangePassword: z.boolean(),
+});
+export type SessionUser = z.infer<typeof SessionUser>;
+
 export const LoginResponse = z.object({
-  user: z.object({ id: uuid, name: z.string(), email: z.string() }),
+  user: SessionUser,
   tokens: z
     .object({
       accessToken: z.string(),
@@ -40,7 +49,9 @@ export const FarmSummary = z.object({
 export type FarmSummary = z.infer<typeof FarmSummary>;
 
 export const MeResponse = z.object({
-  user: z.object({ id: uuid, name: z.string(), email: z.string() }),
+  user: SessionUser,
+  /** Equipe Rebania com acesso ao console da plataforma (pode não ter fazendas). */
+  platformAdmin: z.boolean(),
   memberships: z.array(
     z.object({
       organizationId: uuid,
@@ -58,6 +69,14 @@ export const PasswordPolicy = z
   .string()
   .min(10, "A senha precisa ter ao menos 10 caracteres.")
   .max(200);
+
+export const ChangePasswordRequest = z
+  .object({ currentPassword: z.string().min(1).max(200), newPassword: PasswordPolicy })
+  .refine((v) => v.currentPassword !== v.newPassword, {
+    message: "A nova senha precisa ser diferente da atual.",
+    path: ["newPassword"],
+  });
+export type ChangePasswordRequest = z.infer<typeof ChangePasswordRequest>;
 
 export const CreateInvitationRequest = z
   .object({

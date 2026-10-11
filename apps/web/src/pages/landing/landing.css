@@ -1610,6 +1610,11 @@ fieldset[disabled] .lp-btn {
   align-items: center;
   font-size: 0.92rem;
 }
+/* Acesso da equipe Rebania: discreto, mas com a mesma área de toque. */
+.lp-footer nav a.lp-footer-console {
+  color: var(--color-text-secondary);
+  font-size: 0.8rem;
+}
 @media (min-width: 768px) {
   .lp-footer-inner {
     flex-wrap: nowrap;

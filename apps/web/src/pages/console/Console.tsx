@@ -5,7 +5,6 @@ import { Link, useParams } from "react-router";
 import { errorMessage, get, post } from "../../api/client.ts";
 import {
   Alert,
-  Empty,
   Field,
   formatDate,
   formatDateTime,
@@ -22,25 +21,6 @@ interface OrgRow {
   contract: { plan: string; status: string } | null;
   credits: number;
   aiQuestions30d: number;
-}
-
-/** Garante que só a equipe da plataforma vê o console (o servidor também valida). */
-function useIsStaff() {
-  const [staff, setStaff] = useState<boolean | null>(null);
-  useEffect(() => {
-    get<{ isPlatformAdmin: boolean }>("/v1/platform/me").then(
-      (r) => setStaff(r.isPlatformAdmin),
-      () => setStaff(false),
-    );
-  }, []);
-  return staff;
-}
-
-function StaffOnly({ children }: { children: ReactNode }) {
-  const staff = useIsStaff();
-  if (staff === null) return <Loading />;
-  if (!staff) return <Empty title="Página não encontrada" />;
-  return <>{children}</>;
 }
 
 function Form({
@@ -65,11 +45,7 @@ function Form({
 
 /** T07 Console da plataforma: área separada (não é o painel da fazenda). */
 export function ConsolePage() {
-  return (
-    <StaffOnly>
-      <ConsoleHome />
-    </StaffOnly>
-  );
+  return <ConsoleHome />;
 }
 
 function ConsoleHome() {
@@ -270,11 +246,7 @@ interface OrgDetail {
 }
 
 export function ConsoleOrgPage() {
-  return (
-    <StaffOnly>
-      <OrgDetailView />
-    </StaffOnly>
-  );
+  return <OrgDetailView />;
 }
 
 function OrgDetailView() {
@@ -570,11 +542,7 @@ function OrgDetailView() {
 }
 
 export function ConsoleSupportPage() {
-  return (
-    <StaffOnly>
-      <SupportView />
-    </StaffOnly>
-  );
+  return <SupportView />;
 }
 
 function SupportView() {
@@ -606,11 +574,7 @@ function SupportView() {
 }
 
 export function ConsoleSettingsPage() {
-  return (
-    <StaffOnly>
-      <SettingsView />
-    </StaffOnly>
-  );
+  return <SettingsView />;
 }
 
 function SettingsView() {

@@ -42,6 +42,18 @@ describe("fila PostgreSQL", () => {
     expect(row).toMatchObject({ status: "failed", attempts: 2 });
   });
 
+  it("sessão em UTC: instante gravado pelo app é o mesmo para o banco, qualquer que seja o fuso do servidor", async () => {
+    const [tz] = await db.$queryRaw<{ tz: string }[]>`SELECT current_setting('TimeZone') AS tz`;
+    expect(tz!.tz).toBe("UTC");
+    const runAt = new Date(Date.now() - 1000);
+    const job = await enqueueJob(db, "test.tz", {}, { runAt });
+    const [row] = await db.$queryRaw<{ due: boolean; epoch_ms: number }[]>`
+      SELECT run_at <= now() AS due, (extract(epoch FROM run_at) * 1000)::float8 AS epoch_ms
+      FROM jobs WHERE id = ${job.id}::uuid`;
+    expect(row!.due).toBe(true);
+    expect(row!.epoch_ms).toBe(runAt.getTime());
+  });
+
   it("agendamento periódico é deduplicado por janela", async () => {
     const schedules = [{ queue: "maintenance.sessions", everyMs: 3600_000 }];
     const now = Date.now();

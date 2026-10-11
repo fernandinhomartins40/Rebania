@@ -112,7 +112,7 @@
     "previewNote": "Formulário previsto para integração."
   },
   "footer": {
-    "links": ["Recursos", "Contratação", "Contato", "Entrar"],
+    "links": ["Recursos", "Contratação", "Contato", "Entrar", "Console"],
     "note": "Componentes HTML/CSS · Telas ilustrativas"
   },
   "previewLabel": "Tela ilustrativa",

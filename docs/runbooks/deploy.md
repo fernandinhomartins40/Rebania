@@ -54,9 +54,17 @@ docker compose exec api node dist/cli/bootstrap.js --org "Nome" --farm "Fazenda"
 ```
 Entregue o link do convite pessoalmente (uso único, 7 dias).
 
-Também é possível implantar pelo console da plataforma (Fazenda → Console). Para dar acesso ao console a alguém da equipe (a pessoa precisa já ter conta):
+Também é possível implantar pelo console da plataforma (`/console`, ou o link "Console" no rodapé da landing).
+
+### Conta da equipe (superadmin)
+A conta da equipe é separada e **nunca** tem organização ou fazenda (D-12). Ela entra direto no console. O comando recusa conceder o console a uma conta que já é de cliente.
 ```bash
-docker compose exec api node dist/cli/platform-admin.js --email pessoa@rebania.com.br      # --revoke para retirar
+# Cria a conta com senha provisória (mostrada só neste terminal; troca obrigatória no 1º acesso)
+docker compose exec api node dist/cli/platform-admin.js --email pessoa@rebania.com.br --create --name "Nome"
+# Esqueceu a senha: gera outra provisória e encerra as sessões
+docker compose exec api node dist/cli/platform-admin.js --email pessoa@rebania.com.br --reset-password
+# Retirar o acesso ao console
+docker compose exec api node dist/cli/platform-admin.js --email pessoa@rebania.com.br --revoke
 ```
 
 ## 6.1 Organização de demonstração (testes)
@@ -64,13 +72,13 @@ Cria "Rebania Demonstração (dados fictícios)" com 12 animais de exemplo e um 
 
 Pelo GitHub (recomendado):
 1. Crie o secret `DEMO_PASSWORD` (mín. 10 caracteres) em *Settings → Secrets and variables → Actions*. O repositório é público: use uma senha exclusiva para a demo.
-2. Em *Actions → Seed de demonstração (VPS 112) → Run workflow*. Marque "console da plataforma" só se quiser que `dono@demo.rebania.com.br` veja todas as organizações.
+2. Em *Actions → Seed de demonstração (VPS 112) → Run workflow*. Os usuários da demo são clientes; o console usa a conta da equipe (acima).
 
 Na VPS (a senha vai por variável de ambiente, fora do histórico do shell):
 ```bash
 cd /opt/rebania/infra/compose
 read -rs SEED_DEMO_PASSWORD && export SEED_DEMO_PASSWORD
-docker compose exec -T -e SEED_DEMO_PASSWORD api node dist/cli/seed-demo.js   # --platform-admin opcional
+docker compose exec -T -e SEED_DEMO_PASSWORD api node dist/cli/seed-demo.js
 ```
 Sem senha informada, o comando gera uma e a mostra só no terminal.
 

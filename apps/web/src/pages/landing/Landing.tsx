@@ -723,6 +723,9 @@ export function LandingPage() {
             <a href="#contratacao">{copy.footer.links[1]}</a>
             <a href="#demonstracao">{copy.footer.links[2]}</a>
             <Link to="/entrar">{copy.footer.links[3]}</Link>
+            <Link to="/console" className="lp-footer-console">
+              {copy.footer.links[4]}
+            </Link>
           </nav>
           <p className="lp-footer-meta">
             <strong>

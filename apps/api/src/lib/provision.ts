@@ -1,5 +1,6 @@
 import type { Tx } from "@rebania/db";
 import { randomToken, sha256 } from "./crypto.ts";
+import { assertCanJoinOrganization } from "./platform-account.ts";
 
 export function slugify(name: string) {
   return name
@@ -23,6 +24,7 @@ export async function provisionOrganization(
     actorUserId?: string | null;
   },
 ) {
+  await assertCanJoinOrganization(tx, p.ownerEmail);
   const slugBase = slugify(p.orgName) || "organizacao";
   const token = randomToken();
   const slugTaken = await tx.organization.count({ where: { slug: { startsWith: slugBase } } });

@@ -2,7 +2,7 @@
 
 - A equipe Rebania **não** vê dados das fazendas por padrão.
 - O proprietário concede acesso de leitura em **Fazenda → Plano e créditos → Acesso de suporte**, informando o e-mail da pessoa da equipe, duração (1–72 h) e motivo. Pode revogar a qualquer momento.
-- No console (**Fazenda → Console da plataforma → cliente**), concessões ativas mostram o link de leitura de suporte. Cada leitura gera `support.read` em `audit_entries`.
+- A equipe usa conta própria, sem fazendas (D-12), e entra direto no console (`/console`). Na página do cliente, concessões ativas mostram o link de leitura de suporte. Cada leitura gera `support.read` em `audit_entries`.
 - Fora do app, nenhuma consulta direta ao banco de produção para ver dados de cliente sem concessão registrada e motivo documentado.
 
 ## Créditos

@@ -53,7 +53,10 @@ export function AccountPage() {
           }}
         >
           Sair deste aparelho
-        </button>
+        </button>{" "}
+        <Link to="/fazenda/conta/senha" className="btn btn-ghost">
+          Trocar senha
+        </Link>
       </div>
       <div className="card">
         <h2>Sessões ativas</h2>

@@ -10,6 +10,7 @@ import { ScriptedProvider, text, toolCall } from "@rebania/ai-gateway/testing";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { HmacWebhookAdapter } from "../src/lib/billing.ts";
 import {
+  createStaff,
   createTenant,
   createTestEnv,
   createUser,
@@ -44,9 +45,8 @@ beforeAll(async () => {
     (await createUser(env.db, A.orgId, "field", { farmIds: [A.farmId] })).email,
   );
   ownerB = await login(env.app, (await createUser(env.db, B.orgId, "owner")).email);
-  const s = await createUser(env.db, (await createTenant(env.db, "Equipe")).orgId, "owner");
+  const s = await createStaff(env.db);
   staffId = s.id;
-  await env.db.platformAdmin.create({ data: { userId: s.id } });
   staff = await login(env.app, s.email);
   animalB = (
     await ownerB.post(

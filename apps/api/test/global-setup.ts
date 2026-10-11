@@ -1,4 +1,6 @@
 import { execFileSync } from "node:child_process";
+import { createRequire } from "node:module";
+import path from "node:path";
 import { fileURLToPath } from "node:url";
 import pg from "pg";
 
@@ -18,7 +20,10 @@ export default async function setup() {
   await client.query(`CREATE DATABASE "${dbName}"`);
   await client.end();
   const dbPkg = fileURLToPath(new URL("../../../packages/db", import.meta.url));
-  execFileSync("pnpm", ["exec", "prisma", "migrate", "deploy"], {
+  // CLI do Prisma pelo próprio Node: não depende de `pnpm` no PATH nem de shell (Windows).
+  const prismaPkg = createRequire(path.join(dbPkg, "package.json")).resolve("prisma/package.json");
+  const prismaCli = path.join(path.dirname(prismaPkg), "build", "index.js");
+  execFileSync(process.execPath, [prismaCli, "migrate", "deploy"], {
     cwd: dbPkg,
     env: { ...process.env, DATABASE_URL: url },
     stdio: "pipe",

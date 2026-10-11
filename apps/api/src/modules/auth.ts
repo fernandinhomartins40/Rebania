@@ -1,5 +1,6 @@
 import {
   AcceptInvitationRequest,
+  ChangePasswordRequest,
   LoginRequest,
   RefreshRequest,
   type LoginResponse,
@@ -17,10 +18,18 @@ import {
   verifyPassword,
 } from "../lib/crypto.ts";
 import { HttpError, isUniqueViolation, unauthorized } from "../lib/errors.ts";
+import { assertCanJoinOrganization } from "../lib/platform-account.ts";
 import { accessibleFarms } from "../lib/tenant.ts";
 import { clearSessionCookie, requireAuth, setSessionCookie } from "../plugins/auth.ts";
 
 const LOGIN_RATE = { max: 10, timeWindow: "1 minute" };
+
+const sessionUser = (u: {
+  id: string;
+  name: string;
+  email: string;
+  mustChangePassword: boolean;
+}) => ({ id: u.id, name: u.name, email: u.email, mustChangePassword: u.mustChangePassword });
 
 export function authRoutes(app: FastifyInstance, ctx: AppContext) {
   const { db, config } = ctx;
@@ -73,7 +82,7 @@ export function authRoutes(app: FastifyInstance, ctx: AppContext) {
       data: { channel: body.channel },
       ip: req.ip,
     });
-    const response: LoginResponse = { user: { id: user.id, name: user.name, email: user.email } };
+    const response: LoginResponse = { user: sessionUser(user) };
     if (body.channel === "web") {
       setSessionCookie(reply, ctx, s.access);
     } else {
@@ -121,7 +130,7 @@ export function authRoutes(app: FastifyInstance, ctx: AppContext) {
     });
     if (updated.count !== 1) throw unauthorized();
     return {
-      user: { id: session.user.id, name: session.user.name, email: session.user.email },
+      user: sessionUser(session.user),
       tokens: {
         accessToken: access,
         accessExpiresAt: accessExpiresAt.toISOString(),
@@ -146,8 +155,10 @@ export function authRoutes(app: FastifyInstance, ctx: AppContext) {
     const { userId } = requireAuth(req);
     const user = await db.user.findUniqueOrThrow({ where: { id: userId } });
     const access = await accessibleFarms(db, userId);
+    const admin = await db.platformAdmin.findUnique({ where: { userId } });
     const me: MeResponse = {
-      user: { id: user.id, name: user.name, email: user.email },
+      user: sessionUser(user),
+      platformAdmin: Boolean(admin),
       memberships: access.map(({ membership: m, farms }) => ({
         organizationId: m.organizationId,
         organizationName: m.organization.name,
@@ -163,6 +174,40 @@ export function authRoutes(app: FastifyInstance, ctx: AppContext) {
       })),
     };
     return me;
+  });
+
+  /**
+   * Troca da própria senha; também é a saída da senha provisória (`mustChangePassword`).
+   * Encerra as outras sessões do usuário; a sessão atual continua.
+   */
+  app.post("/v1/auth/password", { config: { rateLimit: LOGIN_RATE } }, async (req, reply) => {
+    const { userId, sessionId } = requireAuth(req);
+    const body = ChangePasswordRequest.parse(req.body);
+    const user = await db.user.findUniqueOrThrow({ where: { id: userId } });
+    if (!(await verifyPassword(body.currentPassword, user.passwordHash))) {
+      throw new HttpError(401, "invalid_credentials", "Senha atual incorreta.");
+    }
+    const passwordHash = await hashPassword(body.newPassword);
+    const now = ctx.now();
+    await db.$transaction(async (tx) => {
+      await tx.user.update({
+        where: { id: userId },
+        data: { passwordHash, mustChangePassword: false },
+      });
+      await tx.authSession.updateMany({
+        where: { userId, revokedAt: null, id: { not: sessionId } },
+        data: { revokedAt: now, revokedReason: "password_changed" },
+      });
+      await audit(tx, {
+        actorUserId: userId,
+        action: "auth.password_changed",
+        entityType: "user",
+        entityId: userId,
+        data: { wasProvisional: user.mustChangePassword },
+        ip: req.ip,
+      });
+    });
+    return reply.status(204).send();
   });
 
   /** Sessões ativas do próprio usuário (para revogar aparelhos). */
@@ -231,6 +276,7 @@ export function authRoutes(app: FastifyInstance, ctx: AppContext) {
   app.post("/v1/auth/invitations/accept", { config: { rateLimit: LOGIN_RATE } }, async (req) => {
     const body = AcceptInvitationRequest.parse(req.body);
     const inv = await findValidInvitation(body.token);
+    await assertCanJoinOrganization(db, inv.email);
     const existing = await db.user.findUnique({ where: { email: inv.email } });
     if (existing) {
       if (!(await verifyPassword(body.password, existing.passwordHash))) {
