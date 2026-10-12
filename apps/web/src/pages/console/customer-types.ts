@@ -75,7 +75,7 @@ export interface CustomerDto {
   createdAt: string;
   lastActivityAt: string | null;
   accountManager: { id: string; name: string } | null;
-  farms: { id: string; name: string; timezone: string; archived: boolean }[];
+  farms: { id: string; name: string; timezone: string; archived: boolean; createdAt: string }[];
   usage: Record<string, number>;
   capacity: CapacityLine[];
   currentMonthlyCents: number | null;

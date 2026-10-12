@@ -13,3 +13,4 @@ export * from "./depth.ts";
 export * from "./platform.ts";
 export * from "./saas-billing.ts";
 export * from "./support.ts";
+export * from "./tax-id.ts";

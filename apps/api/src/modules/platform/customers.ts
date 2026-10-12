@@ -2,8 +2,10 @@ import {
   assertStageTransition,
   isValidTimezone,
   ORG_STAGES,
+  parseCapacityLimits,
   PLATFORM_ROLE_PERMISSIONS,
   ROLE_LABEL,
+  taxIdKind,
 } from "@rebania/domain";
 import { queueEmail, refreshOrgAccess } from "@rebania/saas";
 import type { FastifyInstance } from "fastify";
@@ -36,7 +38,7 @@ const Profile = z.object({
     .trim()
     .max(20)
     .transform(digits)
-    .refine((d) => d === "" || d.length === 11 || d.length === 14, "CPF (11) ou CNPJ (14) dígitos.")
+    .refine((d) => d === "" || taxIdKind(d) !== null, "CPF ou CNPJ inválido.")
     .nullable()
     .optional(),
   phone: z.string().trim().max(30).nullable().optional(),
@@ -50,6 +52,21 @@ const Profile = z.object({
     .optional(),
   accountManagerId: z.uuid().nullable().optional(),
 });
+
+/** Um CPF/CNPJ pertence a um único cliente: fazenda nova entra no cliente que já existe. */
+async function assertDocumentFree(ctx: AppContext, document: string, exceptId?: string) {
+  const other = await ctx.db.organization.findFirst({
+    where: { document, ...(exceptId ? { id: { not: exceptId } } : {}) },
+    select: { id: true, name: true },
+  });
+  if (other)
+    throw new HttpError(
+      409,
+      "document_in_use",
+      `Este CPF/CNPJ já é do cliente "${other.name}". Para mais uma fazenda, use "Adicionar fazenda".`,
+      { customerId: other.id, customerName: other.name },
+    );
+}
 
 async function assertStaffUser(ctx: AppContext, userId: string | null | undefined) {
   if (!userId) return;
@@ -197,6 +214,7 @@ export function customerRoutes(app: FastifyInstance, ctx: AppContext) {
     if (!isValidTimezone(body.timezone))
       throw new HttpError(422, "invalid_timezone", "Fuso inválido.");
     await assertStaffUser(ctx, body.accountManagerId);
+    if (body.document) await assertDocumentFree(ctx, body.document);
     const template = body.templateId
       ? await db.onboardingTemplate.findFirst({ where: { id: body.templateId, archivedAt: null } })
       : null;
@@ -266,6 +284,93 @@ export function customerRoutes(app: FastifyInstance, ctx: AppContext) {
       expiresAt: r.inv.expiresAt.toISOString(),
       emailQueued: r.emailQueued,
     });
+  });
+
+  /** Cliente dono de um CPF/CNPJ, com as fazendas e a capacidade contratada de fazendas. */
+  app.get("/v1/platform/customers/lookup", async (req) => {
+    await requireStaff(ctx, req, "customers.read");
+    const { document } = z
+      .object({
+        document: z
+          .string()
+          .trim()
+          .max(20)
+          .transform(digits)
+          .refine((d) => taxIdKind(d) !== null, "CPF ou CNPJ inválido."),
+      })
+      .parse(req.query);
+    const o = await db.organization.findFirst({
+      where: { document },
+      include: {
+        farms: {
+          where: { archivedAt: null },
+          orderBy: { createdAt: "asc" },
+          select: { id: true, name: true, timezone: true },
+        },
+        contracts: {
+          where: { status: { in: ["active", "suspended"] } },
+          take: 1,
+          orderBy: { createdAt: "desc" },
+          include: { amendments: true },
+        },
+      },
+    });
+    if (!o) return { customer: null };
+    const c = o.contracts[0];
+    const limits = parseCapacityLimits(c ? contractTerms(c, today(ctx)).limits : null);
+    return {
+      customer: {
+        id: o.id,
+        name: o.name,
+        document: o.document,
+        stage: o.stage,
+        city: o.city,
+        state: o.state,
+        farms: o.farms,
+        farmLimit: limits.farms ?? null,
+      },
+    };
+  });
+
+  /** Fazenda nova num cliente que já existe (ex.: segunda propriedade do mesmo CPF/CNPJ). */
+  app.post<{ Params: { id: string } }>("/v1/platform/customers/:id/farms", async (req, reply) => {
+    const staff = await requireStaff(ctx, req, "customers.write");
+    const body = z
+      .object({
+        name: z.string().trim().min(2).max(120),
+        timezone: z.string().default("America/Sao_Paulo"),
+      })
+      .parse(req.body);
+    if (!isValidTimezone(body.timezone))
+      throw new HttpError(422, "invalid_timezone", "Fuso inválido.");
+    const o = await db.organization.findUnique({
+      where: { id: req.params.id },
+      include: { farms: { where: { archivedAt: null }, select: { name: true } } },
+    });
+    if (!o) throw notFound("Cliente");
+    if (o.stage === "churned")
+      throw new HttpError(422, "customer_churned", "Cliente encerrado: reative antes.");
+    const key = (s: string) => s.trim().toLocaleLowerCase("pt-BR");
+    if (o.farms.some((f) => key(f.name) === key(body.name)))
+      throw new HttpError(409, "farm_name_taken", "Este cliente já tem uma fazenda com esse nome.");
+    const farm = await db.$transaction(async (tx) => {
+      const f = await tx.farm.create({
+        data: { organizationId: o.id, name: body.name, timezone: body.timezone },
+      });
+      await audit(tx, {
+        organizationId: o.id,
+        farmId: f.id,
+        actorUserId: staff.userId,
+        action: "farm.created",
+        entityType: "farm",
+        entityId: f.id,
+        data: { by: "platform" },
+      });
+      return f;
+    });
+    return reply
+      .status(201)
+      .send({ id: farm.id, name: farm.name, timezone: farm.timezone, farms: o.farms.length + 1 });
   });
 
   /** Ficha 360 do cliente. Nenhum dado do rebanho além de contagens. */
@@ -454,6 +559,7 @@ export function customerRoutes(app: FastifyInstance, ctx: AppContext) {
     const o = await db.organization.findUnique({ where: { id: req.params.id } });
     if (!o) throw notFound("Cliente");
     await assertStaffUser(ctx, body.accountManagerId);
+    if (body.document) await assertDocumentFree(ctx, body.document, o.id);
     const data = {
       ...(body.name !== undefined ? { name: body.name } : {}),
       ...(body.document !== undefined ? { document: body.document || null } : {}),

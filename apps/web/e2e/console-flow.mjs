@@ -71,6 +71,20 @@ await p.getByRole("button", { name: "Entrar no console" }).click();
 await p.getByRole("heading", { name: "Visão geral" }).waitFor();
 
 const suffix = Date.now().toString().slice(-5);
+/** CNPJ válido e único por execução (o console recusa CPF/CNPJ repetido). */
+function cnpjFrom(seed) {
+  const n = `${seed}`.padStart(8, "0").slice(-8).split("").map(Number);
+  n.push(0, 0, 0, 1);
+  for (const w of [
+    [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2],
+    [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2],
+  ]) {
+    const r = w.reduce((a, x, i) => a + x * n[i], 0) % 11;
+    n.push(r < 2 ? 0 : 11 - r);
+  }
+  return n.join("");
+}
+const cnpj = cnpjFrom(Date.now());
 const orgName = `Agropecuária Teste ${suffix}`;
 
 await step("modelo de checklist", async () => {
@@ -85,12 +99,12 @@ await step("modelo de checklist", async () => {
 await step("nova implantação", async () => {
   await p.goto(`${U}/console/clientes`);
   await p.getByRole("button", { name: "Nova implantação" }).click();
-  await p.getByLabel("Cliente (organização)").fill(orgName);
-  await p.getByLabel("Primeira fazenda").fill("Fazenda Boa Vista");
-  await p.getByLabel("E-mail do proprietário").fill(`dono${suffix}@cliente.dev`);
-  await p.getByLabel(/CPF ou CNPJ/).fill("12.345.678/0001-90");
-  await p.getByLabel(/^Cidade/).fill("Cuiabá");
-  await p.getByLabel(/^UF/).fill("MT");
+  await p.locator("#n-doc").fill(cnpj);
+  await p.locator("#n-org").fill(orgName);
+  await p.locator("#n-city").fill("Cuiabá");
+  await p.locator("#n-state").fill("MT");
+  await p.locator("#n-email").fill(`dono${suffix}@cliente.dev`);
+  await p.locator("#n-farm").fill("Fazenda Boa Vista");
   await p.getByLabel("Checklist de implantação").selectOption({ label: `Padrão ${suffix}` });
   await p.getByRole("button", { name: "Criar cliente e convidar proprietário" }).click();
   await p.getByText("Cliente criado.").waitFor();
@@ -98,6 +112,29 @@ await step("nova implantação", async () => {
   await p.getByRole("heading", { name: orgName }).waitFor();
 });
 const customerUrl = p.url().split("?")[0];
+
+await step("mesmo CNPJ não cria outro cliente: vira 'adicionar fazenda'", async () => {
+  await p.goto(`${U}/console/implantacoes`);
+  await p.getByRole("button", { name: "Nova implantação" }).click();
+  await p.locator("#n-doc").fill(cnpj);
+  await p.getByText(/já é do cliente/).waitFor();
+  await p.getByRole("button", { name: `Adicionar fazenda a ${orgName}` }).click();
+  await p.getByRole("heading", { name: "Adicionar fazenda a um cliente" }).waitFor();
+  await p.getByText("Fazendas atuais (1): Fazenda Boa Vista").waitFor();
+  await p.getByLabel("Nome da fazenda").fill("Retiro Santa Luzia");
+  await p.getByLabel("Fuso horário da fazenda").selectOption("America/Cuiaba");
+  await p.getByRole("button", { name: "Adicionar fazenda", exact: true }).last().click();
+  await p.getByText(/Fazenda “Retiro Santa Luzia” adicionada a/).waitFor();
+});
+
+await step("adicionar fazenda pela ficha do cliente", async () => {
+  await p.goto(customerUrl);
+  await p.getByRole("button", { name: "Adicionar fazenda" }).click();
+  await p.getByLabel("Nome da fazenda").fill("Invernada do Rio");
+  await p.getByRole("button", { name: "Adicionar fazenda", exact: true }).click();
+  await p.getByText("Fazenda “Invernada do Rio” adicionada.").waitFor();
+  await p.getByText("Fazendas (3)").waitFor();
+});
 
 await step("plano no catálogo", async () => {
   await p.goto(`${U}/console/planos`);

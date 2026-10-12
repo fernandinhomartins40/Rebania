@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router";
 import { post } from "../../api/client.ts";
 import { Empty, Field, formatDate, PageHead } from "../../components/ui.tsx";
+import { ImplantationButtons, ImplantationPanel, type ImplantationMode } from "./Implantation.tsx";
 import { CardForm, Loaded, RunButton, StageBadge, useResource, useStaff } from "./kit.tsx";
 
 interface BoardItem {
@@ -26,17 +27,27 @@ export function OnboardingPage() {
   const { can } = useStaff();
   const board = useResource<{ items: BoardItem[] }>("/v1/platform/onboarding");
   const templates = useResource<{ items: Template[] }>("/v1/platform/onboarding-templates");
+  const [mode, setMode] = useState<ImplantationMode>(null);
   const [creating, setCreating] = useState(false);
   const [name, setName] = useState("");
   const [steps, setSteps] = useState("");
   return (
     <section>
-      <PageHead title="Implantações" />
+      <PageHead title="Implantações" aside={<ImplantationButtons onOpen={setMode} />} />
+      {can("customers.write") && !mode ? (
+        <p className="hint">
+          Cliente novo: <strong>Nova implantação</strong> (cadastro, convite ao proprietário e
+          primeira fazenda). Cliente que já existe com mais uma propriedade:{" "}
+          <strong>Adicionar fazenda</strong> pelo CPF ou CNPJ dele, sem criar outro cliente.
+        </p>
+      ) : null}
+      <ImplantationPanel mode={mode} setMode={setMode} onChanged={board.reload} />
       <Loaded r={board}>
         {(d) =>
           d.items.length === 0 ? (
             <Empty title="Nenhuma implantação em andamento">
-              Novas implantações começam em <Link to="/console/clientes">Clientes</Link>.
+              Use <strong>Nova implantação</strong> acima ou veja todos em{" "}
+              <Link to="/console/clientes">Clientes</Link>.
             </Empty>
           ) : (
             <div className="console-table-wrap">

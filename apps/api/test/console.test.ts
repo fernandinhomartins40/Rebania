@@ -16,6 +16,17 @@ import {
   type TestEnv,
 } from "./helpers.ts";
 
+/** CPF válido e único por execução (o banco de teste é compartilhado entre arquivos). */
+function randomCpf() {
+  const n = Array.from({ length: 9 }, () => Math.floor(Math.random() * 10));
+  for (const len of [9, 10]) {
+    const sum = n.slice(0, len).reduce((a, d, i) => a + d * (len + 1 - i), 0);
+    const r = sum % 11;
+    n.push(r < 2 ? 0 : 11 - r);
+  }
+  return n.join("");
+}
+
 async function sessionFor(email: string) {
   const u = await env.db.user.findUniqueOrThrow({ where: { email } });
   return sessionClient(env, u.id);
@@ -142,12 +153,13 @@ describe("clientes e implantação", () => {
       ],
     });
     expect(tpl.statusCode).toBe(201);
+    const cpf = randomCpf();
     const r = await admin.post("/v1/platform/customers", {
       orgName: `Fazendas ${randomUUID().slice(0, 5)}`,
       farmName: "Sede",
       ownerEmail: `dono-${randomUUID()}@cliente.dev`,
       ownerName: "Dono",
-      document: "12.345.678/0001-90",
+      document: cpf.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/, "$1.$2.$3-$4"),
       state: "mt",
       templateId: tpl.json().id,
     });
@@ -155,7 +167,7 @@ describe("clientes e implantação", () => {
     const id = r.json().organizationId;
     const c = (await admin.get(`/v1/platform/customers/${id}`)).json();
     expect(c.stage).toBe("onboarding");
-    expect(c.document).toBe("12345678000190");
+    expect(c.document).toBe(cpf);
     expect(c.state).toBe("MT");
     expect(c.onboarding.map((s: { title: string }) => s.title)).toEqual([
       "Reunião de início",
@@ -186,6 +198,78 @@ describe("clientes e implantação", () => {
         })
       ).statusCode,
     ).toBe(200);
+  });
+
+  it("fazenda nova entra no cliente do mesmo CPF/CNPJ, sem cliente duplicado", async () => {
+    const cpf = randomCpf();
+    const created = await admin.post("/v1/platform/customers", {
+      orgName: `Família ${randomUUID().slice(0, 5)}`,
+      farmName: "Sede",
+      ownerEmail: `dono-${randomUUID()}@cliente.dev`,
+      document: cpf,
+    });
+    expect(created.statusCode).toBe(201);
+    const id = created.json().organizationId;
+
+    // Dígito verificador errado é recusado.
+    const wrong = `${cpf.slice(0, 10)}${(Number(cpf[10]) + 1) % 10}`;
+    expect((await admin.get(`/v1/platform/customers/lookup?document=${wrong}`)).statusCode).toBe(
+      400,
+    );
+
+    // Mesmo CPF não cria outro cliente: a resposta aponta o cliente existente.
+    const dup = await admin.post("/v1/platform/customers", {
+      orgName: "Outro nome",
+      farmName: "Retiro",
+      ownerEmail: `dono-${randomUUID()}@cliente.dev`,
+      document: cpf,
+    });
+    expect(dup.statusCode).toBe(409);
+    expect(dup.json().error).toMatchObject({
+      code: "document_in_use",
+      details: { customerId: id },
+    });
+    expect(
+      (await admin.patch(`/v1/platform/customers/${A.orgId}`, { document: cpf })).statusCode,
+    ).toBe(409);
+
+    const found = (await admin.get(`/v1/platform/customers/lookup?document=${cpf}`)).json();
+    expect(found.customer).toMatchObject({ id, farms: [{ name: "Sede" }] });
+
+    const add = await admin.post(`/v1/platform/customers/${id}/farms`, {
+      name: "Retiro São José",
+      timezone: "America/Cuiaba",
+    });
+    expect(add.statusCode).toBe(201);
+    expect(add.json()).toMatchObject({ farms: 2, timezone: "America/Cuiaba" });
+    expect(
+      (await admin.post(`/v1/platform/customers/${id}/farms`, { name: " retiro são josé " }))
+        .statusCode,
+    ).toBe(409);
+    expect(
+      (
+        await admin.post(`/v1/platform/customers/${id}/farms`, {
+          name: "Invernada",
+          timezone: "Lua/Base",
+        })
+      ).statusCode,
+    ).toBe(422);
+    const after = (await admin.get(`/v1/platform/customers/lookup?document=${cpf}`)).json();
+    expect(after.customer.farms.map((f: { name: string }) => f.name)).toEqual([
+      "Sede",
+      "Retiro São José",
+    ]);
+    const log = await env.db.auditEntry.findFirst({
+      where: { organizationId: id, action: "farm.created", entityId: add.json().id },
+    });
+    expect(log?.farmId).toBe(add.json().id);
+
+    // Suporte só lê clientes: não cria fazenda.
+    const support = await staffWithMfa("support");
+    expect(
+      (await support.c.post(`/v1/platform/customers/${id}/farms`, { name: "Invernada" }))
+        .statusCode,
+    ).toBe(403);
   });
 
   it("notas internas são append-only no banco", async () => {

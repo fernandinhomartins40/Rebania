@@ -179,9 +179,12 @@ export function CardForm({
   onSubmit,
   onCancel,
   bare = false,
+  canSubmit = true,
   children,
 }: {
   title?: string;
+  /** Falso enquanto falta algo antes de enviar (o botão some; Cancelar fica). */
+  canSubmit?: boolean;
   /** Sem moldura de cartão (quando já está dentro de um). */
   bare?: boolean;
   submitLabel: string;
@@ -209,9 +212,11 @@ export function CardForm({
       {error ? <Alert kind="danger">{error}</Alert> : null}
       {children}
       <div className="actions">
-        <button className="btn btn-primary" disabled={busy}>
-          {busy ? "Salvando…" : submitLabel}
-        </button>
+        {canSubmit ? (
+          <button className="btn btn-primary" disabled={busy}>
+            {busy ? "Salvando…" : submitLabel}
+          </button>
+        ) : null}
         {onCancel ? (
           <button type="button" className="btn btn-ghost" onClick={onCancel}>
             Cancelar

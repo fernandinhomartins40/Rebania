@@ -1,9 +1,12 @@
+import { formatTaxId } from "@rebania/domain";
+import { MapPinPlus } from "lucide-react";
 import { useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router";
 import { patch, post } from "../../api/client.ts";
 import { Alert, Empty, Field, formatDate, formatDateTime, PageHead } from "../../components/ui.tsx";
 import { ContractTab, CreditsTab, InvoicesTab } from "./CustomerMoney.tsx";
 import { SupportTab, UsersTab } from "./CustomerPeople.tsx";
+import { AddFarmForm } from "./Implantation.tsx";
 import {
   CAPACITY_LABEL,
   type CustomerDto,
@@ -124,7 +127,7 @@ function Summary({ c, staff, reload }: { c: CustomerDto; staff: StaffLite[]; rel
   const [editing, setEditing] = useState(false);
   const [f, setF] = useState({
     name: c.name,
-    document: c.document ?? "",
+    document: formatTaxId(c.document),
     phone: c.phone ?? "",
     city: c.city ?? "",
     state: c.state ?? "",
@@ -160,6 +163,8 @@ function Summary({ c, staff, reload }: { c: CustomerDto; staff: StaffLite[]; rel
           hint={`cliente desde ${formatDate(c.createdAt.slice(0, 10))}`}
         />
       </div>
+
+      <FarmsCard c={c} reload={reload} />
 
       <div className="grid two">
         <div className="card">
@@ -220,20 +225,13 @@ function Summary({ c, staff, reload }: { c: CustomerDto; staff: StaffLite[]; rel
               <div className="review">
                 <dl>
                   <dt>CPF/CNPJ</dt>
-                  <dd>{c.document ?? "—"}</dd>
+                  <dd>{formatTaxId(c.document) || "—"}</dd>
                   <dt>Telefone</dt>
                   <dd>{c.phone ?? "—"}</dd>
                   <dt>Local</dt>
                   <dd>{[c.city, c.state].filter(Boolean).join(" · ") || "—"}</dd>
                   <dt>Responsável</dt>
                   <dd>{c.accountManager?.name ?? "—"}</dd>
-                  <dt>Fazendas</dt>
-                  <dd>
-                    {c.farms
-                      .filter((x) => !x.archived)
-                      .map((x) => x.name)
-                      .join(", ") || "—"}
-                  </dd>
                 </dl>
               </div>
               {can("customers.write") ? (
@@ -757,6 +755,65 @@ function Timeline({ id }: { id: string }) {
           )
         }
       </Loaded>
+    </div>
+  );
+}
+
+function FarmsCard({ c, reload }: { c: CustomerDto; reload: () => void }) {
+  const { can } = useStaff();
+  const [adding, setAdding] = useState(false);
+  const [added, setAdded] = useState<string | null>(null);
+  const farms = c.farms.filter((x) => !x.archived);
+  const limit = c.capacity.find((l) => l.key === "farms")?.limit ?? null;
+  return (
+    <div className="card" style={{ marginBottom: 16 }}>
+      <h2 style={{ marginTop: 0, fontSize: 18 }}>
+        Fazendas{" "}
+        <span className="hint">
+          ({farms.length}
+          {limit ? ` de ${limit} contratadas` : ""})
+        </span>
+      </h2>
+      {added ? <Alert kind="success">Fazenda “{added}” adicionada.</Alert> : null}
+      {farms.length ? (
+        <ul className="list">
+          {farms.map((x) => (
+            <li key={x.id} className="list-item">
+              <span>
+                <span className="title">{x.name}</span>
+                <div className="meta">
+                  {x.timezone} · desde {formatDate(x.createdAt.slice(0, 10))}
+                </div>
+              </span>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="hint">Nenhuma fazenda ativa.</p>
+      )}
+      {adding ? (
+        <AddFarmForm
+          customer={{ id: c.id, name: c.name, farms: farms.map((x) => x.name), farmLimit: limit }}
+          onCancel={() => setAdding(false)}
+          onDone={(r) => {
+            setAdded(r.farm);
+            setAdding(false);
+            reload();
+          }}
+        />
+      ) : can("customers.write") && c.stage !== "churned" ? (
+        <div className="actions">
+          <button
+            className="btn btn-ghost"
+            onClick={() => {
+              setAdded(null);
+              setAdding(true);
+            }}
+          >
+            <MapPinPlus size={20} aria-hidden="true" /> Adicionar fazenda
+          </button>
+        </div>
+      ) : null}
     </div>
   );
 }

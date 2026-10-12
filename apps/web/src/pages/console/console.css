@@ -229,3 +229,44 @@
 .review + .field {
   margin-top: var(--space-lg);
 }
+
+/* Formulários de implantação: blocos numerados e cliente achado pelo CPF/CNPJ. */
+.form-block {
+  border: 0;
+  border-top: 1px solid var(--line);
+  margin: 0 0 var(--space-lg);
+  padding: var(--space-lg) 0 0;
+  min-width: 0;
+}
+.form-block:first-of-type {
+  border-top: 0;
+  padding-top: 0;
+}
+.form-block legend {
+  font-weight: 700;
+  font-size: 16px;
+  padding: 0;
+  float: left;
+  width: 100%;
+  margin-bottom: var(--space-xs);
+}
+.form-block legend + * {
+  clear: both;
+}
+.form-block .hint {
+  margin: 0 0 var(--space-md);
+}
+.found-customer {
+  display: grid;
+  gap: var(--space-sm);
+  background: var(--color-surface-muted);
+  border-radius: var(--radius-md);
+  padding: var(--space-md) var(--space-lg);
+  margin: var(--space-md) 0;
+}
+.found-customer .title {
+  font-weight: 700;
+}
+.found-customer .alert {
+  margin: 0;
+}
