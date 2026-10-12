@@ -19,12 +19,14 @@ import {
   UserRound,
   Users,
   LifeBuoy,
+  Smartphone,
   type LucideIcon,
 } from "lucide-react";
 import { ROLE_LABEL } from "@rebania/domain";
 import { Link } from "react-router";
 import { useFeatures } from "../state/features.ts";
 import { PageHead } from "../components/ui.tsx";
+import { isStandalone } from "../pwa/install.ts";
 import { useSession } from "../state/session.tsx";
 
 export function FarmPage() {
@@ -173,6 +175,14 @@ export function FarmPage() {
       desc: "Registros no aparelho, rejeitados ou em conflito.",
       icon: CloudUpload,
       show: true,
+    },
+    {
+      to: "/fazenda/instalar",
+      section: "Organização e conta",
+      title: "Instalar o app",
+      desc: "Rebania na tela inicial do celular, sem loja.",
+      icon: Smartphone,
+      show: !isStandalone(),
     },
     {
       to: "/fazenda/suporte",

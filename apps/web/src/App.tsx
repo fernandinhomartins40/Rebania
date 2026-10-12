@@ -55,6 +55,7 @@ import { PlansPage } from "./pages/console/Plans.tsx";
 import { SupportReadPage, TicketPage, TicketsPage } from "./pages/console/Tickets.tsx";
 import { ForgotPasswordPage, ResetPasswordPage } from "./pages/PasswordReset.tsx";
 import { SupportPage, SupportTicketPage } from "./pages/Support.tsx";
+import { InstallAppPage } from "./pages/InstallApp.tsx";
 import { LandingPage } from "./pages/landing/Landing.tsx";
 import { LoginPage } from "./pages/Login.tsx";
 import { MovePage } from "./pages/Move.tsx";
@@ -180,6 +181,7 @@ function Routed() {
           <Route path="fazenda/patrimonio" element={<AssetsPage />} />
           <Route path="fazenda/plano" element={<PlanPage />} />
           <Route path="fazenda/suporte" element={<SupportPage />} />
+          <Route path="fazenda/instalar" element={<InstallAppPage />} />
           <Route path="fazenda/suporte/:id" element={<SupportTicketPage />} />
           <Route path="fazenda/configuracoes" element={<SettingsPage />} />
           <Route path="agenda" element={<AgendaPage />} />
