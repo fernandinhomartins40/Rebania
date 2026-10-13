@@ -9,6 +9,7 @@ import { errorHandler } from "./lib/errors.ts";
 import { registerRequestContext } from "./lib/request-context.ts";
 import { animalRoutes } from "./modules/animals/routes.ts";
 import { authRoutes } from "./modules/auth.ts";
+import { passkeyRoutes } from "./modules/passkeys.ts";
 import { farmRoutes } from "./modules/farms.ts";
 import { importRoutes } from "./modules/imports.ts";
 import { mediaRoutes } from "./modules/media.ts";
@@ -67,6 +68,7 @@ export async function buildApp(input: AppContext) {
   });
 
   authRoutes(app, ctx);
+  passkeyRoutes(app, ctx);
   orgRoutes(app, ctx);
   farmRoutes(app, ctx);
   animalRoutes(app, ctx);

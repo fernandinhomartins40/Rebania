@@ -53,6 +53,8 @@ services:
       DATABASE_URL: postgresql://rebania:${POSTGRES_PASSWORD}@postgres:5432/rebania
       WEB_ORIGINS: ${PUBLIC_URL:?defina PUBLIC_URL}
       WEB_BASE_URL: ${PUBLIC_URL}
+      # Domínio das passkeys (digital/Face ID); vazio = domínio do PUBLIC_URL.
+      WEBAUTHN_RP_ID: ${WEBAUTHN_RP_ID:-}
       COOKIE_SECURE: "true"
       TRUST_PROXY: "true"
       LOG_LEVEL: info

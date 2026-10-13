@@ -23,48 +23,20 @@ import {
 import { HttpError, isUniqueViolation, unauthorized } from "../lib/errors.ts";
 import { issuePasswordLink } from "../lib/password-reset.ts";
 import { assertCanJoinOrganization } from "../lib/platform-account.ts";
+import { openSession as openSessionFor, sessionUser } from "../lib/session.ts";
 import { accessibleFarms } from "../lib/tenant.ts";
 import { clearSessionCookie, requireAuth, setSessionCookie } from "../plugins/auth.ts";
 
 const LOGIN_RATE = { max: 10, timeWindow: "1 minute" };
 
-const sessionUser = (u: {
-  id: string;
-  name: string;
-  email: string;
-  mustChangePassword: boolean;
-}) => ({ id: u.id, name: u.name, email: u.email, mustChangePassword: u.mustChangePassword });
-
 export function authRoutes(app: FastifyInstance, ctx: AppContext) {
   const { db, config } = ctx;
 
-  async function openSession(
+  const openSession = (
     userId: string,
     channel: "web" | "mobile",
     meta: { deviceLabel?: string; userAgent?: string },
-  ) {
-    const now = ctx.now();
-    const access = randomToken();
-    const refresh = channel === "mobile" ? randomToken(48) : null;
-    const accessExpiresAt = new Date(
-      now.getTime() + (channel === "web" ? config.webSessionTtlMs : config.mobileAccessTtlMs),
-    );
-    const refreshExpiresAt = refresh ? new Date(now.getTime() + config.mobileRefreshTtlMs) : null;
-    const session = await db.authSession.create({
-      data: {
-        userId,
-        channel,
-        accessHash: sha256(access),
-        accessExpiresAt,
-        refreshHash: refresh ? sha256(refresh) : null,
-        refreshExpiresAt,
-        deviceLabel: meta.deviceLabel ?? null,
-        userAgent: meta.userAgent?.slice(0, 300) ?? null,
-        lastUsedAt: now,
-      },
-    });
-    return { session, access, refresh, accessExpiresAt, refreshExpiresAt };
-  }
+  ) => openSessionFor(ctx, userId, channel, meta);
 
   app.post("/v1/auth/login", { config: { rateLimit: LOGIN_RATE } }, async (req, reply) => {
     const body = LoginRequest.parse(req.body);

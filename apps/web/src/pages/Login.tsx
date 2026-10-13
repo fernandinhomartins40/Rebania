@@ -1,6 +1,13 @@
+import { Fingerprint } from "lucide-react";
 import { useState } from "react";
 import { post, errorMessage } from "../api/client.ts";
 import { Link } from "react-router";
+import {
+  loginWithPasskey,
+  passkeyErrorMessage,
+  passkeyLoginLabel,
+  passkeySupported,
+} from "../auth/passkey.ts";
 import { FullLogo } from "../components/brand.tsx";
 import { Alert, Field } from "../components/ui.tsx";
 import { useSession } from "../state/session.tsx";
@@ -11,6 +18,7 @@ export function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [canPasskey] = useState(passkeySupported);
 
   return (
     <div className="center-page">
@@ -60,6 +68,34 @@ export function LoginPage() {
             {busy ? "Entrando…" : "Entrar"}
           </button>
         </form>
+        {canPasskey ? (
+          <>
+            <div className="auth-divider" aria-hidden="true">
+              <span>ou</span>
+            </div>
+            <button
+              type="button"
+              className="btn btn-secondary btn-block"
+              disabled={busy}
+              onClick={async () => {
+                setBusy(true);
+                setError(null);
+                try {
+                  if ((await loginWithPasskey()) === "ok") await reload();
+                } catch (err) {
+                  setError(passkeyErrorMessage(err));
+                } finally {
+                  setBusy(false);
+                }
+              }}
+            >
+              <Fingerprint size={22} aria-hidden="true" /> {passkeyLoginLabel()}
+            </button>
+            <p className="hint" style={{ marginTop: 8 }}>
+              Usa o desbloqueio do próprio aparelho. Ative antes em Minha conta.
+            </p>
+          </>
+        ) : null}
         <p className="hint" style={{ marginTop: 16 }}>
           <Link to="/recuperar-senha">Esqueci minha senha</Link>
         </p>

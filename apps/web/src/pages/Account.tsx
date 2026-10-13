@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router";
 import { errorMessage, get, post } from "../api/client.ts";
 import { Alert, formatDateTime, Loading, PageHead } from "../components/ui.tsx";
+import { PasskeysCard } from "../components/PasskeysCard.tsx";
 import { useSession } from "../state/session.tsx";
 import { useSync } from "../state/sync.tsx";
 
@@ -58,6 +59,7 @@ export function AccountPage() {
           Trocar senha
         </Link>
       </div>
+      <PasskeysCard />
       <div className="card">
         <h2>Sessões ativas</h2>
         {error ? <Alert kind="danger">{error}</Alert> : null}

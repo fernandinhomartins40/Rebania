@@ -240,8 +240,48 @@ model User {
   sessions    AuthSession[]
   platformAdmin PlatformAdmin?
   resetTokens   PasswordResetToken[]
+  passkeys      Passkey[]
 
   @@map("users")
+}
+
+/// Passkey (WebAuthn): entrar com digital, senha do celular ou Face ID. Só a chave pública
+/// fica no servidor; a privada nunca sai do aparelho. Removida = revogada (fica no histórico).
+model Passkey {
+  id           String    @id @default(uuid()) @db.Uuid
+  userId       String    @map("user_id") @db.Uuid
+  /// ID da credencial em base64url, como o navegador devolve.
+  credentialId String    @unique @map("credential_id")
+  publicKey    Bytes     @map("public_key")
+  counter      BigInt    @default(0)
+  transports   String[]  @default([])
+  /// "singleDevice" ou "multiDevice" (sincronizada, ex.: iCloud/Google).
+  deviceType   String    @map("device_type")
+  backedUp     Boolean   @default(false) @map("backed_up")
+  label        String
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  lastUsedAt   DateTime? @map("last_used_at") @db.Timestamptz(3)
+  revokedAt    DateTime? @map("revoked_at") @db.Timestamptz(3)
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@map("passkeys")
+}
+
+/// Desafio WebAuthn de uso único (cadastro ou entrada), com validade curta.
+model WebauthnChallenge {
+  id        String    @id @default(uuid()) @db.Uuid
+  challenge String
+  purpose   String
+  /// Cadastro: dono da sessão. Entrada: nulo (o aparelho diz qual passkey usou).
+  userId    String?   @map("user_id") @db.Uuid
+  expiresAt DateTime  @map("expires_at") @db.Timestamptz(3)
+  usedAt    DateTime? @map("used_at") @db.Timestamptz(3)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([expiresAt])
+  @@map("webauthn_challenges")
 }
 
 model Membership {

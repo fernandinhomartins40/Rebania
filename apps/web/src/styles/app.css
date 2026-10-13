@@ -1766,3 +1766,19 @@ button.list-item {
     flex: 1;
   }
 }
+
+/* Login: "ou" entre senha e digital/Face ID. */
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  margin: var(--space-lg) 0;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+}
+.auth-divider::before,
+.auth-divider::after {
+  content: "";
+  flex: 1;
+  border-top: 1px solid var(--line);
+}

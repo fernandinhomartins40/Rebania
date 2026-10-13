@@ -15,6 +15,7 @@ import { useSession } from "../state/session.tsx";
 import { initials, Logo } from "./brand.tsx";
 import { AccountBanners } from "./AccountBanners.tsx";
 import { InstallBanner } from "./InstallBanner.tsx";
+import { PasskeyOffer } from "./PasskeyOffer.tsx";
 import { SyncBadge } from "./SyncBadge.tsx";
 
 const NAV: { to: string; label: string; icon: IconComponent; end?: boolean }[] = [
@@ -83,6 +84,7 @@ export function Layout() {
         <main className="content">
           <AccountBanners />
           <InstallBanner />
+          <PasskeyOffer />
           <Outlet />
         </main>
       </div>

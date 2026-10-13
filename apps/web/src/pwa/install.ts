@@ -82,4 +82,5 @@ export function snooze(now = Date.now()) {
   } catch {
     /* preferência opcional */
   }
+  emit(); // o próximo convite (ex.: entrar com a digital) pode aparecer
 }

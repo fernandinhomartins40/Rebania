@@ -18,6 +18,7 @@
     "@rebania/domain": "workspace:*",
     "@rebania/hardware": "workspace:*",
     "@rebania/sync-core": "workspace:*",
+    "@simplewebauthn/browser": "13.3.0",
     "barcode-detector": "3.2.2",
     "lucide-react": "1.53.0",
     "qrcode": "1.5.4",

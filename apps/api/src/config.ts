@@ -11,6 +11,9 @@ const Env = z
     API_HOST: z.string().default("127.0.0.1"),
     WEB_ORIGINS: z.string().default("http://localhost:5173"),
     WEB_BASE_URL: z.string().default("http://localhost:5173"),
+    // Domínio das passkeys (digital/Face ID). Padrão: o domínio do WEB_BASE_URL. Mudar depois
+    // invalida as passkeys já cadastradas, então defina uma vez (ex.: rebania.com.br).
+    WEBAUTHN_RP_ID: optionalSecret(1),
     COOKIE_SECURE: z
       .enum(["true", "false"])
       .default("true")
@@ -54,6 +57,8 @@ export type Config = {
   host: string;
   webOrigins: string[];
   webBaseUrl: string;
+  /** WebAuthn (passkeys): domínio (RP ID) e origens aceitas. */
+  webauthn: { rpId: string; origins: string[] };
   cookieSecure: boolean;
   logLevel: z.infer<typeof Env>["LOG_LEVEL"];
   trustProxy: boolean;
@@ -83,6 +88,17 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
       .map((s) => s.trim())
       .filter(Boolean),
     webBaseUrl: e.WEB_BASE_URL.replace(/\/$/, ""),
+    webauthn: {
+      rpId: e.WEBAUTHN_RP_ID ?? new URL(e.WEB_BASE_URL).hostname,
+      origins: [
+        ...new Set([
+          new URL(e.WEB_BASE_URL).origin,
+          ...e.WEB_ORIGINS.split(",")
+            .map((s) => s.trim())
+            .filter(Boolean),
+        ]),
+      ],
+    },
     cookieSecure: e.COOKIE_SECURE,
     logLevel: e.LOG_LEVEL,
     trustProxy: e.TRUST_PROXY,
