@@ -47,6 +47,13 @@ export function deviceId(): string {
 export class SyncEngine extends CoreEngine {
   private onOnline = () => this.setOnline(true);
   private onOffline = () => this.setOnline(false);
+  /**
+   * O iOS não roda nada em segundo plano e nem sempre avisa "online" quando o sinal volta
+   * com o app fechado: ao voltar para a tela (ou sair do cache de página), envia na hora.
+   */
+  private onVisible = () => {
+    if (document.visibilityState === "visible" && navigator.onLine) void this.syncNow();
+  };
 
   constructor(farmId: string) {
     super({
@@ -69,12 +76,16 @@ export class SyncEngine extends CoreEngine {
   override async start() {
     window.addEventListener("online", this.onOnline);
     window.addEventListener("offline", this.onOffline);
+    document.addEventListener("visibilitychange", this.onVisible);
+    window.addEventListener("pageshow", this.onVisible);
     await super.start();
   }
 
   override stop() {
     window.removeEventListener("online", this.onOnline);
     window.removeEventListener("offline", this.onOffline);
+    document.removeEventListener("visibilitychange", this.onVisible);
+    window.removeEventListener("pageshow", this.onVisible);
     super.stop();
   }
 }

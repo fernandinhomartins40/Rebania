@@ -13,6 +13,7 @@ RUN pnpm --filter @rebania/web build
 
 FROM ${NGINX_IMAGE} AS web
 COPY infra/nginx/rebania.conf /etc/nginx/conf.d/default.conf
+COPY infra/nginx/security-headers.conf /etc/nginx/snippets/rebania-security-headers.conf
 COPY --from=build /repo/apps/web/dist /usr/share/nginx/html
 LABEL org.opencontainers.image.title="rebania-web" project="rebania"
 EXPOSE 8080

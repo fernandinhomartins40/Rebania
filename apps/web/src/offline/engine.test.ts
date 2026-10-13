@@ -174,4 +174,25 @@ describe("SyncEngine (web)", () => {
     const [problem] = await engine.problems();
     expect(problem!.lastError!.message).toBe("Brinco em uso");
   });
+
+  it("ao voltar para a tela com internet, envia sem esperar o intervalo", async () => {
+    const engine = new SyncEngine(FARM);
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response(JSON.stringify({ changes: [], cursor: "0", hasMore: false }))),
+    );
+    await engine.start();
+    const spy = vi.spyOn(engine, "syncNow");
+    Object.defineProperty(document, "visibilityState", { value: "visible", configurable: true });
+    // Sem internet: não tenta.
+    document.dispatchEvent(new Event("visibilitychange"));
+    expect(spy).not.toHaveBeenCalled();
+    Object.defineProperty(navigator, "onLine", { value: true, configurable: true });
+    document.dispatchEvent(new Event("visibilitychange"));
+    window.dispatchEvent(new Event("pageshow"));
+    expect(spy).toHaveBeenCalledTimes(2);
+    engine.stop();
+    document.dispatchEvent(new Event("visibilitychange"));
+    expect(spy).toHaveBeenCalledTimes(2);
+  });
 });

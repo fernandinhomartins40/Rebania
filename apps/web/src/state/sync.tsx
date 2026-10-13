@@ -1,6 +1,8 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { SyncEngine, type SyncState } from "../offline/engine.ts";
+import { preloadBarcodeFallback } from "../components/barcode.ts";
 import { processUploads } from "../offline/uploads.ts";
+import { requestStorageProtection } from "../pwa/storage.ts";
 
 interface SyncValue {
   engine: SyncEngine;
@@ -27,6 +29,9 @@ export function SyncProvider({ farmId, children }: { farmId: string; children: R
       lastPhase = s.phase;
     });
     void engine.start();
+    // A fila offline mora no aparelho: pede ao navegador que não a apague por falta de espaço.
+    void requestStorageProtection();
+    preloadBarcodeFallback();
     return () => {
       unsub();
       engine.stop();

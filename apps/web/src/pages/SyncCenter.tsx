@@ -2,7 +2,16 @@ import type { OutboxItem } from "@rebania/sync-core";
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router";
 import { Alert, Empty, formatDateTime, Loading, PageHead } from "../components/ui.tsx";
+import { storageProtection, type StorageProtection } from "../pwa/storage.ts";
 import { useSync } from "../state/sync.tsx";
+
+const STORAGE_TEXT: Record<StorageProtection, string> = {
+  protected: "Dados do aparelho protegidos: o sistema não os apaga para liberar espaço.",
+  best_effort:
+    "Dados do aparelho sem proteção garantida: com pouco espaço livre, o sistema pode apagá-los. Use o app instalado na tela inicial e sincronize sempre que tiver sinal.",
+  unsupported:
+    "Este navegador não informa se os dados do aparelho estão protegidos. Sincronize sempre que tiver sinal.",
+};
 
 const TYPE_LABEL: Record<string, string> = {
   "animal.create": "Cadastro de animal",
@@ -15,6 +24,8 @@ const TYPE_LABEL: Record<string, string> = {
 export function SyncCenterPage() {
   const { engine, state, version } = useSync();
   const [items, setItems] = useState<OutboxItem[] | null>(null);
+  const [storage, setStorage] = useState<StorageProtection | null>(null);
+  useEffect(() => void storageProtection().then(setStorage), []);
   const load = useCallback(() => engine.problems().then(setItems), [engine]);
   useEffect(() => void load(), [load, version, state.pending, state.rejected, state.conflict]);
 
@@ -26,6 +37,7 @@ export function SyncCenterPage() {
           {state.online ? "Conectado" : "Sem internet"} · Última sincronização:{" "}
           {formatDateTime(state.lastSyncAt)}
         </p>
+        {storage ? <p className="hint">{STORAGE_TEXT[storage]}</p> : null}
         {state.lastError ? <Alert kind="danger">{state.lastError}</Alert> : null}
         <button
           className="btn btn-secondary"

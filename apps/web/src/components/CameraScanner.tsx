@@ -1,24 +1,12 @@
 import { useEffect, useRef, useState } from "react";
+import { createDetector } from "./barcode.ts";
 import { Alert } from "./ui.tsx";
 
-interface Detector {
-  detect(source: CanvasImageSource): Promise<{ rawValue: string }[]>;
-}
-declare global {
-  interface Window {
-    BarcodeDetector?: new (opts?: { formats?: string[] }) => Detector;
-  }
-}
-
-export const cameraScanSupported = () =>
-  typeof window !== "undefined" &&
-  "BarcodeDetector" in window &&
-  Boolean(navigator.mediaDevices?.getUserMedia);
+export { cameraScanSupported } from "./barcode.ts";
 
 /**
- * Leitura de QR/código de barras pela câmera (Barcode Detection API, disponível no
- * Chrome/Android). Onde não houver suporte, a opção fica indisponível com explicação.
- * OCR de brinco depende do provedor de IA (G6) e não é feito aqui.
+ * Leitura de QR/código de barras pela câmera: leitor nativo no Chrome/Android, ZXing
+ * (WebAssembly) no iPhone e nos demais. OCR de brinco depende do provedor de IA (G6).
  */
 export function CameraScanner({ onDetect }: { onDetect: (value: string) => void }) {
   const video = useRef<HTMLVideoElement>(null);
@@ -36,9 +24,15 @@ export function CameraScanner({ onDetect }: { onDetect: (value: string) => void 
         if (!video.current) return;
         video.current.srcObject = stream;
         await video.current.play();
-        const detector = new window.BarcodeDetector!({
-          formats: ["qr_code", "code_128", "ean_13", "code_39"],
-        });
+        let detector;
+        try {
+          detector = await createDetector();
+        } catch {
+          setError(
+            "O leitor de código ainda não foi baixado neste aparelho. Abra com internet uma vez ou use Leitor/Digitar.",
+          );
+          return;
+        }
         const tick = async () => {
           if (stop || !video.current) return;
           try {
